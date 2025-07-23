@@ -602,6 +602,17 @@ export class BankEmailService {
 
       // Створюємо запис про банківське повідомлення
       console.log("🏦 Зберігання операції:", paymentInfo.operationType);
+      
+      // КРИТИЧНИЙ FIX: Перевіряємо валідність дати перед збереженням в БД
+      let validInvoiceDate: Date | undefined;
+      if (paymentInfo.invoiceDate && !isNaN(paymentInfo.invoiceDate.getTime())) {
+        validInvoiceDate = paymentInfo.invoiceDate;
+        console.log("🏦 ✅ Дата рахунку валідна:", validInvoiceDate.toLocaleDateString('uk-UA'));
+      } else {
+        validInvoiceDate = undefined;
+        console.log("🏦 ⚠️ Дата рахунку невалідна або відсутня, встановлюємо undefined");
+      }
+      
       const notification: InsertBankPaymentNotification = {
         messageId: emailContent.messageId,
         subject: emailContent.subject,
@@ -614,7 +625,7 @@ export class BankEmailService {
         correspondent: paymentInfo.correspondent,
         paymentPurpose: paymentInfo.paymentPurpose,
         invoiceNumber: paymentInfo.invoiceNumber,
-        invoiceDate: paymentInfo.invoiceDate,
+        invoiceDate: validInvoiceDate,
         vatAmount: paymentInfo.vatAmount?.toString(),
         processed: false,
         rawEmailContent: emailContent.textContent,
@@ -749,10 +760,12 @@ export class BankEmailService {
   }
 
   /**
-   * Парсинг українських назв місяців у дати
+   * ВИПРАВЛЕНИЙ парсинг українських назв місяців у дати
    */
   private parseUkrainianDate(dateString: string): Date | null {
     try {
+      console.log(`🏦 Спроба парсингу дати: "${dateString}"`);
+      
       const ukrainianMonths: { [key: string]: number } = {
         'січня': 1, 'січні': 1, 'січень': 1,
         'лютого': 2, 'лютому': 2, 'лютий': 2,
@@ -775,22 +788,38 @@ export class BankEmailService {
         const monthNum = ukrainianMonths[month.toLowerCase()];
         if (monthNum) {
           const date = new Date(parseInt(year), monthNum - 1, parseInt(day));
-          console.log(`🏦 Парсинг української дати: "${dateString}" → ${date.toLocaleDateString('uk-UA')}`);
+          if (!isNaN(date.getTime())) {
+            console.log(`🏦 ✅ Парсинг української дати: "${dateString}" → ${date.toISOString()}`);
+            return date;
+          }
+        }
+      }
+
+      // Покращений regex для числового формату: "22.07.25р." або "22.07.2025" або "22.07.2025р."
+      const numericMatch = dateString.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})(?:р\.?)?/i);
+      if (numericMatch) {
+        const [, day, month, yearPart] = numericMatch;
+        let year = parseInt(yearPart);
+        if (yearPart.length === 2) {
+          year = 2000 + year; // 25 → 2025
+        }
+        
+        const date = new Date(year, parseInt(month) - 1, parseInt(day));
+        if (!isNaN(date.getTime())) {
+          console.log(`🏦 ✅ Парсинг числової дати: "${dateString}" → ${date.toISOString()}`);
           return date;
         }
       }
 
-      // Формат: "22.07.25р." або "22.07.2025"
-      const numericMatch = dateString.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})р?\.?/);
-      if (numericMatch) {
-        const [, day, month, yearPart] = numericMatch;
-        let year = yearPart;
-        if (yearPart.length === 2) {
-          year = '20' + yearPart;
-        }
+      // Додатковий формат: "від ДД.ММ.РРРР" або просто "ДД.ММ.РРРР"
+      const additionalMatch = dateString.match(/(?:від\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4})/i);
+      if (additionalMatch) {
+        const [, day, month, year] = additionalMatch;
         const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        console.log(`🏦 Парсинг числової дати: "${dateString}" → ${date.toLocaleDateString('uk-UA')}`);
-        return date;
+        if (!isNaN(date.getTime())) {
+          console.log(`🏦 ✅ Парсинг додаткового формату: "${dateString}" → ${date.toISOString()}`);
+          return date;
+        }
       }
 
       console.log(`🏦 ⚠️ Не вдалося розпізнати формат дати: "${dateString}"`);
@@ -1012,7 +1041,13 @@ export class BankEmailService {
           
           try {
             invoiceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            console.log(`🏦 Розпізнано дату (старий алгоритм): ${datePart} → ${invoiceDate.toLocaleDateString('uk-UA')}`);
+            // КРИТИЧНИЙ FIX: Перевіряємо чи дата валідна
+            if (isNaN(invoiceDate.getTime())) {
+              console.error(`🏦 ❌ Створена дата невалідна: "${datePart}" → Invalid Date`);
+              invoiceDate = undefined;
+            } else {
+              console.log(`🏦 ✅ Розпізнано дату (старий алгоритм): ${datePart} → ${invoiceDate.toLocaleDateString('uk-UA')}`);
+            }
           } catch (error) {
             console.error(`🏦 ❌ Помилка створення дати з "${datePart}":`, error);
             invoiceDate = undefined;
