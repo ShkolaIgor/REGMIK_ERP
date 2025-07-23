@@ -715,17 +715,7 @@ export default function Orders() {
     },
   });
 
-  // Запит для конкретного клієнта при редагуванні замовлення
-  const { data: specificClientData } = useQuery({
-    queryKey: ["/api/clients/search", "specific", selectedOrder?.clientId],
-    queryFn: async () => {
-      if (!selectedOrder?.clientId) return null;
-      const response = await fetch(`/api/clients/search?clientId=${selectedOrder.clientId}`);
-      if (!response.ok) throw new Error('Failed to fetch specific client');
-      return response.json();
-    },
-    enabled: !!selectedOrder?.clientId && isEditMode,
-  });
+  // ВИДАЛЕНО ЗАЙВИЙ ЗАПИТ - використовуємо дані з замовлення
 
   const { data: allClientContacts = [] } = useQuery<any[]>({
     queryKey: ["/api/client-contacts"],
@@ -868,17 +858,7 @@ export default function Orders() {
     queryKey: ["/api/companies"],
   }) as { data: Company[]; isLoading: boolean };
 
-  // Ініціалізуємо поле компанії з компанією за замовчуванням
-  useEffect(() => {
-    if (companies.length > 0 && !form.watch("companyId") && !isEditMode && isDialogOpen) {
-      const defaultCompany = companies.find((c: Company) => c.isDefault);
-      if (defaultCompany) {
-        form.setValue("companyId", defaultCompany.id.toString());
-        setCompanySearchValue(defaultCompany.name);
-        setCompanyComboboxOpen(false); // Закриваємо список компаній
-      }
-    }
-  }, [companies, form, isEditMode, isDialogOpen]);
+  // ВИДАЛЕНО ПРОБЛЕМНИЙ useEffect - встановлюємо компанію при створенні нового замовлення
 
   // Форма для управління статусами
   const statusForm = useForm<StatusFormData>({
@@ -1323,105 +1303,77 @@ export default function Orders() {
     form.reset();
   };
 
-  // Функція для початку редагування замовлення - ОПТИМІЗОВАНА
+  // Функція для початку редагування замовлення - МАКСИМАЛЬНО ОПТИМІЗОВАНА
   const handleEditOrder = (order: any) => {
+    console.log("EDIT ORDER STARTED - OPTIMIZED VERSION");
     
-    // Використовуємо існуючі дані замовлення без додаткового запиту
+    // Швидке встановлення стану без зайвих операцій
     setEditingOrder(order);
     setIsEditMode(true);
     
-    // Функція для конвертації дати в формат datetime-local
-    const formatDateForInput = (dateString: string | null) => {
-      if (!dateString) return "";
-      const date = new Date(dateString);
-      return date.toISOString().slice(0, 16);
-    };
+    // Оптимізована функція для дат
+    const formatDate = (dateString: string | null) => 
+      dateString ? new Date(dateString).toISOString().slice(0, 16) : "";
     
-    // Заповнюємо форму даними замовлення - ШВИДКО БЕЗ ЗАТРИМОК
+    // Миттєве заповнення форми без затримок
     form.reset({
-      clientId: order.clientId ? order.clientId.toString() : "",
-      clientContactsId: order.clientContactsId ? order.clientContactsId.toString() : "",
-      companyId: order.companyId ? order.companyId.toString() : "",
+      clientId: order.clientId?.toString() || "",
+      clientContactsId: order.clientContactsId?.toString() || "",
+      companyId: order.companyId?.toString() || "",
       orderNumber: order.orderNumber || "",
       totalAmount: order.totalAmount || "",
-      status: order.status,
+      status: order.status || "Нове",
       notes: order.notes || "",
-      paymentDate: formatDateForInput(order.paymentDate),
+      paymentDate: formatDate(order.paymentDate),
       paymentType: order.paymentType || "full",
       paidAmount: order.paidAmount || "0",
-      dueDate: formatDateForInput(order.dueDate),
-      shippedDate: formatDateForInput(order.shippedDate),
+      dueDate: formatDate(order.dueDate),
+      shippedDate: formatDate(order.shippedDate),
       trackingNumber: order.trackingNumber || "",
       invoiceNumber: order.invoiceNumber || "",
       carrierId: order.carrierId || null,
       statusId: order.statusId || undefined,
       productionApproved: order.productionApproved || false,
       productionApprovedBy: order.productionApprovedBy || "",
-      productionApprovedAt: formatDateForInput(order.productionApprovedAt),
+      productionApprovedAt: formatDate(order.productionApprovedAt),
     });
 
-    // Встановлюємо вибраного клієнта СИНХРОННО
+    // Швидке встановлення клієнта з мінімальною логікою
     if (order.clientId) {
       setSelectedClientId(order.clientId.toString());
-      
-      // Знаходимо клієнта - використовуємо дані з замовлення або шукаємо в списку
-      let client = null;
-      
-      // Першочергово використовуємо дані клієнта з замовлення якщо є
-      if (order.client && order.client.id === order.clientId) {
-        client = order.client;
-      } else {
-        // Якщо нема в замовленні, шукаємо в загальному списку
-        const clientsArray = Array.isArray(allClients) ? allClients : (allClients?.clients || []);
-        client = clientsArray.find((c: any) => c.id === order.clientId);
-        
-        // Якщо не знайшли, використовуємо данні зі спеціального запиту
-        if (!client && specificClientData?.clients?.length > 0) {
-          client = specificClientData.clients[0];
-        }
-      }
-      
-      if (client) {
-        setClientSearchValue(client.name);
-      } else {
-        setClientSearchValue('');
-      }
+      // Використовуємо дані з замовлення якщо доступні
+      const clientName = order.clientName || order.client?.name || `Client ${order.clientId}`;
+      setClientSearchValue(clientName);
+    } else {
+      setSelectedClientId("");
+      setClientSearchValue("");
     }
 
-    // Встановлюємо компанію
+    // Швидке встановлення компанії
     if (order.companyId) {
       setSelectedCompanyId(order.companyId.toString());
-      
-      // Знаходимо компанію в списку та встановлюємо назву
-      const company = Array.isArray(companies) ? companies.find((c: any) => c.id === order.companyId) : null;
-      if (company) {
-        setCompanySearchValue(company.name);
-      } else {
-
-        setCompanySearchValue('');
-      }
-    }
-
-    // Встановлюємо контактну особу ВІДРАЗУ
-    if (order.clientContactsId) {
-      setSelectedContactId(order.clientContactsId.toString());
-    }
-
-    // Заповнюємо товари замовлення якщо є
-    if (order.items && order.items.length > 0) {
-      setOrderItems(order.items.map((item: any) => ({
-        productId: item.productId || 0,
-        quantity: item.quantity ? item.quantity.toString() : "1",
-        unitPrice: item.unitPrice ? item.unitPrice.toString() : "0",
-      })));
+      const company = companies?.find((c: any) => c.id === order.companyId);
+      setCompanySearchValue(company?.name || `Company ${order.companyId}`);
     } else {
-
-      setOrderItems([]);
+      setSelectedCompanyId("");
+      setCompanySearchValue("");
     }
+
+    // Швидке встановлення контакту
+    setSelectedContactId(order.clientContactsId?.toString() || "");
+
+    // Оптимізоване встановлення товарів
+    const items = order.items?.map((item: any) => ({
+      productId: item.productId || 0,
+      quantity: String(item.quantity || 1),
+      unitPrice: String(item.unitPrice || 0),
+    })) || [];
+    setOrderItems(items);
     
     setIsDialogOpen(true);
+    console.log("EDIT ORDER COMPLETED - FAST MODE");
     
-    // Встановлюємо фокус на поле клієнта тільки для нових замовлень
+    // Встановлюємо фокус тільки для нових замовлень
     if (!order) {
       setTimeout(() => {
         const clientInput = document.querySelector('input[placeholder*="Почніть вводити назву клієнта"]') as HTMLInputElement;
