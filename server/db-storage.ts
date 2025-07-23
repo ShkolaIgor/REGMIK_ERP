@@ -14508,20 +14508,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getOrderPayments(orderId: number): Promise<any[]> {
-    try {
-      const payments = await db
-        .select()
-        .from(orderPayments)
-        .where(eq(orderPayments.orderId, orderId))
-        .orderBy(orderPayments.createdAt);
 
-      return payments;
-    } catch (error) {
-      console.error('Error fetching order payments:', error);
-      throw error;
-    }
-  }
 
 }
 
