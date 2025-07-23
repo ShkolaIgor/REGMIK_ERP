@@ -613,11 +613,18 @@ export class BankEmailService {
         console.log("🏦 ⚠️ Дата рахунку невалідна або відсутня, встановлюємо undefined");
       }
       
+      // Перевіряємо чи receivedAt валідна дата
+      let validReceivedAt = emailContent.receivedAt;
+      if (isNaN(emailContent.receivedAt.getTime())) {
+        console.log("🏦 ⚠️ emailContent.receivedAt невалідна, використовуємо поточну дату");
+        validReceivedAt = new Date();
+      }
+
       const notification: InsertBankPaymentNotification = {
         messageId: emailContent.messageId,
         subject: emailContent.subject,
         fromAddress: emailContent.fromAddress,
-        receivedAt: emailContent.receivedAt,
+        receivedAt: validReceivedAt,
         accountNumber: paymentInfo.accountNumber,
         currency: paymentInfo.currency,
         operationType: paymentInfo.operationType,
@@ -630,6 +637,8 @@ export class BankEmailService {
         processed: false,
         rawEmailContent: emailContent.textContent,
       };
+
+
 
       const savedNotification = await storage.createBankPaymentNotification(notification);
 

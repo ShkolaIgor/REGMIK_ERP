@@ -1606,34 +1606,7 @@ export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 export type ProductionOutput = typeof productionOutput.$inferSelect;
 export type InsertProductionOutput = z.infer<typeof insertProductionOutputSchema>;
 
-// Component Alternatives
-export const componentAlternatives = pgTable("component_alternatives", {
-  id: serial("id").primaryKey(),
-  originalComponentId: integer("original_component_id").notNull().references(() => components.id, { onDelete: "cascade" }),
-  alternativeComponentId: integer("alternative_component_id").notNull().references(() => components.id, { onDelete: "cascade" }),
-  compatibility: varchar("compatibility", { length: 50 }).default("повна"), // повна, часткова, обмежена
-  notes: text("notes"),
-  verified: boolean("verified").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
-export const componentAlternativesRelations = relations(componentAlternatives, ({ one }) => ({
-  originalComponent: one(components, {
-    fields: [componentAlternatives.originalComponentId],
-    references: [components.id],
-    relationName: "original_component"
-  }),
-  alternativeComponent: one(components, {
-    fields: [componentAlternatives.alternativeComponentId],
-    references: [components.id],
-    relationName: "alternative_component"
-  }),
-}));
-
-export const insertComponentAlternativeSchema = createInsertSchema(componentAlternatives).omit({
-  id: true,
-  createdAt: true,
-});
 
 // Relations for positions and departments
 export const positionsRelations = relations(positions, ({ one }) => ({
@@ -1647,8 +1620,7 @@ export const departmentsRelations = relations(departments, ({ many }) => ({
   positions: many(positions),
 }));
 
-export type ComponentAlternative = typeof componentAlternatives.$inferSelect;
-export type InsertComponentAlternative = z.infer<typeof insertComponentAlternativeSchema>;
+
 
 // Схеми для списання компонентів
 export const insertComponentDeductionSchema = createInsertSchema(componentDeductions).omit({

@@ -21,7 +21,7 @@ import {
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
   insertWorkerSchema, insertProductionForecastSchema,
   insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
-  insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema,
+  insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentCategorySchema,
   insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
   insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema,
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
