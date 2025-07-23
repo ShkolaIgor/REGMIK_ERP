@@ -498,11 +498,6 @@ export default function Orders() {
         return (
           <div className="flex flex-col items-start">
             {getPaymentDisplay()}
-            {order.productionApproved && (
-              <div className="text-xs text-green-600 mt-1 flex items-center">
-                ✅ Виробництво дозволено
-              </div>
-            )}
           </div>
         );
       
@@ -599,6 +594,12 @@ export default function Orders() {
                 ))}
               </SelectContent>
             </Select>
+
+            {order.productionApproved && (
+              <div className="text-xs text-green-600 mt-1 flex items-center">
+                ✅ Виробництво дозволено
+              </div>
+            )}
           </div>
         );
       
