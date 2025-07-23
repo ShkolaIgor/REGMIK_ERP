@@ -14441,5 +14441,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Тестовий ендпоінт для перевірки парсингу українських дат
+  app.post("/api/test-ukrainian-date-parsing", (req, res) => {
+    try {
+      const { dateString } = req.body;
+      
+      // Використовуємо метод з банківського сервісу
+      const parseUkrainianDate = (dateStr: string): Date | null => {
+        try {
+          const ukrainianMonths: { [key: string]: number } = {
+            'січня': 1, 'січні': 1, 'січень': 1,
+            'лютого': 2, 'лютому': 2, 'лютий': 2,
+            'березня': 3, 'березні': 3, 'березень': 3,
+            'квітня': 4, 'квітні': 4, 'квітень': 4,
+            'травня': 5, 'травні': 5, 'травень': 5,
+            'червня': 6, 'червні': 6, 'червень': 6,
+            'липня': 7, 'липні': 7, 'липень': 7,
+            'серпня': 8, 'серпні': 8, 'серпень': 8,
+            'вересня': 9, 'вересні': 9, 'вересень': 9,
+            'жовтня': 10, 'жовтні': 10, 'жовтень': 10,
+            'листопада': 11, 'листопаді': 11, 'листопад': 11,
+            'грудня': 12, 'грудні': 12, 'грудень': 12
+          };
+
+          // Формат: "22 липня 2025 р."
+          const ukrainianMatch = dateStr.match(/(\d{1,2})\s+([а-яё]+)\s+(\d{4})/i);
+          if (ukrainianMatch) {
+            const [, day, month, year] = ukrainianMatch;
+            const monthNum = ukrainianMonths[month.toLowerCase()];
+            if (monthNum) {
+              return new Date(parseInt(year), monthNum - 1, parseInt(day));
+            }
+          }
+
+          // Формат: "22.07.25р." або "22.07.2025"
+          const numericMatch = dateStr.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})р?\.?/);
+          if (numericMatch) {
+            const [, day, month, yearPart] = numericMatch;
+            let year = yearPart;
+            if (yearPart.length === 2) {
+              year = '20' + yearPart;
+            }
+            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          }
+
+          return null;
+        } catch (error) {
+          return null;
+        }
+      };
+
+      const parsedDate = parseUkrainianDate(dateString);
+      
+      res.json({
+        success: true,
+        input: dateString,
+        parsedDate: parsedDate ? parsedDate.toISOString() : null,
+        formattedDate: parsedDate ? parsedDate.toLocaleDateString('uk-UA') : null,
+        isValid: parsedDate !== null
+      });
+      
+    } catch (error) {
+      console.error("❌ Помилка тестування парсингу дати:", error);
+      res.status(500).json({ 
+        error: "Помилка тестування парсингу дати",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   return httpServer;
 }

@@ -749,6 +749,59 @@ export class BankEmailService {
   }
 
   /**
+   * Парсинг українських назв місяців у дати
+   */
+  private parseUkrainianDate(dateString: string): Date | null {
+    try {
+      const ukrainianMonths: { [key: string]: number } = {
+        'січня': 1, 'січні': 1, 'січень': 1,
+        'лютого': 2, 'лютому': 2, 'лютий': 2,
+        'березня': 3, 'березні': 3, 'березень': 3,
+        'квітня': 4, 'квітні': 4, 'квітень': 4,
+        'травня': 5, 'травні': 5, 'травень': 5,
+        'червня': 6, 'червні': 6, 'червень': 6,
+        'липня': 7, 'липні': 7, 'липень': 7,
+        'серпня': 8, 'серпні': 8, 'серпень': 8,
+        'вересня': 9, 'вересні': 9, 'вересень': 9,
+        'жовтня': 10, 'жовтні': 10, 'жовтень': 10,
+        'листопада': 11, 'листопаді': 11, 'листопад': 11,
+        'грудня': 12, 'грудні': 12, 'грудень': 12
+      };
+
+      // Формат: "22 липня 2025 р."
+      const ukrainianMatch = dateString.match(/(\d{1,2})\s+([а-яё]+)\s+(\d{4})/i);
+      if (ukrainianMatch) {
+        const [, day, month, year] = ukrainianMatch;
+        const monthNum = ukrainianMonths[month.toLowerCase()];
+        if (monthNum) {
+          const date = new Date(parseInt(year), monthNum - 1, parseInt(day));
+          console.log(`🏦 Парсинг української дати: "${dateString}" → ${date.toLocaleDateString('uk-UA')}`);
+          return date;
+        }
+      }
+
+      // Формат: "22.07.25р." або "22.07.2025"
+      const numericMatch = dateString.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})р?\.?/);
+      if (numericMatch) {
+        const [, day, month, yearPart] = numericMatch;
+        let year = yearPart;
+        if (yearPart.length === 2) {
+          year = '20' + yearPart;
+        }
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        console.log(`🏦 Парсинг числової дати: "${dateString}" → ${date.toLocaleDateString('uk-UA')}`);
+        return date;
+      }
+
+      console.log(`🏦 ⚠️ Не вдалося розпізнати формат дати: "${dateString}"`);
+      return null;
+    } catch (error) {
+      console.error(`🏦 ❌ Помилка парсингу дати "${dateString}":`, error);
+      return null;
+    }
+  }
+
+  /**
    * Аналіз тексту банківського email для виявлення платіжної інформації
    */
   private analyzeBankEmailContent(emailText: string): {
@@ -877,8 +930,14 @@ export class BankEmailService {
         }
       }
       
-      // Шукаємо дату рахунку (підтримка різних форматів: від 18.07.2025, від 18.07.25р.)
-      const dateMatch = emailText.match(/від\s*(\d{2}\.\d{2}\.(?:\d{4}|\d{2}р?))/i);
+      // Шукаємо дату рахунку (підтримка українських та числових форматів)
+      // Формати: "від 22 липня 2025 р.", "від 18.07.2025", "від 18.07.25р."
+      let dateMatch = emailText.match(/від\s*(\d{1,2}\s+[а-яё]+\s+\d{4}\s*р?\.?)/i);
+      if (!dateMatch) {
+        dateMatch = emailText.match(/від\s*(\d{2}\.\d{2}\.(?:\d{4}|\d{2}р?))/i);
+      }
+      
+      console.log("🏦 Пошук дати рахунку:", dateMatch?.[1]);
       
       // Шукаємо ПДВ
       const vatMatch = emailText.match(/ПДВ.*?(\d+[,\.]\d+)/i);
@@ -927,22 +986,38 @@ export class BankEmailService {
       let invoiceDate: Date | undefined;
       if (dateMatch) {
         const datePart = dateMatch[1];
-        const [day, month, yearPart] = datePart.split('.');
+        console.log(`🏦 Знайдено дату в тексті: "${datePart}"`);
         
-        // Обробляємо різні формати року: 2025, 25р., 25
-        let year: string;
-        if (yearPart.length === 4) {
-          year = yearPart; // 2025
-        } else if (yearPart.endsWith('р.') || yearPart.endsWith('р')) {
-          year = '20' + yearPart.replace(/р\.?/, ''); // 25р. → 2025
-        } else if (yearPart.length === 2) {
-          year = '20' + yearPart; // 25 → 2025
-        } else {
-          year = yearPart;
+        // НОВИЙ ПІДХІД: Спочатку перевіряємо український формат
+        invoiceDate = this.parseUkrainianDate(datePart);
+        
+        // Якщо український формат не спрацював, використовуємо старий алгоритм
+        if (!invoiceDate) {
+          const [day, month, yearPart] = datePart.split('.');
+          
+          // Обробляємо різні формати року: 2025, 25р., 25
+          let year: string;
+          if (yearPart && yearPart.length === 4) {
+            year = yearPart; // 2025
+          } else if (yearPart && (yearPart.endsWith('р.') || yearPart.endsWith('р'))) {
+            year = '20' + yearPart.replace(/р\.?/, ''); // 25р. → 2025
+          } else if (yearPart && yearPart.length === 2) {
+            year = '20' + yearPart; // 25 → 2025
+          } else if (yearPart) {
+            year = yearPart;
+          } else {
+            console.log(`🏦 ⚠️ Не вдалося розпізнати рік у даті: "${datePart}"`);
+            year = new Date().getFullYear().toString(); // Fallback на поточний рік
+          }
+          
+          try {
+            invoiceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            console.log(`🏦 Розпізнано дату (старий алгоритм): ${datePart} → ${invoiceDate.toLocaleDateString('uk-UA')}`);
+          } catch (error) {
+            console.error(`🏦 ❌ Помилка створення дати з "${datePart}":`, error);
+            invoiceDate = undefined;
+          }
         }
-        
-        invoiceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        console.log(`🏦 Розпізнано дату: ${datePart} → ${invoiceDate.toLocaleDateString('uk-UA')}`);
       }
 
       // Очищаємо operationType від зайвих символів і тексту (включно з комами)

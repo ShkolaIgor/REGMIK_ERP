@@ -72,6 +72,7 @@ import Test1CDebug from "@/pages/test-1c-debug";
 import SystemLogs from "@/pages/system-logs";
 import BankEmailTest from "@/pages/bank-email-test";
 import Payments from "@/pages/payments";
+import SystemTesting from "@/pages/system-testing";
 
 import NotFound from "@/pages/not-found";
 
@@ -247,6 +248,7 @@ function Router() {
         <Route path="/system-logs" component={SystemLogs} />
         <Route path="/bank-email-test" component={BankEmailTest} />
         <Route path="/payments" component={Payments} />
+        <Route path="/system-testing" component={SystemTesting} />
 
         <Route path="/users" component={Users} />
         <Route path="/roles" component={Roles} />
