@@ -593,11 +593,14 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true, 
   orderSequenceNumber: true,
   createdAt: true
+}).extend({
+  orderNumber: z.string().optional(), // дозволяємо автоматичну генерацію
 });
 
 export const insertOrderSchemaForm = insertOrderSchema.extend({
   statusId: z.number().int().positive("Статус обов'язковий"),
   clientContactsId: z.number().int().positive().optional(),
+  orderNumber: z.string().optional(), // дозволяємо автоматичну генерацію
   // Nova Poshta поля (опціональні)
   recipientCityRef: z.string().optional(),
   recipientCityName: z.string().optional(),
@@ -619,7 +622,15 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderForm = z.infer<typeof insertOrderSchemaForm>;
 
-export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true }).extend({
+  productId: z.number().int().positive().optional().nullable(),
+  itemName: z.string().optional(),
+}).refine((data) => {
+  // Товар валідний якщо є або productId, або itemName
+  return data.productId || (data.itemName && data.itemName.trim().length > 0);
+}, {
+  message: "Потрібно вказати або productId, або itemName",
+});
 export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true, createdAt: true });
 export const insertRecipeIngredientSchema = createInsertSchema(recipeIngredients).omit({ id: true });
 export const insertProductionTaskSchema = createInsertSchema(productionTasks).omit({ id: true, createdAt: true });

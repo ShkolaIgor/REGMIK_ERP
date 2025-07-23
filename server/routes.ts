@@ -1031,7 +1031,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const validatedOrderData = insertOrderSchemaForm.parse(orderData);
-      const createdOrder = await storage.createOrder(validatedOrderData, items || []);
+      // Перевіряємо чи це імпорт з 1С (useDatabasePrices = false)
+      const useDatabasePrices = req.body.useDatabasePrices !== false; // default true
+      const createdOrder = await storage.createOrder(validatedOrderData, items || [], useDatabasePrices);
       console.log("Created order:", createdOrder);
       res.status(201).json(createdOrder);
     } catch (error) {

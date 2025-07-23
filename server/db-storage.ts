@@ -998,7 +998,8 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+  async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[], useDatabasePrices: boolean = true): Promise<Order> {
+
     // Автоматично генеруємо послідовний номер замовлення якщо не передано
     let orderNumber = insertOrder.orderNumber;
     
@@ -1016,9 +1017,11 @@ export class DatabaseStorage implements IStorage {
       if (lastOrderResult.rows.length > 0) {
         const lastNumber = parseInt(lastOrderResult.rows[0].order_number as string);
         nextNumber = lastNumber + 1;
+  
       }
       
       orderNumber = nextNumber.toString();
+
     }
     
     // Визначаємо чи це замовлення з Бітрікс24 (мають передані ціни)
@@ -1042,29 +1045,60 @@ export class DatabaseStorage implements IStorage {
         
         itemsWithPrices.push(itemWithPrice);
         totalAmount += calculatedTotalPrice;
-      } else {
-        // Для звичайних замовлень отримуємо ціни з бази даних
-        const product = await db.select().from(products).where(eq(products.id, typeof item.productId === 'string' ? parseInt(item.productId) : item.productId)).limit(1);
-        
-        if (product.length > 0) {
-          const unitPrice = parseFloat(product[0].retailPrice || "0");
+      } else if (item.productId && item.productId > 0) {
+        if (useDatabasePrices) {
+          // Для UI замовлень: отримуємо ціни з бази даних
+          const product = await db.select().from(products).where(eq(products.id, typeof item.productId === 'string' ? parseInt(item.productId) : item.productId)).limit(1);
+          
+          if (product.length > 0) {
+            const unitPrice = parseFloat(product[0].retailPrice || "0");
+            const quantity = parseFloat(typeof item.quantity === 'string' ? item.quantity : item.quantity?.toString() || "1");
+            const totalPrice = unitPrice * quantity;
+            
+            const itemWithPrice = {
+              ...item,
+              unitPrice: unitPrice.toString(),
+              totalPrice: totalPrice.toString()
+            };
+            
+            itemsWithPrices.push(itemWithPrice);
+            totalAmount += totalPrice;
+          } else {
+            // Якщо товар не знайдено, використовуємо передану ціну
+            const itemPrice = parseFloat(item.totalPrice || "0");
+            itemsWithPrices.push(item);
+            totalAmount += itemPrice;
+          }
+        } else {
+          // Для 1С/Бітрікс замовлень: використовуємо передані ціни
           const quantity = parseFloat(typeof item.quantity === 'string' ? item.quantity : item.quantity?.toString() || "1");
-          const totalPrice = unitPrice * quantity;
+          const unitPrice = parseFloat(item.unitPrice?.toString() || "0");
+          const calculatedTotalPrice = quantity * unitPrice;
           
           const itemWithPrice = {
             ...item,
             unitPrice: unitPrice.toString(),
-            totalPrice: totalPrice.toString()
+            totalPrice: calculatedTotalPrice.toString()
           };
           
           itemsWithPrices.push(itemWithPrice);
-          totalAmount += totalPrice;
-        } else {
-          // Якщо товар не знайдено, використовуємо передану ціну
-          const itemPrice = parseFloat(item.totalPrice || "0");
-          itemsWithPrices.push(item);
-          totalAmount += itemPrice;
+          totalAmount += calculatedTotalPrice;
         }
+      } else {
+        // Для товарів без productId (з itemName) використовуємо передані ціни
+        const quantity = parseFloat(typeof item.quantity === 'string' ? item.quantity : item.quantity?.toString() || "1");
+        const unitPrice = parseFloat(item.unitPrice?.toString() || "0");
+        const calculatedTotalPrice = quantity * unitPrice;
+        
+        const itemWithPrice = {
+          ...item,
+          productId: null, // явно встановлюємо null для товарів з itemName
+          unitPrice: unitPrice.toString(),
+          totalPrice: calculatedTotalPrice.toString()
+        };
+        
+        itemsWithPrices.push(itemWithPrice);
+        totalAmount += calculatedTotalPrice;
       }
     }
 
@@ -1078,16 +1112,19 @@ export class DatabaseStorage implements IStorage {
       shippedDate: insertOrder.shippedDate ? new Date(insertOrder.shippedDate) : null,
     };
 
+    // Виключаємо поля які автоматично генеруються БД та можуть викликати конфлікт
+    delete orderData.id;
+    delete orderData.orderSequenceNumber;
+    delete orderData.createdAt;
+    
+
     const orderResult = await db.insert(orders).values([orderData]).returning();
     const order = orderResult[0];
 
     if (itemsWithPrices.length > 0) {
       const itemsToInsert = itemsWithPrices.map(item => ({ ...item, orderId: order.id }));
-      console.log('Inserting order items with calculated prices:', itemsToInsert);
-      
       try {
         const insertResult = await db.insert(orderItems).values(itemsToInsert).returning();
-        console.log('Order items inserted successfully:', insertResult);
       } catch (error) {
         console.error('Error inserting order items:', error);
         throw error;

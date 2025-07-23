@@ -116,6 +116,12 @@ const orderItemSchema = z.object({
   itemName: z.string().optional().default(""),
   quantity: z.string().min(1, "Введіть кількість"),
   unitPrice: z.string().min(1, "Введіть ціну"),
+}).refine((data) => {
+  // Товар валідний якщо є або productId, або itemName
+  return data.productId > 0 || (data.itemName && data.itemName.trim().length > 0);
+}, {
+  message: "Оберіть товар зі списку або введіть назву товару",
+  path: ["itemName"],
 });
 
 const orderSchema = z.object({
@@ -1546,15 +1552,20 @@ export default function Orders() {
       return;
     }
 
-    // Перевіряємо валідність товарів
-    const invalidItems = orderItems.filter(item => 
-      !item.productId || !item.quantity || !item.unitPrice
-    );
+    // Перевіряємо валідність товарів - має бути або productId, або itemName
+    const invalidItems = orderItems.filter(item => {
+      const hasProduct = item.productId > 0;
+      const hasItemName = item.itemName && item.itemName.trim().length > 0;
+      const hasQuantity = item.quantity && item.quantity.trim().length > 0;
+      const hasPrice = item.unitPrice && item.unitPrice.trim().length > 0;
+      
+      return !(hasProduct || hasItemName) || !hasQuantity || !hasPrice;
+    });
     
     if (invalidItems.length > 0) {
       toast({
-        title: "Помилка",
-        description: "Заповніть всі поля для кожного товару",
+        title: "Помилка", 
+        description: "Для кожного товару заповніть назву (або оберіть зі списку), кількість та ціну",
         variant: "destructive",
       });
       return;
@@ -1599,7 +1610,8 @@ export default function Orders() {
         ...(data.shippedDate && { shippedDate: parseDateForServer(data.shippedDate) }),
       },
       items: orderItems.map(item => ({
-        productId: item.productId,
+        productId: item.productId > 0 ? item.productId : null,
+        itemName: item.itemName || "",
         quantity: parseInt(item.quantity),
         unitPrice: parseFloat(item.unitPrice).toString(),
         totalPrice: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toString(),
