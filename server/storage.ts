@@ -553,6 +553,7 @@ export interface IStorage {
   }): Promise<BankPaymentNotification[]>;
   updateBankPaymentNotification(id: number, updates: Partial<BankPaymentNotification>): Promise<BankPaymentNotification | undefined>;
   markBankNotificationAsProcessed(notificationId: number, processed?: boolean, processingError?: string): Promise<boolean>;
+  getBankNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined>;
 
   // Order Payments
   createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment>;
@@ -2350,6 +2351,11 @@ export class MemStorage implements IStorage {
   async markBankNotificationAsProcessed(notificationId: number, processed: boolean = true, processingError?: string): Promise<boolean> {
     console.log(`MemStorage: markBankNotificationAsProcessed(${notificationId}, ${processed})`);
     return true; // Always return success for testing
+  }
+
+  async getBankNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined> {
+    console.log(`MemStorage: getBankNotificationByMessageId(${messageId})`);
+    return undefined; // Always return undefined for testing
   }
 
   // Order Payments methods for MemStorage

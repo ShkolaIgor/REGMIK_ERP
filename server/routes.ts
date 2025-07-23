@@ -11325,6 +11325,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // НОВИЙ ТЕСТОВИЙ ENDPOINT - Перевірка виправленої логіки дублікатів
+  app.post("/api/bank-email/test-no-duplicates", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🏦 ТЕСТ: Початок тестування виправленої логіки без дублікатів");
+      
+      // Використовуємо новий метод checkForNewEmails який перевіряє messageId
+      await bankEmailService.checkForNewEmails();
+      
+      res.json({
+        success: true,
+        message: "Тестування виправленої логіки завершено - система тепер перевіряє messageId перед обробкою",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("❌ ТЕСТ: Помилка:", error);
+      res.status(500).json({
+        success: false,
+        message: `Помилка тестування: ${error instanceof Error ? error.message : String(error)}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // ТЕСТОВИЙ ENDPOINT - Симуляція реального банківського повідомлення від користувача
+  app.post("/api/bank-email/test-real-payment", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🏦 ТЕСТ: Тестування з реальним повідомленням користувача");
+      
+      // Реальне повідомлення від користувача
+      const realBankMessage = `
+рух коштів по рахунку: UA743510050000026005031648800,
+валюта: UAH,
+тип операції: зараховано,
+сумма: 16821.00,
+номер документу: 3725,
+корреспондент: ЕНСИС УКРАЇНА ТОВ,
+рахунок кореспондента: UA853052990000026004040104158,
+призначення платежу: Оплата рахунка №27752 вiд 22 липня 2025 р. за датчики. У сумi 14017.50 грн., ПДВ - 20 % 2803.50 грн.,
+клієнт: НВФ "РЕГМІК".
+Якщо у Вас виникли додаткові питання, зателефонуйте на Інформаційну лінію Укрсиббанку за номером 729 (безкоштовно з мобільного).
+      `;
+      
+      // Симулюємо обробку email
+      const testEmailData = {
+        messageId: `test-real-payment-${Date.now()}`,
+        subject: 'Банківське повідомлення',
+        fromAddress: 'online@ukrsibbank.com',
+        receivedAt: new Date(),
+        textContent: realBankMessage
+      };
+      
+      console.log("🏦 ТЕСТ: Обробляємо реальне повідомлення...");
+      const result = await bankEmailService.processBankEmail(testEmailData);
+      
+      res.json({
+        success: result.success,
+        message: result.message,
+        details: {
+          realMessage: "Тестування з реальним повідомленням про платіж 16821.00 UAH за рахунком №27752",
+          processed: result.success
+        },
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error("❌ ТЕСТ РЕАЛЬНОГО ПЛАТЕЖУ: Помилка:", error);
+      res.status(500).json({
+        success: false,
+        message: `Помилка тестування: ${error instanceof Error ? error.message : String(error)}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // API для перевірки оплат на пошті
   app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
     const startTime = Date.now();

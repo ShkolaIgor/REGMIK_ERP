@@ -4502,6 +4502,20 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getBankNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined> {
+    try {
+      const [notification] = await db
+        .select()
+        .from(bankPaymentNotifications)
+        .where(eq(bankPaymentNotifications.messageId, messageId))
+        .limit(1);
+      return notification;
+    } catch (error) {
+      console.error("Error getting bank notification by messageId:", error);
+      throw error;
+    }
+  }
+
   // Order Payment methods
   async createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment> {
     try {

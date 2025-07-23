@@ -346,17 +346,16 @@ export class BankEmailService {
 
             console.log(`🏦 Відкрито INBOX, всього повідомлень: ${box.messages.total}`);
 
-            // Шукаємо нові email від банку за останні 24 години
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
+            // Шукаємо email від банку за останні 7 днів (включно з прочитаними)
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
             
             const bankFromAddress = emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua';
-            console.log(`🏦 Пошук email за критеріями: від=${bankFromAddress}, з=${yesterday.toDateString()}, непрочитані`);
+            console.log(`🏦 Пошук email за критеріями: від=${bankFromAddress}, з=${lastWeek.toDateString()}`);
             
             imap.search([
-              'UNSEEN',
               ['FROM', bankFromAddress],
-              ['SINCE', yesterday]
+              ['SINCE', lastWeek]
             ], (err: any, results: any) => {
               if (err) {
                 console.error("❌ Помилка пошуку email:", err);
@@ -378,51 +377,91 @@ export class BankEmailService {
               console.log(`🏦 Знайдено ${results.length} нових банківських email`);
               console.log(`🏦 Початок обробки email повідомлень...`);
 
-              // Обробляємо кожен email - отримуємо повний зміст БЕЗ позначення як прочитаний
+              // Обробляємо кожен email - отримуємо headers та зміст
               const fetch = imap.fetch(results, { 
-                bodies: 'TEXT', // Отримуємо текстову частину email
+                bodies: ['HEADER', 'TEXT'], // Отримуємо заголовки та текст
                 struct: true,
-                markSeen: false  // НЕ помічаємо як прочитаний для збереження автоматичного моніторингу
+                markSeen: false  // НЕ помічаємо як прочитаний
               });
               let processedCount = 0;
 
               fetch.on('message', (msg: any, seqno: any) => {
                 let emailContent = '';
                 let emailSubject = '';
+                let realMessageId = '';
+                let emailDate = new Date();
 
-                // Отримуємо заголовки
+                // Отримуємо заголовки та зміст
                 msg.on('body', (stream: any, info: any) => {
-                  if (info.which === 'TEXT') {
-                    // Це текстовий зміст email
-                    let buffer = '';
-                    stream.on('data', (chunk: any) => {
-                      buffer += chunk.toString('utf8');
-                    });
-                    
-                    stream.once('end', () => {
+                  let buffer = '';
+                  stream.on('data', (chunk: any) => {
+                    buffer += chunk.toString('utf8');
+                  });
+                  
+                  stream.once('end', () => {
+                    if (info.which === 'HEADER') {
+                      // Витягуємо справжній Message-ID з headers
+                      const messageIdMatch = buffer.match(/Message-ID:\s*<?(.*?)>?\r?\n/i);
+                      if (messageIdMatch) {
+                        realMessageId = messageIdMatch[1].trim();
+                        console.log(`🏦 Email ${seqno} справжній Message-ID: ${realMessageId}`);
+                      }
+                      
+                      // Витягуємо дату
+                      const dateMatch = buffer.match(/Date:\s*(.*?)\r?\n/i);
+                      if (dateMatch) {
+                        try {
+                          emailDate = new Date(dateMatch[1].trim());
+                        } catch (e) {
+                          emailDate = new Date();
+                        }
+                      }
+                    } else if (info.which === 'TEXT') {
                       emailContent = buffer;
                       console.log(`🏦 Отримано зміст email ${seqno}, довжина: ${buffer.length} символів`);
-                    });
-                  }
+                    }
+                  });
                 });
 
-                // Отримуємо атрибути повідомлення (subject, date тощо)
+                // Отримуємо атрибути повідомлення (subject тощо)
                 msg.once('attributes', (attrs: any) => {
                   if (attrs.envelope && attrs.envelope.subject) {
                     emailSubject = attrs.envelope.subject;
                     console.log(`🏦 Email ${seqno} subject: ${emailSubject}`);
                   }
+                  if (attrs.envelope && attrs.envelope.messageId) {
+                    // Якщо не вдалося витягти з headers, використовуємо з envelope
+                    if (!realMessageId) {
+                      realMessageId = attrs.envelope.messageId;
+                      console.log(`🏦 Email ${seqno} Message-ID з envelope: ${realMessageId}`);
+                    }
+                  }
                 });
 
                 msg.once('end', async () => {
                   try {
-                    // Використовуємо отриманий subject або fallback
+                    // Використовуємо fallback якщо не вдалося отримати Message-ID
+                    const messageId = realMessageId || `imap-${seqno}-${Date.now()}`;
+                    
+                    // ПЕРЕВІРЯЄМО ЧИ ЦЕЙ EMAIL ВЖЕ ОБРОБЛЕНИЙ
+                    const existingNotification = await storage.getBankNotificationByMessageId(messageId);
+                    if (existingNotification) {
+                      console.log(`🏦⏭️ Email ${seqno} (${messageId}) вже оброблений, пропускаємо`);
+                      processedCount++;
+                      
+                      if (processedCount === results.length) {
+                        console.log(`🏦 Обробка завершена: ${processedCount}/${results.length} email`);
+                        imap.end();
+                        resolve();
+                      }
+                      return;
+                    }
+                    
                     const actualSubject = emailSubject || 'Банківське повідомлення';
                     
                     // Декодуємо Base64 контент якщо потрібно
                     let decodedContent = emailContent;
                     try {
-                      // Перевіряємо чи це Base64 (типово починається з букв і цифр без пробілів)
                       if (/^[A-Za-z0-9+/]+=*$/.test(emailContent.replace(/\s/g, ''))) {
                         decodedContent = Buffer.from(emailContent, 'base64').toString('utf8');
                         console.log(`🏦 Email ${seqno} декодовано з Base64`);
@@ -432,35 +471,40 @@ export class BankEmailService {
                       decodedContent = emailContent;
                     }
 
-                    // Створюємо об'єкт email з декодованим вмістом
-                    const mockEmail = {
-                      messageId: `imap-${seqno}-${Date.now()}`,
+                    // Створюємо об'єкт email зі справжнім messageId
+                    const emailData = {
+                      messageId: messageId,
                       subject: actualSubject,
                       fromAddress: emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua',
-                      receivedAt: new Date(),
+                      receivedAt: emailDate,
                       textContent: decodedContent
                     };
 
-                    console.log(`🏦 Готовий до обробки email ${seqno}:`);
+                    console.log(`🏦 Обробляємо НОВИЙ email ${seqno}:`);
+                    console.log(`  Message-ID: ${messageId}`);
                     console.log(`  Subject: ${actualSubject}`);
-                    console.log(`  Original length: ${emailContent.length} символів`);
-                    console.log(`  Decoded length: ${decodedContent.length} символів`);
-                    console.log(`  Decoded preview: ${decodedContent.substring(0, 150)}...`);
+                    
+                    // Безпечне логування дати
+                    let dateString = 'Invalid Date';
+                    try {
+                      if (emailDate && !isNaN(emailDate.getTime())) {
+                        dateString = emailDate.toISOString();
+                      } else {
+                        emailDate = new Date(); // Fallback на поточну дату
+                        dateString = emailDate.toISOString();
+                      }
+                    } catch (e) {
+                      emailDate = new Date();
+                      dateString = emailDate.toISOString();
+                    }
+                    
+                    console.log(`  Date: ${dateString}`);
+                    console.log(`  Content length: ${decodedContent.length} символів`);
 
-                    const result = await this.processBankEmail(mockEmail);
+                    const result = await this.processBankEmail(emailData);
                     
                     if (result.success) {
-                      // Позначаємо повідомлення як оброблене
-                      if (result.notification && result.notification.id) {
-                        try {
-                          await storage.markBankNotificationAsProcessed(result.notification.id, true);
-                          console.log(`🏦✅ Email ${seqno} оброблено успішно та позначено як processed`);
-                        } catch (error) {
-                          console.error(`❌ Помилка позначання email ${seqno} як оброблений:`, error);
-                        }
-                      } else {
-                        console.log(`🏦✅ Email ${seqno} оброблено успішно`);
-                      }
+                      console.log(`🏦✅ Email ${seqno} оброблено успішно`);
                     } else {
                       console.log(`🏦⚠️ Email ${seqno}: ${result.message}`);
                     }
@@ -469,7 +513,6 @@ export class BankEmailService {
                     
                     if (processedCount === results.length) {
                       console.log(`🏦 Обробка завершена: ${processedCount}/${results.length} email`);
-                      console.log(`🏦 Усі банківські повідомлення оброблено успішно`);
                       imap.end();
                       resolve();
                     }
@@ -812,15 +855,25 @@ export class BankEmailService {
         console.log("🏦 DEBUG: Контекст навколо 'кореспондент':", contextAround);
       }
       
-      // Спочатку шукаємо стандартні формати рахунків
-      let invoiceMatch = emailText.match(/(?:РМ00-(\d+)|(?:згідно\s+)?(?:рах\.?|рахунку)\s*№?\s*(\d+))/i);
+      // УНІВЕРСАЛЬНИЙ ПОШУК НОМЕРІВ РАХУНКІВ
+      // 1. Спочатку шукаємо стандартні формати РМ00-XXXXX
+      let invoiceMatch = emailText.match(/РМ00-(\d+)/i);
       
-      // Якщо не знайшли, шукаємо номери з датами (будь-який текст між номером та датою)
+      // 2. Якщо не знайшли, шукаємо формат "рахунка №XXXXX"
       if (!invoiceMatch) {
-        invoiceMatch = emailText.match(/(\d{5,6}).*?(\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2}р?))/i);
+        invoiceMatch = emailText.match(/рахунка?\s*№?\s*(\d+)/i);
         if (invoiceMatch) {
+          // Створюємо структуру як для РМ00 формату
+          invoiceMatch = [invoiceMatch[0], invoiceMatch[1]];
+        }
+      }
+      
+      // 3. Якщо все ще не знайшли, шукаємо номери з датами (будь-який текст між номером та датою)
+      if (!invoiceMatch) {
+        const numberDateMatch = emailText.match(/(\d{5,6}).*?(\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2}р?))/i);
+        if (numberDateMatch) {
           // Створюємо структуру як для стандартного match
-          invoiceMatch = [invoiceMatch[0], null, null, invoiceMatch[1]];
+          invoiceMatch = [numberDateMatch[0], numberDateMatch[1]];
         }
       }
       
@@ -829,6 +882,18 @@ export class BankEmailService {
       
       // Шукаємо ПДВ
       const vatMatch = emailText.match(/ПДВ.*?(\d+[,\.]\d+)/i);
+      
+      // ДОДАТКОВИЙ ПОШУК: Якщо не знайшли в основному тексті, шукаємо в purposeMatch
+      if (!invoiceMatch && purposeMatch?.[1]) {
+        const purposeText = purposeMatch[1];
+        
+        // Шукаємо номер рахунку в тексті призначення
+        const purposeInvoiceMatch = purposeText.match(/рахунка?\s*№?\s*(\d+)/i);
+        
+        if (purposeInvoiceMatch) {
+          invoiceMatch = [purposeInvoiceMatch[0], purposeInvoiceMatch[1]];
+        }
+      }
       
       console.log("🏦 Додаткові регекси:");
       console.log("  invoiceMatch:", invoiceMatch);
@@ -894,7 +959,7 @@ export class BankEmailService {
         amount: amount,
         correspondent: correspondentMatch[1].trim(),
         paymentPurpose: purposeMatch?.[1]?.trim() || "",
-        invoiceNumber: invoiceMatch ? `РМ00-${invoiceMatch[1] || invoiceMatch[2] || invoiceMatch[3]}` : undefined,
+        invoiceNumber: invoiceMatch ? `РМ00-${invoiceMatch[1]}` : undefined,
         invoiceDate: invoiceDate,
         vatAmount: vatAmount,
       };
@@ -922,6 +987,25 @@ export class BankEmailService {
         order = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
         console.log(`🏦 Simple search result:`, order ? `Found order ID ${order.id}` : 'Not found');
         searchDetails += `Пошук за номером: ${paymentInfo.invoiceNumber}`;
+        
+        // ПОКРАЩЕННЯ: Перевіряємо точне співпадіння суми
+        if (order && paymentInfo.amount) {
+          const orderTotal = parseFloat(order.totalAmount?.toString() || '0');
+          const paymentAmount = parseFloat(paymentInfo.amount.toString());
+          
+          console.log(`🏦 Перевірка співпадіння суми:`);
+          console.log(`  - Сума замовлення: ${orderTotal} UAH`);
+          console.log(`  - Сума платежу: ${paymentAmount} UAH`);
+          console.log(`  - Точне співпадіння: ${orderTotal === paymentAmount}`);
+          
+          if (orderTotal === paymentAmount) {
+            console.log(`🏦✅ ТОЧНЕ СПІВПАДІННЯ! Рахунок ${paymentInfo.invoiceNumber} та сума ${paymentAmount} UAH`);
+            // Продовжуємо з цим замовленням
+          } else {
+            console.log(`🏦⚠️ Сума не співпадає для ${paymentInfo.invoiceNumber}. Шукаємо далі...`);
+            order = null; // Скидаємо щоб продовжити пошук
+          }
+        }
       }
 
       // Якщо не знайдено, використовуємо розширений пошук
@@ -960,8 +1044,31 @@ export class BankEmailService {
         const foundOrders = await storage.findOrdersByPaymentInfo(searchCriteria);
         
         if (foundOrders.length > 0) {
-          order = foundOrders[0]; // Беремо перше знайдене замовлення
           console.log(`🔍 Знайдено ${foundOrders.length} замовлень за розширеним пошуком`);
+          
+          // ПОКРАЩЕННЯ: Пріоритизуємо замовлення з точним співпадінням суми
+          if (paymentInfo.amount && foundOrders.length > 1) {
+            const paymentAmount = parseFloat(paymentInfo.amount.toString());
+            console.log(`🔍 Шукаємо серед ${foundOrders.length} замовлень з точним співпадінням суми ${paymentAmount}`);
+            
+            for (const foundOrder of foundOrders) {
+              const orderTotal = parseFloat(foundOrder.totalAmount?.toString() || '0');
+              console.log(`🔍 Перевіряємо замовлення ${foundOrder.invoiceNumber}: ${orderTotal} UAH`);
+              
+              if (orderTotal === paymentAmount) {
+                order = foundOrder;
+                console.log(`🔍✅ ЗНАЙДЕНО ТОЧНЕ СПІВПАДІННЯ: ${foundOrder.invoiceNumber} = ${paymentAmount} UAH`);
+                break;
+              }
+            }
+          }
+          
+          // Якщо точного співпадіння суми немає, беремо перше знайдене
+          if (!order) {
+            order = foundOrders[0];
+            console.log(`🔍 Взято перше замовлення з результатів пошуку: ${order.invoiceNumber}`);
+          }
+          
           searchDetails += `, розширений пошук: ${JSON.stringify(searchCriteria)}`;
         }
       }
