@@ -1302,7 +1302,17 @@ export default function Orders() {
     setIsEditMode(false);
     setEditingOrder(null);
     setOrderItems([]);
-    form.reset();
+    setClientSearchValue("");
+    setClientComboboxOpen(false);
+    setSelectedContactId("");
+    setSelectedCompanyId("");
+    form.reset({
+      clientId: "",
+      customerEmail: "",
+      customerPhone: "",
+      status: "Нове",
+      notes: "",
+    });
   };
 
   // Функція для закриття діалогу редагування
@@ -1679,7 +1689,13 @@ export default function Orders() {
                   });
                 }} />
               </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                if (!open) {
+                  handleCloseDialog();
+                } else {
+                  setIsDialogOpen(open);
+                }
+              }}>
                 <DialogTrigger asChild>
                   <Button 
                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
