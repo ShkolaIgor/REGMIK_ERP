@@ -250,6 +250,29 @@ export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Мутація для автоматичного зіставлення товарів з 1С з існуючими товарами
+  const linkProductsMutation = useMutation({
+    mutationFn: () => apiRequest("/api/orders/link-products", {
+      method: "POST",
+    }),
+    onSuccess: (result) => {
+      toast({
+        title: "Зіставлення завершено",
+        description: result.message,
+        variant: "default",
+      });
+      // Оновлюємо дані замовлень для відображення змін
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка зіставлення",
+        description: error.details || "Не вдалося виконати зіставлення товарів",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Обробник зміни пошуку
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -1603,6 +1626,30 @@ export default function Orders() {
 
   // Убрано індикатор завантаження що викликав перезавантаження сторінки
 
+  // Компонент для автоматичного зіставлення товарів з 1С
+  const LinkProductsButton = () => {
+    return (
+      <Button
+        onClick={() => linkProductsMutation.mutate()}
+        disabled={linkProductsMutation.isPending}
+        variant="outline"
+        className="flex items-center gap-2"
+      >
+        {linkProductsMutation.isPending ? (
+          <>
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            Зіставлення...
+          </>
+        ) : (
+          <>
+            <Plus className="w-4 h-4" />
+            Зіставити товари
+          </>
+        )}
+      </Button>
+    );
+  };
+
   return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         {/* Header Section */}
@@ -1640,6 +1687,7 @@ export default function Orders() {
                     description: "Позиції замовлень успішно імпортовані",
                   });
                 }} />
+                <LinkProductsButton />
               </div>
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 if (!open) {

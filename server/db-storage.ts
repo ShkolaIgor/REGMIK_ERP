@@ -6267,6 +6267,91 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Функція для автоматичного зіставлення товарів з 1С з існуючими товарами
+  async linkOrderItemsToProducts(): Promise<{ success: number; skipped: number; errors: number }> {
+    let success = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    try {
+      // Знаходимо всі позиції замовлень без зв'язку з товарами (productId is null)
+      const unlinkedItems = await db
+        .select({
+          id: orderItems.id,
+          itemName: orderItems.itemName,
+          itemCode: orderItems.itemCode
+        })
+        .from(orderItems)
+        .where(isNull(orderItems.productId));
+
+      console.log(`Знайдено ${unlinkedItems.length} позицій без зв'язку з товарами`);
+
+      // Отримуємо всі товари для пошуку
+      const allProducts = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          sku: products.sku
+        })
+        .from(products);
+
+      console.log(`Всього товарів в системі: ${allProducts.length}`);
+
+      for (const item of unlinkedItems) {
+        try {
+          if (!item.itemName) {
+            skipped++;
+            continue;
+          }
+
+          // Шукаємо товар за точною назвою
+          let matchedProduct = allProducts.find(p => 
+            p.name.toLowerCase().trim() === item.itemName.toLowerCase().trim()
+          );
+
+          // Якщо не знайшли за точною назвою, шукаємо за частковим входженням
+          if (!matchedProduct && item.itemName.length > 3) {
+            matchedProduct = allProducts.find(p => 
+              p.name.toLowerCase().includes(item.itemName.toLowerCase()) ||
+              item.itemName.toLowerCase().includes(p.name.toLowerCase())
+            );
+          }
+
+          // Якщо є код товару, також шукаємо за SKU
+          if (!matchedProduct && item.itemCode) {
+            matchedProduct = allProducts.find(p => 
+              p.sku && p.sku.toLowerCase() === item.itemCode.toLowerCase()
+            );
+          }
+
+          if (matchedProduct) {
+            // Оновлюємо позицію замовлення, прив'язуючи до знайденого товару
+            await db
+              .update(orderItems)
+              .set({ productId: matchedProduct.id })
+              .where(eq(orderItems.id, item.id));
+
+            console.log(`✅ Зіставлено: "${item.itemName}" → "${matchedProduct.name}" (ID: ${matchedProduct.id})`);
+            success++;
+          } else {
+            console.log(`❌ Не знайдено товар для: "${item.itemName}" (код: ${item.itemCode || 'немає'})`);
+            skipped++;
+          }
+        } catch (error) {
+          console.error(`Помилка при обробці позиції ${item.id}:`, error);
+          errors++;
+        }
+      }
+
+      console.log(`Результат зіставлення: успішно=${success}, пропущено=${skipped}, помилок=${errors}`);
+      return { success, skipped, errors };
+
+    } catch (error) {
+      console.error('Помилка при зіставленні товарів:', error);
+      throw error;
+    }
+  }
+
   async getManufacturingSteps(manufacturingOrderId: number): Promise<any[]> {
     try {
       const steps = await db

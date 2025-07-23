@@ -1168,6 +1168,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Link products for orders from 1C with existing products  
+  app.post("/api/orders/link-products", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const result = await storage.matchProductsByName();
+      res.json({
+        success: true,
+        message: result.message,
+        details: result
+      });
+    } catch (error) {
+      console.error("Error linking products:", error);
+      res.status(500).json({
+        success: false,
+        error: "Помилка зіставлення товарів",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Orders XML Import with job tracking
   const orderImportJobs = new Map<string, {
     id: string;
@@ -4610,6 +4629,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Зупинка виробництва
+  // API endpoint для автоматичного зіставлення товарів з 1С з існуючими товарами
+  app.post("/api/orders/link-products", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🔗 Запуск автоматичного зіставлення товарів з 1С");
+      const result = await storage.linkOrderItemsToProducts();
+      
+      res.json({
+        success: true,
+        message: `Зіставлення завершено: ${result.success} успішно, ${result.skipped} пропущено, ${result.errors} помилок`,
+        ...result
+      });
+    } catch (error) {
+      console.error("❌ Помилка при зіставленні товарів:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Помилка при зіставленні товарів",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   app.post("/api/manufacturing-orders/:id/stop", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

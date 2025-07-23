@@ -524,6 +524,9 @@ export interface IStorage {
   getSupplyDecisions(): Promise<any[]>;
   analyzeSupplyDecision(productId: number, requiredQuantity: number): Promise<any>;
 
+  // Product Matching for 1C Orders
+  linkOrderItemsToProducts(): Promise<{ success: number; skipped: number; errors: number }>;
+
   // Client Nova Poshta Settings
   getClientNovaPoshtaSettings(clientId: number): Promise<ClientNovaPoshtaSettings[]>;
   getClientNovaPoshtaSetting(id: number): Promise<ClientNovaPoshtaSettings | undefined>;
