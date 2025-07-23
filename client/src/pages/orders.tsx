@@ -112,7 +112,8 @@ type OrderWithItems = Order & {
 
 // Схеми валідації
 const orderItemSchema = z.object({
-  productId: z.number().min(1, "Оберіть товар"),
+  productId: z.number().optional().default(0),
+  itemName: z.string().optional().default(""),
   quantity: z.string().min(1, "Введіть кількість"),
   unitPrice: z.string().min(1, "Введіть ціну"),
 });
@@ -1388,6 +1389,7 @@ export default function Orders() {
     // Оптимізоване встановлення товарів
     const items = order.items?.map((item: any) => ({
       productId: item.productId || 0,
+      itemName: item.itemName || item.product?.name || "",
       quantity: String(item.quantity || 1),
       unitPrice: String(item.unitPrice || 0),
     })) || [];
@@ -1409,7 +1411,7 @@ export default function Orders() {
 
   // Функції для управління товарами в замовленні
   const addOrderItem = () => {
-    setOrderItems([...orderItems, { productId: 0, quantity: "", unitPrice: "" }]);
+    setOrderItems([...orderItems, { productId: 0, itemName: "", quantity: "", unitPrice: "" }]);
   };
 
   const removeOrderItem = (index: number) => {
@@ -2233,68 +2235,109 @@ export default function Orders() {
                     <div className="space-y-3">
                       {orderItems.map((item, index) => (
                         <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
-                          <div className="flex-1">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  className="w-full justify-between"
+                          <div className="flex-1 relative">
+                            <Input
+                              placeholder="Назва товару..."
+                              value={(() => {
+                                // Спочатку перевіряємо чи є прив'язаний товар з products
+                                if (item.productId > 0 && products) {
+                                  const product = products.find((p: any) => p.id === item.productId);
+                                  if (product) return product.name;
+                                }
+                                
+                                // Якщо прив'язаного товару немає, показуємо itemName з 1С
+                                if (item.itemName) {
+                                  return item.itemName;
+                                }
+                                
+                                // Якщо редагуємо існуюче замовлення, показуємо дані з нього
+                                if (editingOrder?.items && editingOrder.items[index]) {
+                                  const orderItem = editingOrder.items[index];
+                                  if (orderItem.itemName) {
+                                    return orderItem.itemName;
+                                  }
+                                  if (orderItem.product?.name) {
+                                    return orderItem.product.name;
+                                  }
+                                }
+                                
+                                return "";
+                              })()}
+                              onChange={(e) => {
+                                // Оновлюємо itemName при введенні тексту
+                                updateOrderItem(index, "itemName", e.target.value);
+                                // Скидаємо productId якщо користувач почав вводити власну назву
+                                if (item.productId > 0) {
+                                  updateOrderItem(index, "productId", 0);
+                                }
+                              }}
+                              onFocus={() => {
+                                // Показуємо випадаючий список при фокусі
+                                const dropdown = document.getElementById(`product-dropdown-${index}`);
+                                if (dropdown) dropdown.style.display = 'block';
+                              }}
+                              onBlur={(e) => {
+                                // Приховуємо випадаючий список через короткий час (щоб дати час на клік)
+                                setTimeout(() => {
+                                  const dropdown = document.getElementById(`product-dropdown-${index}`);
+                                  if (dropdown) dropdown.style.display = 'none';
+                                }, 200);
+                              }}
+                            />
+                            
+                            {/* Випадаючий список товарів */}
+                            <div
+                              id={`product-dropdown-${index}`}
+                              className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+                              style={{ display: 'none' }}
+                            >
+                              {products?.filter((product: any) => {
+                                const currentValue = (() => {
+                                  if (item.productId > 0) {
+                                    const selectedProduct = products.find((p: any) => p.id === item.productId);
+                                    return selectedProduct?.name || "";
+                                  }
+                                  return item.itemName || (editingOrder?.items?.[index]?.itemName) || "";
+                                })();
+                                return !currentValue || product.name.toLowerCase().includes(currentValue.toLowerCase()) ||
+                                       product.sku.toLowerCase().includes(currentValue.toLowerCase());
+                              }).map((product: any) => (
+                                <div
+                                  key={product.id}
+                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                  onClick={() => {
+                                    updateOrderItem(index, "productId", product.id);
+                                    updateOrderItem(index, "itemName", product.name);
+                                    // Автозаповнення ціни з товару
+                                    if (product.retailPrice && (!item.unitPrice || item.unitPrice === "0")) {
+                                      updateOrderItem(index, "unitPrice", product.retailPrice.toString());
+                                    }
+                                    const dropdown = document.getElementById(`product-dropdown-${index}`);
+                                    if (dropdown) dropdown.style.display = 'none';
+                                  }}
                                 >
-                                  {(() => {
-                                    // Спочатку перевіряємо чи є прив'язаний товар з products
-                                    if (item.productId > 0 && products) {
-                                      const product = products.find((p: any) => p.id === item.productId);
-                                      if (product) return product.name;
-                                    }
-                                    
-                                    // Якщо прив'язаного товару немає, перевіряємо дані з замовлення
-                                    if (editingOrder?.items && editingOrder.items[index]) {
-                                      const orderItem = editingOrder.items[index];
-                                      if (orderItem.itemName) {
-                                        return `${orderItem.itemName} (з 1C)`;
-                                      }
-                                      if (orderItem.product?.name) {
-                                        return orderItem.product.name;
-                                      }
-                                    }
-                                    
-                                    return "Оберіть товар...";
-                                  })()}
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-full p-0">
-                                <Command>
-                                  <CommandInput placeholder="Пошук товару..." />
-                                  <CommandEmpty>Товар не знайдено</CommandEmpty>
-                                  <CommandGroup>
-                                    {products?.map((product: any) => (
-                                      <CommandItem
-                                        key={product.id}
-                                        value={`${product.name} ${product.sku}`}
-                                        onSelect={() => {
-                                          updateOrderItem(index, "productId", product.id);
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            item.productId === product.id ? "opacity-100" : "opacity-0"
-                                          )}
-                                        />
-                                        <div>
-                                          <div className="font-medium">{product.name}</div>
-                                          <div className="text-sm text-gray-500">
-                                            {product.sku} • {formatCurrency(product.retailPrice)}
-                                          </div>
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
+                                  <div className="font-medium">{product.name}</div>
+                                  <div className="text-sm text-gray-500">
+                                    {product.sku} • {formatCurrency(product.retailPrice)}
+                                  </div>
+                                </div>
+                              ))}
+                              {products?.filter((product: any) => {
+                                const currentValue = (() => {
+                                  if (item.productId > 0) {
+                                    const selectedProduct = products.find((p: any) => p.id === item.productId);
+                                    return selectedProduct?.name || "";
+                                  }
+                                  return item.itemName || (editingOrder?.items?.[index]?.itemName) || "";
+                                })();
+                                return !currentValue || product.name.toLowerCase().includes(currentValue.toLowerCase()) ||
+                                       product.sku.toLowerCase().includes(currentValue.toLowerCase());
+                              }).length === 0 && (
+                                <div className="px-3 py-2 text-gray-500">
+                                  Товарів не знайдено
+                                </div>
+                              )}
+                            </div>
                           </div>
                           
                           <Input
