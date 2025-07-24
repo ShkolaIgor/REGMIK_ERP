@@ -620,6 +620,17 @@ export class BankEmailService {
         validReceivedAt = new Date();
       }
 
+      // КРИТИЧНИЙ FIX: Перевіряємо чи email вже оброблено, щоб уникнути дублікатів
+      const existingNotification = await storage.getBankPaymentNotificationByMessageId(emailContent.messageId);
+      if (existingNotification) {
+        console.log("🏦 ⚠️ Email вже оброблено, пропускаємо:", emailContent.messageId);
+        return { 
+          success: false, 
+          message: "Email вже оброблено раніше",
+          notification: existingNotification 
+        };
+      }
+
       const notification: InsertBankPaymentNotification = {
         messageId: emailContent.messageId,
         subject: emailContent.subject,
@@ -637,8 +648,6 @@ export class BankEmailService {
         processed: false,
         rawEmailContent: emailContent.textContent,
       };
-
-
 
       const savedNotification = await storage.createBankPaymentNotification(notification);
 
@@ -686,7 +695,6 @@ export class BankEmailService {
           userId: null
         });
         
-        console.log("🏦 DEBUG: paymentInfo для обробки:", paymentInfo);
         const paymentResult = await this.processPayment(savedNotification.id, paymentInfo);
         
         if (paymentResult.success) {

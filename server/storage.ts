@@ -549,6 +549,7 @@ export interface IStorage {
 
   // Bank Payment Notifications
   createBankPaymentNotification(notification: InsertBankPaymentNotification): Promise<BankPaymentNotification>;
+  getBankPaymentNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined>;
   getBankPaymentNotifications(filters?: {
     processed?: boolean;
     fromDate?: Date;
@@ -2356,8 +2357,8 @@ export class MemStorage implements IStorage {
     return true; // Always return success for testing
   }
 
-  async getBankNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined> {
-    console.log(`MemStorage: getBankNotificationByMessageId(${messageId})`);
+  async getBankPaymentNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined> {
+    console.log(`MemStorage: getBankPaymentNotificationByMessageId(${messageId})`);
     return undefined; // Always return undefined for testing
   }
 

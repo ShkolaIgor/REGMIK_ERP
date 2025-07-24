@@ -4476,6 +4476,19 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getBankPaymentNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined> {
+    try {
+      const [result] = await db
+        .select()
+        .from(bankPaymentNotifications)
+        .where(eq(bankPaymentNotifications.messageId, messageId));
+      return result || undefined;
+    } catch (error) {
+      console.error("Error getting bank payment notification by message ID:", error);
+      throw error;
+    }
+  }
+
   async getBankPaymentNotifications(filters?: {
     processed?: boolean;
     fromDate?: Date;
