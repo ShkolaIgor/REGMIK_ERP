@@ -132,10 +132,10 @@ export class BankEmailService {
     
     this.isMonitoring = true;
     
-    // Перевіряємо email кожні 5 хвилин
+    // Перевіряємо email кожні 5 хвилин (всі банківські повідомлення за останні дні)
     this.monitoringInterval = setInterval(async () => {
       try {
-        console.log("🏦 Запуск перевірки нових банківських email...");
+        console.log("🏦 Автоматична перевірка банківських email...");
         await this.checkNewEmails();
       } catch (error) {
         console.error("❌ Помилка під час перевірки банківських email:", error);
@@ -350,7 +350,7 @@ export class BankEmailService {
             const lastWeek = new Date();
             lastWeek.setDate(lastWeek.getDate() - 7);
             
-            const bankFromAddress = emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua';
+            const bankFromAddress = emailSettings?.bankEmailAddress || 'online@ukrsibbank.com';
             console.log(`🏦 Пошук email за критеріями: від=${bankFromAddress}, з=${lastWeek.toDateString()}`);
             
             imap.search([
@@ -367,8 +367,8 @@ export class BankEmailService {
               console.log(`🏦 Результати пошуку email: знайдено ${results ? results.length : 0} повідомлень`);
 
               if (!results || results.length === 0) {
-                console.log("🏦 Нових банківських email не знайдено (перевірено INBOX за сьогодні)");
-                console.log(`🏦 Пошук завершено для: ${bankFromAddress} з ${yesterday.toDateString()}`);
+                console.log("🏦 Нових банківських email не знайдено (перевірено INBOX за останні 7 днів)");
+                console.log(`🏦 Пошук завершено для: ${bankFromAddress} з ${lastWeek.toDateString()}`);
                 imap.end();
                 resolve();
                 return;
