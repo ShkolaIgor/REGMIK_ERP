@@ -620,88 +620,46 @@ export class BankEmailService {
         validReceivedAt = new Date();
       }
 
-      // КРИТИЧНИЙ FIX: Перевіряємо чи email вже оброблено, щоб уникнути дублікатів
-      const existingNotification = await storage.getBankPaymentNotificationByMessageId(emailContent.messageId);
-      if (existingNotification) {
-        console.log("🏦 ⚠️ Email вже оброблено, пропускаємо:", emailContent.messageId);
-        return { 
-          success: false, 
-          message: "Email вже оброблено раніше",
-          notification: existingNotification 
-        };
-      }
-
-      const notification: InsertBankPaymentNotification = {
-        messageId: emailContent.messageId,
-        subject: emailContent.subject,
-        fromAddress: emailContent.fromAddress,
-        receivedAt: validReceivedAt,
-        accountNumber: paymentInfo.accountNumber,
-        currency: paymentInfo.currency,
-        operationType: paymentInfo.operationType,
-        amount: paymentInfo.amount.toString(),
-        correspondent: paymentInfo.correspondent,
-        paymentPurpose: paymentInfo.paymentPurpose,
-        invoiceNumber: paymentInfo.invoiceNumber,
-        invoiceDate: validInvoiceDate,
-        vatAmount: paymentInfo.vatAmount?.toString(),
-        processed: false,
-        rawEmailContent: emailContent.textContent,
-      };
-
-      const savedNotification = await storage.createBankPaymentNotification(notification);
-
-      // Логуємо в системні логи про отримання банківського повідомлення
-      await storage.createSystemLog({
-        level: 'info',
-        category: 'bank-email',
-        module: 'bank-monitoring',
-        message: `Отримано банківське повідомлення: ${paymentInfo.operationType} на суму ${paymentInfo.amount} UAH`,
-        details: { 
-          component: 'bank-email-service',
-          operationType: paymentInfo.operationType,
-          amount: paymentInfo.amount,
-          correspondent: paymentInfo.correspondent,
-          invoiceNumber: paymentInfo.invoiceNumber,
-          accountNumber: paymentInfo.accountNumber
-        },
-        userId: null
-      });
-
-      // Якщо це зарахування коштів та знайдено номер рахунку - обробляємо платіж
-      console.log("🏦 Перевірка умов для обробки платежу:");
-      console.log("  operationType:", paymentInfo.operationType);
-      console.log("  invoiceNumber:", paymentInfo.invoiceNumber);
-      console.log("  Умова зараховано:", paymentInfo.operationType === "зараховано");
-      console.log("  Умова номер рахунку:", !!paymentInfo.invoiceNumber);
-      console.log("  operationType type:", typeof paymentInfo.operationType);
-      console.log("  operationType length:", paymentInfo.operationType?.length);
-      
+      // Якщо це зарахування коштів та знайдено номер рахунку - обробляємо платіж  
       if (paymentInfo.operationType === "зараховано" && paymentInfo.invoiceNumber) {
         console.log("🏦 Розпочинаю обробку платежу...");
         
-        // Логуємо спробу обробки платежу
-        await storage.createSystemLog({
-          level: 'info',
-          category: 'bank-payment',
-          module: 'payment-processing',
-          message: `Спроба обробки платежу за рахунком ${paymentInfo.invoiceNumber}`,
-          details: { 
-            component: 'bank-email-service',
-            invoiceNumber: paymentInfo.invoiceNumber,
-            amount: paymentInfo.amount,
-            correspondent: paymentInfo.correspondent
-          },
-          userId: null
-        });
+        // ПЕРЕВІРЯЄМО ЧИ ЦЕЙ EMAIL ВЖЕ ОБРОБЛЕНИЙ (тільки для платежів що можуть бути оброблені)
+        const existingNotification = await storage.getBankPaymentNotificationByMessageId(emailContent.messageId);
+        if (existingNotification) {
+          console.log("🏦 ⚠️ Email вже оброблено, пропускаємо:", emailContent.messageId);
+          return { 
+            success: false, 
+            message: "Email вже оброблено раніше",
+            notification: existingNotification 
+          };
+        }
         
-        const paymentResult = await this.processPayment(savedNotification.id, paymentInfo);
+        // Спробуємо знайти замовлення ПЕРЕД створенням bank_payment_notification
+        const paymentResult = await this.processPayment(0, paymentInfo); // Передаємо 0 як тимчасовий ID
         
         if (paymentResult.success) {
-          await storage.updateBankPaymentNotification(savedNotification.id, {
+          // ТІЛЬКИ ЯКЩО ПЛАТІЖ УСПІШНИЙ - створюємо bank_payment_notification
+          const notification: InsertBankPaymentNotification = {
+            messageId: emailContent.messageId,
+            subject: emailContent.subject,
+            fromAddress: emailContent.fromAddress,
+            receivedAt: validReceivedAt,
+            accountNumber: paymentInfo.accountNumber,
+            currency: paymentInfo.currency,
+            operationType: paymentInfo.operationType,
+            amount: paymentInfo.amount.toString(),
+            correspondent: paymentInfo.correspondent,
+            paymentPurpose: paymentInfo.paymentPurpose,
+            invoiceNumber: paymentInfo.invoiceNumber,
+            invoiceDate: validInvoiceDate,
+            vatAmount: paymentInfo.vatAmount?.toString(),
             processed: true,
             orderId: paymentResult.orderId,
-          });
+            rawEmailContent: emailContent.textContent,
+          };
+
+          const savedNotification = await storage.createBankPaymentNotification(notification);
           
           // Логуємо успішну обробку платежу
           await storage.createSystemLog({
@@ -718,11 +676,11 @@ export class BankEmailService {
             userId: null
           });
         } else {
-          await storage.updateBankPaymentNotification(savedNotification.id, {
-            processingError: paymentResult.message,
-          });
+          // ЯКЩО ЗАМОВЛЕННЯ НЕ ЗНАЙДЕНО - НЕ створюємо bank_payment_notification
+          // Це дозволить повторно перевіряти цей email пізніше
+          console.log("🏦⏭️ Замовлення не знайдено, НЕ створюємо запис - email буде перевірено знову пізніше");
           
-          // Логуємо помилку обробки платежу
+          // Логуємо помилку обробки платежу (але не створюємо bank_payment_notification)
           await storage.createSystemLog({
             level: 'warn',
             category: 'bank-payment',
@@ -739,18 +697,16 @@ export class BankEmailService {
         }
 
         return {
-          success: true,
+          success: paymentResult.success,
           message: paymentResult.success ? 
             `Платіж оброблено успішно: ${paymentInfo.invoiceNumber} на суму ${paymentInfo.amount} UAH` :
-            `Помилка обробки платежу: ${paymentResult.message}`,
-          notification: savedNotification
+            `Замовлення не знайдено для рахунку ${paymentInfo.invoiceNumber}, email буде перевірено пізніше`
         };
       }
 
       return {
-        success: true,
-        message: "Банківське повідомлення збережено, але не потребує обробки",
-        notification: savedNotification
+        success: false,
+        message: "Банківське повідомлення не є зарахуванням коштів або не містить номер рахунку"
       };
 
     } catch (error) {
@@ -1208,7 +1164,17 @@ export class BankEmailService {
 
       console.log(`🏦 DEBUG: Found order for payment processing:`, { orderId: order.id, orderNumber: order.invoiceNumber, amount: paymentInfo.amount });
 
-      // Оновлюємо статус оплати замовлення
+      // Якщо notificationId = 0, це означає що ми тільки перевіряємо існування замовлення
+      if (notificationId === 0) {
+        console.log(`🏦 Замовлення знайдено: #${order.id} (${order.invoiceNumber}) - повертаємо success без створення платежу`);
+        return {
+          success: true,
+          message: `Замовлення знайдено: #${order.id} (${order.invoiceNumber})`,
+          orderId: order.id
+        };
+      }
+
+      // Оновлюємо статус оплати замовлення тільки якщо notificationId реальний
       console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus...`);
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
