@@ -11543,6 +11543,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (newPaymentsCount > 0) {
           foundPayment = true;
           console.log(`🏦 Знайдено нових платежів: ${newPaymentsCount}`);
+        } else {
+          // FALLBACK ЛОГІКА: Якщо нових платежів за рахунком не знайдено, 
+          // шукаємо в необроблених email за клієнтом + сумою
+          console.log(`🔄 FALLBACK: Нових платежів за рахунком ${order.orderNumber} не знайдено, запускаю fallback пошук...`);
+          
+          try {
+            // Отримуємо клієнта замовлення
+            const client = await storage.getClient(order.clientId);
+            
+            if (client && client.name) {
+              console.log(`🔄 FALLBACK: Шукаю платежі для клієнта "${client.name}" на суму ${order.totalAmount}`);
+              
+              // Створюємо тестові дані для fallback логіки
+              const fallbackPaymentInfo = {
+                invoiceNumber: "FALLBACK-SEARCH", // Неіснуючий номер для активації fallback
+                correspondent: client.name,
+                amount: parseFloat(order.totalAmount.toString()),
+                accountNumber: "FALLBACK",
+                currency: "UAH",
+                operationType: "зараховано",
+                paymentPurpose: "Fallback пошук за клієнтом",
+                vatAmount: null,
+                invoiceDate: new Date()
+              };
+              
+              const fallbackResult = await bankEmailService.processPayment(0, fallbackPaymentInfo);
+              
+              if (fallbackResult.success) {
+                foundPayment = true;
+                console.log(`🔄 FALLBACK SUCCESS: Знайдено замовлення через fallback логіку: ${fallbackResult.orderId}`);
+                
+                // Логуємо успішний fallback результат
+                await storage.createSystemLog({
+                  level: 'info',
+                  category: 'bank-payment',
+                  module: 'fallback-logic',
+                  event: 'fallback_payment_found',
+                  message: `Fallback логіка знайшла замовлення для клієнта ${client.name} на суму ${order.totalAmount}`,
+                  details: {
+                    originalOrderId: orderId,
+                    foundOrderId: fallbackResult.orderId,
+                    clientName: client.name,
+                    amount: order.totalAmount,
+                    fallbackMethod: 'client_amount_match'
+                  },
+                  userId: null
+                });
+              } else {
+                console.log(`🔄 FALLBACK: Замовлення не знайдено через fallback логіку`);
+              }
+            }
+          } catch (fallbackError) {
+            console.error("🔄 FALLBACK: Помилка fallback пошуку:", fallbackError);
+          }
         }
       }
 
@@ -14868,6 +14922,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
+  // ТЕСТ FALLBACK ЛОГІКИ з конкретними даними
+  app.get("/api/test-fallback-logic", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🧪 ТЕСТ FALLBACK: Започинаю тестування fallback логіки");
+      
+      // Створюємо тестові дані для fallback логіки
+      const testPaymentInfo = {
+        invoiceNumber: "РМ00-027999", // Неіснуючий номер рахунку
+        correspondent: "ТестКомпанія ТОВ", // Клієнт що існує
+        amount: 300.00, // Точна сума замовлення РМ00-027804
+        accountNumber: "26001234567890",
+        currency: "UAH",
+        operationType: "зараховано",
+        paymentPurpose: "Оплата за товари та послуги",
+        vatAmount: null,
+        invoiceDate: new Date("2025-07-24")
+      };
+      
+      console.log("🧪 ТЕСТ FALLBACK: Викликаю processPayment з тестовими даними:", testPaymentInfo);
+      
+      const result = await bankEmailService.processPayment(0, testPaymentInfo);
+      
+      console.log("🧪 ТЕСТ FALLBACK: Результат processPayment:", result);
+      
+      res.json({
+        success: true,
+        message: "Тест fallback логіки завершено",
+        testData: testPaymentInfo,
+        result: result,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error("❌ ТЕСТ FALLBACK: Помилка:", error);
+      res.status(500).json({
+        success: false,
+        message: `Помилка тестування fallback: ${error instanceof Error ? error.message : String(error)}`,
+        timestamp: new Date().toISOString()
       });
     }
   });

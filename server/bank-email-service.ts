@@ -1174,7 +1174,50 @@ export class BankEmailService {
         }
       }
 
+      // FALLBACK ЛОГІКА: Якщо замовлення не знайдено за номером рахунку, шукаємо за кореспондентом та сумою
+      if (!order && paymentInfo.correspondent && paymentInfo.amount) {
+        console.log("🔄 FALLBACK: Пошук останнього замовлення за кореспондентом та сумою...");
+        console.log(`🔄 Критерії: кореспондент="${paymentInfo.correspondent}", сума=${paymentInfo.amount}`);
+        
+        try {
+          // Шукаємо останнє замовлення з точним співпадінням суми та кореспондента
+          const fallbackOrders = await storage.query(`
+            SELECT o.*, c.name as client_name 
+            FROM orders o
+            LEFT JOIN clients c ON o.client_id = c.id
+            WHERE c.name ILIKE $1 AND o.total_amount = $2::numeric
+            ORDER BY o.created_at DESC
+            LIMIT 5
+          `, [`%${paymentInfo.correspondent}%`, paymentInfo.amount.toString()]);
+          
+          if (fallbackOrders.length > 0) {
+            order = fallbackOrders[0]; // Беремо найновіше замовлення
+            console.log(`🔄✅ FALLBACK УСПІШНИЙ: Знайдено замовлення #${order.id} (${order.invoice_number || order.invoiceNumber}) для клієнта "${order.client_name}"`);
+            console.log(`🔄 Деталі: сума ${order.total_amount || order.totalAmount} UAH, дата ${order.created_at}`);
+            searchDetails += `, fallback пошук за кореспондентом та сумою`;
+            
+            // Конвертуємо snake_case до camelCase для сумісності
+            if (order.invoice_number && !order.invoiceNumber) {
+              order.invoiceNumber = order.invoice_number;
+            }
+            if (order.total_amount && !order.totalAmount) {
+              order.totalAmount = order.total_amount;
+            }
+          } else {
+            console.log(`🔄❌ FALLBACK: Не знайдено замовлень для кореспондента="${paymentInfo.correspondent}" та суми=${paymentInfo.amount}`);
+          }
+        } catch (fallbackError) {
+          console.error("🔄❌ FALLBACK ERROR:", fallbackError);
+          searchDetails += `, fallback пошук failed: ${fallbackError.message}`;
+        }
+      }
+
       if (!order) {
+        console.log(`🔄 DEBUG: Перевіряємо умови для fallback логіки:`);
+        console.log(`  - order знайдено: ${!!order}`);
+        console.log(`  - correspondent є: ${!!paymentInfo.correspondent} ("${paymentInfo.correspondent}")`);
+        console.log(`  - amount є: ${!!paymentInfo.amount} (${paymentInfo.amount})`);
+        
         const errorMsg = `Замовлення не знайдено. ${searchDetails}`;
         console.log(`🏦❌ ${errorMsg}`);
         return { success: false, message: errorMsg };
