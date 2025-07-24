@@ -641,7 +641,7 @@ export class BankEmailService {
         // Шукаємо існуючі записи з такою ж комбінацією полів
         const existingNotifications = await storage.query(`
           SELECT * FROM bank_payment_notifications 
-          WHERE subject = $1 AND correspondent = $2 AND amount = $3::text
+          WHERE subject = $1 AND correspondent = $2 AND amount::text = $3
         `, [emailContent.subject, paymentInfo.correspondent, paymentInfo.amount.toString()]);
         
         if (existingNotifications.length > 0) {
