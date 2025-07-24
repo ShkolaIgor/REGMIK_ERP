@@ -37,6 +37,7 @@ import { bankEmailService } from "./bank-email-service";
 import multer from "multer";
 import xml2js from "xml2js";
 import { DOMParser } from "@xmldom/xmldom";
+import Imap from "imap";
 
 // Helper function for fallback outgoing invoices data when 1C server is unavailable
 async function getFallbackOutgoingInvoices() {
@@ -14067,7 +14068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bank Email Monitoring Test Endpoint
   app.get("/api/bank-email/test", async (req, res) => {
     try {
-      const bankEmailService = require('./bank-email-service').bankEmailService;
+      // bankEmailService уже імпортований на початку файлу
       
       // Перевіряємо статус моніторингу
       const emailSettings = await storage.getEmailSettings();
@@ -14104,6 +14105,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("❌ Помилка простого тесту:", error);
       res.status(500).json({ 
         error: "Simple test failed",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Test Message-ID extraction with detailed headers
+  app.get("/api/bank-email/test-message-id-extraction", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🔍 Тестування витягування Message-ID з детальними заголовками...");
+      
+      const emailSettings = await storage.getEmailSettings();
+      const bankEmailUser = process.env.BANK_EMAIL_USER || emailSettings?.bankEmailUser;
+      const bankEmailPassword = process.env.BANK_EMAIL_PASSWORD || emailSettings?.bankEmailPassword;
+      const bankEmailHost = emailSettings?.bankEmailHost || process.env.BANK_EMAIL_HOST || 'mail.regmik.ua';
+      const bankEmailPort = emailSettings?.bankEmailPort || 993;
+      const bankSslEnabled = emailSettings?.bankSslEnabled ?? true;
+
+      if (!bankEmailUser || !bankEmailPassword) {
+        return res.status(400).json({ error: "Налаштування банківського email не знайдено" });
+      }
+
+      const diagnostics = await new Promise((resolve, reject) => {
+        const imap = new ImapClient({
+          user: bankEmailUser,
+          password: bankEmailPassword,
+          host: bankEmailHost,
+          port: bankEmailPort,
+          tls: bankSslEnabled,
+          authTimeout: 10000,
+          connTimeout: 10000,
+          tlsOptions: { rejectUnauthorized: false }
+        });
+
+        const emailDiagnostics: any[] = [];
+
+        imap.once('ready', () => {
+          console.log(`📬 Підключено до IMAP для тестування Message-ID`);
+          
+          imap.openBox('INBOX', false, (err: any, box: any) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            console.log(`📬 INBOX відкрито: ${box.messages.total} повідомлень`);
+
+            // Беремо тільки 3 останні email для тестування Message-ID
+            const emailsToCheck = ['19', '20', '21'];
+            console.log(`🔍 Тестування Message-ID з ${emailsToCheck.length} email...`);
+
+            const fetch = imap.fetch(emailsToCheck, { 
+              bodies: 'HEADER',
+              struct: true
+            });
+
+            fetch.on('message', (msg: any, seqno: any) => {
+              const emailDiagnostic: any = {
+                seqno: parseInt(seqno),
+                realMessageId: null,
+                envelopeMessageId: null,
+                headerContent: null,
+                fullBuffer: null,
+                subject: null
+              };
+
+              msg.on('body', (stream: any, info: any) => {
+                if (info.which === 'HEADER') {
+                  let buffer = '';
+                  stream.on('data', (chunk: any) => {
+                    buffer += chunk.toString('utf8');
+                  });
+                  
+                  stream.once('end', () => {
+                    emailDiagnostic.headerContent = buffer.substring(0, 1000);
+                    emailDiagnostic.fullBuffer = buffer;
+                    
+                    // Спробуємо витягти Message-ID різними способами
+                    const patterns = [
+                      { name: 'standard', regex: /Message-ID:\s*<([^>]+)>/i },
+                      { name: 'no_brackets', regex: /Message-ID:\s*([^\r\n\s]+)/i },
+                      { name: 'line_safe', regex: /Message-ID:\s*(.*?)(?=\r|\n|$)/i }
+                    ];
+
+                    emailDiagnostic.patternResults = [];
+                    
+                    for (const pattern of patterns) {
+                      const match = buffer.match(pattern.regex);
+                      emailDiagnostic.patternResults.push({
+                        name: pattern.name,
+                        matched: !!match,
+                        value: match ? match[1]?.trim() : null
+                      });
+                      
+                      if (match && match[1] && match[1].trim().length > 5) {
+                        emailDiagnostic.realMessageId = match[1].trim();
+                        emailDiagnostic.successPattern = pattern.name;
+                        break;
+                      }
+                    }
+                    
+                    // Додаткова діагностика: чи містить заголовок Message-ID взагалі
+                    emailDiagnostic.hasMessageIdHeader = buffer.toLowerCase().includes('message-id:');
+                    emailDiagnostic.bufferLength = buffer.length;
+                  });
+                }
+              });
+
+              msg.once('attributes', (attrs: any) => {
+                if (attrs.envelope) {
+                  emailDiagnostic.envelopeMessageId = attrs.envelope.messageId;
+                  emailDiagnostic.subject = attrs.envelope.subject;
+                }
+              });
+
+              msg.once('end', () => {
+                emailDiagnostics.push(emailDiagnostic);
+              });
+            });
+
+            fetch.once('end', () => {
+              console.log(`🔍 Message-ID тестування завершено: ${emailDiagnostics.length} email перевірено`);
+              imap.end();
+              resolve(emailDiagnostics);
+            });
+
+            fetch.once('error', (err: any) => {
+              console.error("❌ Помилка отримання email для Message-ID тестування:", err);
+              imap.end();
+              reject(err);
+            });
+          });
+        });
+
+        imap.once('error', (err: any) => {
+          console.error("❌ Помилка IMAP з'єднання для Message-ID тестування:", err);
+          reject(err);
+        });
+
+        imap.connect();
+      });
+
+      res.json({
+        success: true,
+        message: "Message-ID тестування завершено",
+        diagnostics,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("❌ Помилка тестування Message-ID:", error);
+      res.status(500).json({ 
+        error: "Message-ID тестування не вдалося",
         details: error instanceof Error ? error.message : String(error)
       });
     }
@@ -14548,6 +14700,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Помилка тестування парсингу дати",
         message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Діагностика Message-ID витягування з банківських email
+  app.get('/api/bank-email/diagnose-message-id', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log('🔍 Запуск діагностики Message-ID витягування...');
+      
+      const emailSettings = await storage.getEmailSettings();
+      if (!emailSettings?.bankEmailHost || !emailSettings?.bankEmailUser || !emailSettings?.bankEmailPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Налаштування банківського email не налаштовані' 
+        });
+      }
+
+      const imap = new Imap({
+        user: emailSettings.bankEmailUser,
+        password: emailSettings.bankEmailPassword,
+        host: emailSettings.bankEmailHost,
+        port: emailSettings.bankEmailPort || 993,
+        tls: emailSettings.bankSslEnabled !== false,
+        tlsOptions: { rejectUnauthorized: false }
+      });
+
+      const diagnostics: any[] = [];
+
+      const imapPromise = new Promise((resolve, reject) => {
+        imap.once('ready', () => {
+          imap.openBox('INBOX', true, (err: any, box: any) => {
+            if (err) {
+              console.error('❌ Помилка відкриття INBOX:', err);
+              reject(err);
+              return;
+            }
+
+            console.log(`📬 INBOX відкрито: ${box.messages.total} повідомлень`);
+            
+            // Шукаємо останні 3 банківські email для діагностики
+            imap.search([
+              ['FROM', emailSettings.bankEmailAddress || 'online@ukrsibbank.com'],
+              ['SINCE', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)]
+            ], (err: any, results: any) => {
+              if (err) {
+                console.error("❌ Помилка пошуку email:", err);
+                reject(err);
+                return;
+              }
+
+              if (!results || results.length === 0) {
+                resolve([]);
+                return;
+              }
+
+              // Беремо тільки 3 останні email для діагностики
+              const emailsToCheck = results.slice(0, 3);
+              console.log(`🔍 Діагностика ${emailsToCheck.length} email...`);
+
+              const fetch = imap.fetch(emailsToCheck, { 
+                bodies: 'HEADER',
+                struct: true
+              });
+
+              let checkedCount = 0;
+
+              fetch.on('message', (msg: any, seqno: any) => {
+                const emailDiagnostic: any = {
+                  seqno: seqno,
+                  realMessageId: null,
+                  envelopeMessageId: null,
+                  headerContent: null,
+                  subject: null
+                };
+
+                msg.on('body', (stream: any, info: any) => {
+                  if (info.which === 'HEADER') {
+                    let buffer = '';
+                    stream.on('data', (chunk: any) => {
+                      buffer += chunk.toString('utf8');
+                    });
+                    
+                    stream.once('end', () => {
+                      emailDiagnostic.headerContent = buffer.substring(0, 1000); // Перші 1000 символів заголовка
+                      emailDiagnostic.fullBufferLength = buffer.length; // Повна довжина для діагностики
+                      
+                      // Діагностика: знаходимо чи є Message-ID в заголовках взагалі
+                      emailDiagnostic.hasMessageIdHeader = buffer.toLowerCase().includes('message-id:');
+                      
+                      // Спробуємо різні regex для Message-ID з більшою деталізацією
+                      const patterns = [
+                        { name: 'standard_angle_brackets', regex: /Message-ID:\s*<([^>]+)>/i },
+                        { name: 'no_brackets', regex: /Message-ID:\s*([^\r\n\s]+)/i },
+                        { name: 'multiline_safe', regex: /Message-ID:\s*(.*?)(?=\r|\n|$)/im },
+                        { name: 'greedy_capture', regex: /Message-ID:(.*?)(?=\r\n[A-Za-z-]+:|$)/im }
+                      ];
+
+                      emailDiagnostic.patternResults = [];
+                      
+                      for (let i = 0; i < patterns.length; i++) {
+                        const match = buffer.match(patterns[i].regex);
+                        const result = {
+                          name: patterns[i].name,
+                          matched: !!match,
+                          value: match ? match[1]?.trim() : null
+                        };
+                        emailDiagnostic.patternResults.push(result);
+                        
+                        if (match && match[1] && match[1].trim().length > 5) { // Мінімум 5 символів для валідного Message-ID
+                          emailDiagnostic.realMessageId = match[1].trim();
+                          emailDiagnostic.patternUsed = i;
+                          emailDiagnostic.patternName = patterns[i].name;
+                          break;
+                        }
+                      }
+                      
+                      // Додатковий аналіз: шукаємо всі рядки що містять Message-ID
+                      const lines = buffer.split(/\r?\n/);
+                      emailDiagnostic.messageIdLines = lines.filter(line => 
+                        line.toLowerCase().includes('message-id')
+                      );
+                    });
+                  }
+                });
+
+                msg.once('attributes', (attrs: any) => {
+                  if (attrs.envelope) {
+                    emailDiagnostic.subject = attrs.envelope.subject;
+                    emailDiagnostic.envelopeMessageId = attrs.envelope.messageId;
+                  }
+                });
+
+                msg.once('end', () => {
+                  diagnostics.push(emailDiagnostic);
+                  checkedCount++;
+                  
+                  if (checkedCount === emailsToCheck.length) {
+                    console.log(`🔍 Діагностика завершена: ${checkedCount} email перевірено`);
+                    imap.end();
+                    resolve(diagnostics);
+                  }
+                });
+              });
+
+              fetch.once('error', (err: any) => {
+                console.error('❌ Помилка fetch:', err);
+                reject(err);
+              });
+            });
+          });
+        });
+
+        imap.once('error', (err: any) => {
+          console.error('❌ IMAP помилка:', err);
+          reject(err);
+        });
+
+        imap.connect();
+      });
+
+      const result = await imapPromise;
+      res.json({ success: true, diagnostics: result });
+
+    } catch (error) {
+      console.error('❌ Помилка діагностики Message-ID:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
       });
     }
   });

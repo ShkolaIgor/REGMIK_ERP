@@ -379,7 +379,7 @@ export class BankEmailService {
 
               // Обробляємо кожен email - отримуємо headers та зміст
               const fetch = imap.fetch(results, { 
-                bodies: ['HEADER', 'TEXT'], // Отримуємо заголовки та текст
+                bodies: ['HEADER', 'TEXT'], // Отримуємо повні заголовки та текст
                 struct: true,
                 markSeen: false  // НЕ помічаємо як прочитаний
               });
@@ -401,10 +401,18 @@ export class BankEmailService {
                   stream.once('end', () => {
                     if (info.which === 'HEADER') {
                       // Витягуємо справжній Message-ID з headers
-                      const messageIdMatch = buffer.match(/Message-ID:\s*<?(.*?)>?\r?\n/i);
-                      if (messageIdMatch) {
+                      const messageIdMatch = buffer.match(/Message-ID:\s*<([^>]+)>/i);
+                      
+                      if (messageIdMatch && messageIdMatch[1] && messageIdMatch[1].trim().length > 5) {
                         realMessageId = messageIdMatch[1].trim();
                         console.log(`🏦 Email ${seqno} справжній Message-ID: ${realMessageId}`);
+                      } else {
+                        // Спробуємо альтернативні regex для Message-ID без кутових дужок
+                        const altRegex = buffer.match(/Message-ID:\s*([^\r\n\s]+)/i);
+                        if (altRegex && altRegex[1] && altRegex[1].trim().length > 5) {
+                          realMessageId = altRegex[1].trim();
+                          console.log(`🏦 Email ${seqno} Message-ID (без дужок): ${realMessageId}`);
+                        }
                       }
                       
                       // Витягуємо дату
@@ -442,6 +450,8 @@ export class BankEmailService {
                   try {
                     // Використовуємо fallback якщо не вдалося отримати Message-ID
                     const messageId = realMessageId || `imap-${seqno}-${Date.now()}`;
+                    
+                    console.log(`🏦 DEBUG: Email ${seqno} - realMessageId: "${realMessageId}", messageId: "${messageId}"`);
                     
                     // ПЕРЕВІРЯЄМО ЧИ ЦЕЙ EMAIL ВЖЕ ОБРОБЛЕНИЙ
                     const existingNotification = await storage.getBankNotificationByMessageId(messageId);
@@ -624,14 +634,22 @@ export class BankEmailService {
       if (paymentInfo.operationType === "зараховано" && paymentInfo.invoiceNumber) {
         console.log("🏦 Розпочинаю обробку платежу...");
         
-        // ПЕРЕВІРЯЄМО ЧИ ЦЕЙ EMAIL ВЖЕ ОБРОБЛЕНИЙ (тільки для платежів що можуть бути оброблені)
-        const existingNotification = await storage.getBankPaymentNotificationByMessageId(emailContent.messageId);
-        if (existingNotification) {
-          console.log("🏦 ⚠️ Email вже оброблено, пропускаємо:", emailContent.messageId);
+        // ПЕРЕВІРЯЄМО ЧИ ЦЕЙ EMAIL ВЖЕ ОБРОБЛЕНИЙ (за комбінацією полів замість Message-ID)
+        const duplicateKey = `${emailContent.subject}-${paymentInfo.correspondent}-${paymentInfo.amount}`;
+        console.log("🏦 Перевірка дублікатів за ключем:", duplicateKey);
+        
+        // Шукаємо існуючі записи з такою ж комбінацією полів
+        const existingNotifications = await storage.query(`
+          SELECT * FROM bank_payment_notifications 
+          WHERE subject = $1 AND correspondent = $2 AND amount = $3::text
+        `, [emailContent.subject, paymentInfo.correspondent, paymentInfo.amount.toString()]);
+        
+        if (existingNotifications.length > 0) {
+          console.log("🏦 ⚠️ Email дублікат знайдено за комбінацією полів, пропускаємо");
           return { 
             success: false, 
-            message: "Email вже оброблено раніше",
-            notification: existingNotification 
+            message: "Email дублікат вже оброблено раніше",
+            notification: existingNotifications[0] 
           };
         }
         
@@ -1301,23 +1319,19 @@ export class BankEmailService {
                 let emailSubject = '';
 
                 msg.on('body', (stream: any, info: any) => {
-                  if (info.which === 'TEXT') {
-                    let buffer = '';
-                    stream.on('data', (chunk: any) => {
-                      buffer += chunk.toString('utf8');
-                    });
-                    
-                    stream.once('end', () => {
-                      emailContent = buffer;
-                      console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} - зміст отримано, довжина: ${buffer.length} символів`);
-                    });
-                  }
+                  let buffer = '';
+                  stream.on('data', (chunk: any) => {
+                    buffer += chunk.toString('utf8');
+                  });
+                  
+                  stream.once('end', () => {
+                    emailContent = buffer;
+                  });
                 });
 
                 msg.once('attributes', (attrs: any) => {
                   if (attrs.envelope && attrs.envelope.subject) {
                     emailSubject = attrs.envelope.subject;
-                    console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} subject: ${emailSubject}`);
                   }
                 });
 
@@ -1330,26 +1344,18 @@ export class BankEmailService {
                     try {
                       if (/^[A-Za-z0-9+/]+=*$/.test(emailContent.replace(/\s/g, ''))) {
                         decodedContent = Buffer.from(emailContent, 'base64').toString('utf8');
-                        console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} декодовано з Base64`);
                       }
                     } catch (error) {
-                      console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} не потребує декодування Base64`);
                       decodedContent = emailContent;
                     }
 
                     const mockEmail = {
-                      messageId: `processed-${seqno}-${Date.now()}`,
+                      messageId: `processed-${seqno}-${Date.now()}`, // Простий fallback ID
                       subject: actualSubject,
                       fromAddress: emailSettings.bankEmailAddress || 'online@ukrsibbank.com',
                       receivedAt: new Date(),
                       textContent: decodedContent
                     };
-
-                    console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Готовий до обробки email ${seqno}:`);
-                    console.log(`  Subject: ${actualSubject}`);
-                    console.log(`  Original length: ${emailContent.length} символів`);
-                    console.log(`  Decoded length: ${decodedContent.length} символів`);
-                    console.log(`  Decoded preview: ${decodedContent.substring(0, 150)}...`);
 
                     const result = await this.processBankEmail(mockEmail);
                     
