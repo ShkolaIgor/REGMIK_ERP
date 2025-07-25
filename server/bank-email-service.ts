@@ -724,7 +724,8 @@ export class BankEmailService {
         const savedNotification = await storage.createBankPaymentNotification(notification);
         
         // ПІСЛЯ створення notification спробуємо знайти замовлення
-        const paymentResult = await this.processPayment(savedNotification.id, paymentInfo);
+        // ВИПРАВЛЕНО: Передаємо дату отримання email для правильної дати платежу
+        const paymentResult = await this.processPayment(savedNotification.id, paymentInfo, validReceivedAt);
         
         if (paymentResult.success) {
           // Оновлюємо notification як оброблений з orderId
@@ -1221,7 +1222,7 @@ export class BankEmailService {
   /**
    * Обробка платежу - знаходження замовлення та оновлення його статусу
    */
-  private async processPayment(notificationId: number, paymentInfo: any): Promise<{ success: boolean; message: string; orderId?: number }> {
+  private async processPayment(notificationId: number, paymentInfo: any, emailReceivedAt?: Date): Promise<{ success: boolean; message: string; orderId?: number }> {
     try {
       console.log(`🏦 processPayment called with notificationId=${notificationId}, paymentInfo:`, paymentInfo);
       
@@ -1424,7 +1425,8 @@ export class BankEmailService {
         paymentInfo.correspondent,
         undefined, // reference
         undefined, // notes
-        paymentInfo.paymentTime
+        paymentInfo.paymentTime,
+        emailReceivedAt // ВИПРАВЛЕНО: Передаємо дату отримання email замість поточної дати
       );
 
       console.log(`🏦 DEBUG: updateOrderPaymentStatus result:`, result);

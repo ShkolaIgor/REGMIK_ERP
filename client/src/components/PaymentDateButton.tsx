@@ -10,7 +10,7 @@ import {
 import { Calendar, Check, X, Clock } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { formatShortUkrainianDate } from "@/lib/date-utils";
+import { formatShortUkrainianDate, formatShortUkrainianDateTime } from "@/lib/date-utils";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +51,8 @@ export function PaymentDateButton({ order, onPaymentDateChange, isLoading }: Pay
   });
 
   const formatDate = (dateString: string | null) => {
-    return formatShortUkrainianDate(dateString);
+    // Для платежів показуємо дату та час
+    return formatShortUkrainianDateTime(dateString);
   };
 
   const handleSetPaymentDate = async (date: Date | null) => {

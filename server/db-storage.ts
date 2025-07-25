@@ -4662,7 +4662,7 @@ export class DatabaseStorage implements IStorage {
 
 
 
-  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string, reference?: string, notes?: string, paymentTime?: string): Promise<{ order: Order; payment: OrderPayment }> {
+  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string, reference?: string, notes?: string, paymentTime?: string, emailReceivedAt?: Date): Promise<{ order: Order; payment: OrderPayment }> {
     try {
       console.log(`🏦 DEBUG: updateOrderPaymentStatus(orderId=${orderId}, paymentAmount=${paymentAmount}, paymentType=${paymentType})`);
       
@@ -4718,10 +4718,12 @@ export class DatabaseStorage implements IStorage {
       console.log(`🏦 DEBUG: Order updated successfully`);
 
       // Створюємо запис про платіж
+      // ВИПРАВЛЕНО: Використовуємо дату отримання email замість поточної дати
+      const paymentDate = emailReceivedAt || new Date();
       const paymentData = {
         orderId: orderId,
         paymentAmount: paymentAmount.toString(),
-        paymentDate: new Date(),
+        paymentDate: paymentDate,
         paymentTime: paymentTime,
         paymentType: paymentType,
         paymentStatus: "confirmed" as const,
