@@ -561,7 +561,8 @@ export class BankEmailService {
                       messageId: messageId,
                       subject: actualSubject,
                       fromAddress: emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua',
-                      receivedAt: finalEmailDate, // ВИПРАВЛЕНО: Використовуємо фінальну дату
+                      receivedAt: finalEmailDate, // Дата отримання email ERP системою
+                      emailDate: emailDate, // Дата з Email заголовка (Date:) - фактична дата банківського повідомлення
                       textContent: decodedContent
                     };
 
@@ -646,6 +647,7 @@ export class BankEmailService {
     subject: string;
     fromAddress: string;
     receivedAt: Date;
+    emailDate?: Date; // Дата з Email заголовка (Date:)
     textContent: string;
   }): Promise<{ success: boolean; message: string; notification?: any }> {
     try {
@@ -664,6 +666,9 @@ export class BankEmailService {
 
       // Аналізуємо текст email на предмет банківських операцій
       const paymentInfo = this.analyzeBankEmailContent(emailContent.textContent);
+      
+      console.log("🏦 🔧 РЕЗУЛЬТАТ analyzeBankEmailContent:");
+      console.log("🏦 🔧 paymentInfo:", JSON.stringify(paymentInfo, null, 2));
       
       if (!paymentInfo) {
         return { success: false, message: "Не вдалося розпізнати банківську операцію в email" };
@@ -740,11 +745,16 @@ export class BankEmailService {
           rawEmailContent: emailContent.textContent,
         };
 
+        console.log("🏦 🔧 ПЕРЕД ЗБЕРЕЖЕННЯМ notification:");
+        console.log("🏦 🔧 currency:", `"${notification.currency}" (length: ${notification.currency?.length})`);
+        console.log("🏦 🔧 operationType:", `"${notification.operationType}" (length: ${notification.operationType?.length})`);
+        console.log("🏦 🔧 accountNumber:", `"${notification.accountNumber}" (length: ${notification.accountNumber?.length})`);
+
         const savedNotification = await storage.createBankPaymentNotification(notification);
         
-        // ПІСЛЯ створення notification спробуємо знайти замовлення
-        // ВИПРАВЛЕНО: Передаємо дату отримання email для правильної дати платежу
-        const paymentResult = await this.processPayment(savedNotification.id, paymentInfo, validReceivedAt);
+        // ПІСЛЯ створення notification спробуємо знайти замовлення  
+        // ВИПРАВЛЕНО: Передаємо весь emailContent для правильної дати платежу
+        const paymentResult = await this.processPayment(savedNotification.id, paymentInfo, emailContent);
         
         if (paymentResult.success) {
           // Оновлюємо notification як оброблений з orderId
@@ -817,6 +827,10 @@ export class BankEmailService {
       }
 
       // Створюємо запис про банківське повідомлення для ВСІХ email
+      console.log("🏦 🔧 ДРУГИЙ БЛОК - ПЕРЕД ЗБЕРЕЖЕННЯМ notification:");
+      console.log("🏦 🔧 paymentInfo.currency:", `"${paymentInfo.currency}" (length: ${paymentInfo.currency?.length})`);
+      console.log("🏦 🔧 paymentInfo.operationType:", `"${paymentInfo.operationType}" (length: ${paymentInfo.operationType?.length})`);
+      
       const notification: InsertBankPaymentNotification = {
         messageId: emailContent.messageId,
         subject: emailContent.subject,
@@ -835,6 +849,8 @@ export class BankEmailService {
         orderId: null,
         rawEmailContent: emailContent.textContent,
       };
+
+      console.log("🏦 🔧 notification.currency:", `"${notification.currency}" (length: ${notification.currency?.length})`);
 
       const savedNotification = await storage.createBankPaymentNotification(notification);
       console.log(`🏦 ✅ Створено запис банківського повідомлення ID: ${savedNotification.id} для ВСІХ типів email`);
@@ -1139,16 +1155,43 @@ export class BankEmailService {
         }
       }
 
+      console.log("🏦 🔧 DEBUG СТАТУС ПЕРЕД ПЕРЕВІРКАМИ:");
+      console.log("🏦 🔧 operationMatch:", !!operationMatch, operationMatch?.[1]);
+      console.log("🏦 🔧 correspondentMatch:", !!correspondentMatch, correspondentMatch?.[1]);
+      console.log("🏦 🔧 amountMatch:", !!amountMatch, amountMatch?.[1]);
+      console.log("🏦 🔧 currencyMatch:", !!currencyMatch, currencyMatch?.[1]);
+
+      // Витягуємо суму з amountMatch або currencyMatch
+      let amount: number;
+      console.log("🏦 ПОЧАТОК ВИТЯГУВАННЯ СУМИ:");
+      console.log("🏦 amountMatch:", amountMatch);
+      console.log("🏦 currencyMatch:", currencyMatch);
+      
+      if (amountMatch) {
+        const amountStr = amountMatch[1].replace(',', '.'); // Українські коми → крапки
+        amount = parseFloat(amountStr);
+        console.log("🏦 ✅ Сума з amountMatch:", amount);
+      } else if (currencyMatch) {
+        // Якщо amountMatch не знайдено, спробуємо витягти з currencyMatch
+        const amountStr = currencyMatch[1].replace(',', '.'); // Українські коми → крапки
+        amount = parseFloat(amountStr);
+        console.log("🏦 ✅ Сума з currencyMatch:", amount);
+      } else {
+        console.log("🏦 ❌ Не вдалося знайти суму в email");
+        return null;
+      }
+      
+      console.log("🏦 ОТРИМАНА СУМА:", amount, "тип:", typeof amount, "isNaN:", isNaN(amount));
+
       // Для карткових операцій accountMatch може бути відсутнім
-      if (!operationMatch || !amountMatch || !correspondentMatch) {
+      if (!operationMatch || isNaN(amount) || !correspondentMatch) {
         console.log("🏦 Не вдалося розпізнати основні поля банківського повідомлення");
-        console.log("🏦 operationMatch:", !!operationMatch, "amountMatch:", !!amountMatch, "correspondentMatch:", !!correspondentMatch);
+        console.log("🏦 НОВИЙ DEBUG: operationMatch:", !!operationMatch, "amount:", amount, "isNaN(amount):", isNaN(amount), "correspondentMatch:", !!correspondentMatch);
         return null;
       }
 
-      // Конвертуємо суму - підтримуємо і крапки, і коми як десяткові розділювачі
-      const amountStr = amountMatch[1].replace(',', '.'); // Українські коми → крапки
-      const amount = parseFloat(amountStr);
+      console.log("🏦 ✅ УСПІШНО РОЗПІЗНАНО EMAIL! Переходимо до обробки платежу");
+      console.log("🏦 ✅ operation:", operationMatch[1], "amount:", amount, "correspondent:", correspondentMatch[1]);
 
       const vatAmount = vatMatch ? parseFloat(vatMatch[1].replace(',', '.')) : undefined;
 
@@ -1216,9 +1259,31 @@ export class BankEmailService {
         console.log(`🏦 ✅ АВТОПЕРЕТВОРЕННЯ: ${partialInvoiceNumber} → ${finalInvoiceNumber}`);
       }
 
+      // Витягуємо валюту правильно з currencyMatch
+      console.log("🏦 🔧 ПОЧАТОК ВИТЯГУВАННЯ ВАЛЮТИ:");
+      console.log("🏦 🔧 currencyMatch:", currencyMatch);
+      console.log("🏦 🔧 currencyMatch.length:", currencyMatch?.length);
+      
+      let currency = "UAH"; // За замовчуванням
+      if (currencyMatch) {
+        // Перший regex: валюта в [1] групі
+        // Другий regex: сума в [1], валюта в [2] групі  
+        if (currencyMatch.length === 2) {
+          // Перший regex: /валюта.*?:\s*([A-Z]{3})/i
+          currency = currencyMatch[1];
+          console.log("🏦 🔧 Валюта з regex 1 (group[1]):", currency);
+        } else if (currencyMatch.length === 3) {
+          // Другий regex: /(\d+[,\.]\d+)\s*(UAH|USD|EUR)/i
+          currency = currencyMatch[2];
+          console.log("🏦 🔧 Валюта з regex 2 (group[2]):", currency);
+        }
+      }
+      
+      console.log("🏦 🔧 ОСТАТОЧНА ВИТЯГНУТА ВАЛЮТА:", currency);
+
       return {
         accountNumber: accountMatch?.[1] || "CARD_OPERATION", // Для карткових операцій
-        currency: currencyMatch?.[1] || "UAH",
+        currency: currency,
         operationType: cleanOperationType,
         amount: amount,
         correspondent: correspondentMatch[1].trim(),
@@ -1241,9 +1306,10 @@ export class BankEmailService {
   /**
    * Обробка платежу - знаходження замовлення та оновлення його статусу
    */
-  private async processPayment(notificationId: number, paymentInfo: any, emailReceivedAt?: Date): Promise<{ success: boolean; message: string; orderId?: number }> {
+  private async processPayment(notificationId: number, paymentInfo: any, emailContent?: any): Promise<{ success: boolean; message: string; orderId?: number }> {
     try {
       console.log(`🏦 processPayment called with notificationId=${notificationId}, paymentInfo:`, paymentInfo);
+      console.log(`🏦 DEBUG: emailContent provided at start: ${!!emailContent}`);
       
       // Перевіряємо, чи це операція зарахування
       console.log(`🏦 DEBUG operationType: "${paymentInfo.operationType}"`);
@@ -1435,6 +1501,10 @@ export class BankEmailService {
 
       // Оновлюємо статус оплати замовлення тільки якщо notificationId реальний
       console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus...`);
+      console.log(`🏦 DEBUG: emailContent provided: ${!!emailContent}`);
+      console.log(`🏦 DEBUG: emailDate from header: ${emailContent?.emailDate?.toISOString()}`);
+      console.log(`🏦 DEBUG: emailReceivedAt (current logic): ${emailContent?.receivedAt?.toISOString()}`);
+      
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
         paymentInfo.amount, 
@@ -1445,7 +1515,8 @@ export class BankEmailService {
         undefined, // reference
         undefined, // notes
         paymentInfo.paymentTime,
-        emailReceivedAt // ВИПРАВЛЕНО: Передаємо дату отримання email замість поточної дати
+        emailContent?.emailDate || new Date(), // Дата з Email заголовка (Date:) - фактична дата платежу
+        emailContent?.receivedAt || new Date()  // Дата отримання email ERP системою
       );
 
       console.log(`🏦 DEBUG: updateOrderPaymentStatus result:`, result);

@@ -11443,6 +11443,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // API для тестування дати з email заголовка
+  app.get('/api/test-email-header-date', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🔍 ТЕСТ: Перевірка використання дати з Email заголовка...");
+      
+      // Тестуємо з конкретною датою з заголовка: Fri, 25 Jul 2025 16:50:16 +0300 (EEST)
+      const emailHeaderDate = new Date('Fri, 25 Jul 2025 16:50:16 +0300');
+      const emailReceivedAtDate = new Date('2025-07-25T17:30:00.000Z'); // Дата отримання ERP
+      
+      console.log(`🔍 ТЕСТ: Email header дата: ${emailHeaderDate.toISOString()}`);
+      console.log(`🔍 ТЕСТ: Email received дата: ${emailReceivedAtDate.toISOString()}`);
+      
+      // Тестові дані з датою з заголовка
+      const testEmailData = {
+        messageId: 'test-header-date-' + Date.now(),
+        subject: 'Рух коштів за банківським рахунком від 25.07.2025',
+        fromAddress: 'online@ukrsibbank.com',
+        receivedAt: emailReceivedAtDate, // Дата отримання email ERP системою
+        emailDate: emailHeaderDate, // Дата з Email заголовка (Date:)
+        textContent: `<br>
+<br>  16:50 <br> рух коштів по рахунку UA743510050000026005031648800
+<br>на суму 871.28 UAH
+<br>Тип операції: зараховано
+<br>Кореспондент: ТЕСТ КОМПАНІЯ ТОВ
+<br>рахунок кореспондента: UA123456789012345678901234
+<br>Призначення платежу: Оплата рахунка №27743 від 24.07.2025
+<br>клієнт: НВФ "РЕГМІК".`
+      };
+
+      // Перевіряємо замовлення РМ00-027743
+      const order = await storage.getOrderByInvoiceNumber('РМ00-027743');
+      if (!order) {
+        return res.json({
+          success: false,
+          message: "Тестове замовлення РМ00-027743 не знайдено"
+        });
+      }
+
+      console.log(`🔍 ТЕСТ: Знайдено замовлення ID=${order.id}, номер=${order.invoiceNumber}`);
+
+      // Обробляємо тестовий email через банківський сервіс
+      const result = await bankEmailService.processBankEmail(testEmailData);
+      
+      if (result.success) {
+        // Отримуємо останній створений платіж для цього замовлення
+        const recentPayments = await storage.query(`
+          SELECT id, payment_date, received_at, payment_time, payment_amount, payment_type
+          FROM order_payments 
+          WHERE order_id = $1 
+          ORDER BY created_at DESC 
+          LIMIT 1
+        `, [order.id]);
+        
+        if (recentPayments.length > 0) {
+          const payment = recentPayments[0];
+          
+          res.json({
+            success: true,
+            message: "Тест дати з Email заголовка завершено",
+            testResults: {
+              emailHeaderDate: emailHeaderDate.toISOString(),
+              emailReceivedAtDate: emailReceivedAtDate.toISOString(),
+              paymentDateInDB: payment.payment_date,
+              receivedAtInDB: payment.received_at,
+              paymentTimeInDB: payment.payment_time,
+              usesHeaderDate: payment.payment_date === emailHeaderDate.toISOString(),
+              expectedHeaderDate: emailHeaderDate.toISOString(),
+              actualPaymentDate: payment.payment_date
+            },
+            details: {
+              orderId: order.id,
+              orderNumber: order.invoiceNumber,
+              paymentId: payment.id,
+              paymentAmount: payment.payment_amount
+            }
+          });
+        } else {
+          res.json({
+            success: false,
+            message: "Платіж створено, але не знайдено в базі даних"
+          });
+        }
+      } else {
+        res.json({
+          success: false,
+          message: "Помилка обробки тестового платежу",
+          error: result.message
+        });
+      }
+      
+    } catch (error) {
+      console.error("❌ ПОМИЛКА ТЕСТУ ДАТИ З EMAIL ЗАГОЛОВКА:", error);
+      res.status(500).json({
+        success: false,
+        message: `Помилка тестування: ${error instanceof Error ? error.message : String(error)}`
+      });
+    }
+  });
+
   // API для перевірки оплат на пошті
   app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
     const startTime = Date.now();
