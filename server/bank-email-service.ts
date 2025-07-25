@@ -1435,6 +1435,10 @@ export class BankEmailService {
 
       // Оновлюємо статус оплати замовлення тільки якщо notificationId реальний
       console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus...`);
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: Використовуємо дату з банківського повідомлення як дату платежу
+      const paymentDate = paymentInfo.invoiceDate || emailReceivedAt;
+      console.log(`🏦 ДАТА ПЛАТЕЖУ: invoiceDate=${paymentInfo.invoiceDate?.toISOString()}, emailReceivedAt=${emailReceivedAt.toISOString()}, використовуємо=${paymentDate.toISOString()}`);
+      
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
         paymentInfo.amount, 
@@ -1445,7 +1449,7 @@ export class BankEmailService {
         undefined, // reference
         undefined, // notes
         paymentInfo.paymentTime,
-        emailReceivedAt // ВИПРАВЛЕНО: Передаємо дату отримання email замість поточної дати
+        paymentDate // ВИПРАВЛЕНО: Використовуємо дату з банківського повідомлення замість дати обробки email
       );
 
       console.log(`🏦 DEBUG: updateOrderPaymentStatus result:`, result);
