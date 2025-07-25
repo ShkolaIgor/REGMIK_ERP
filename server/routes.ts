@@ -14317,6 +14317,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test NEW Payment Time Processing with Real Bank Email
+  app.post("/api/bank-email/test-new-payment-time", async (req, res) => {
+    try {
+      console.log("🏦 🆕 Тестування нового regex для витягування часу платежу...");
+      
+      // Симулюємо реальне банківське повідомлення
+      const testEmailContent = `<br>  14:25 <br> рух коштів по рахунку: UA743510050000026005031648800, <br> валюта: UAH, <br> тип операції: зараховано, <br> сумма: 1500.00, <br> номер документу: 9999, <br>  корреспондент: ТЕСТ ТОВ НОВИЙ REGEX, <br> рахунок кореспондента: UA463209840000026004210429999, <br> призначення платежу: Тестовий платіж для перевірки нового regex №27999 від 25.07.2025р у т.ч. ПДВ 20% - 250.00 грн., <br> клієнт: НВФ "РЕГМІК". <br> Тест завершено.`;
+      
+      // Створюємо тестове банківське повідомлення
+      const testNotification = {
+        messageId: `test-new-regex-${Date.now()}@ukrsibbank.com`,
+        subject: "Зарахування коштів на Ваш рахунок",
+        fromAddress: "online@ukrsibbank.com",
+        receivedAt: new Date(),
+        textContent: testEmailContent
+      };
+      
+      console.log("🏦 Обробляємо тестове повідомлення з новим regex...");
+      const result = await bankEmailService.processBankEmail(testNotification);
+      
+      // Отримуємо створений платіж для перевірки
+      if (result.success && result.paymentId) {
+        const [payment] = await db
+          .select({
+            id: orderPayments.id,
+            paymentTime: orderPayments.paymentTime,
+            paymentAmount: orderPayments.paymentAmount,
+            paymentDate: orderPayments.paymentDate
+          })
+          .from(orderPayments)
+          .where(eq(orderPayments.id, result.paymentId))
+          .limit(1);
+          
+        res.json({
+          success: true,
+          message: "Тестування нового regex завершено",
+          testEmailPreview: testEmailContent.substring(0, 200) + "...",
+          processingResult: result,
+          createdPayment: payment || null,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        res.json({
+          success: false,
+          message: "Тестовий платіж не був створений",
+          testEmailPreview: testEmailContent.substring(0, 200) + "...",
+          processingResult: result,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+    } catch (error) {
+      console.error("❌ Помилка тестування нового regex:", error);
+      res.status(500).json({ 
+        error: "Помилка тестування нового regex",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Test Payment Time Extraction from Real Bank Emails
+  app.get("/api/bank-email/test-payment-time", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🏦 Тестування витягування часу платежу з реальних банківських повідомлень...");
+      
+      const notifications = await storage.getBankPaymentNotifications();
+      const recentNotifications = notifications.filter(n => 
+        n.rawEmailContent && 
+        n.operationType === 'зараховано' && 
+        n.invoiceNumber
+      ).slice(0, 5);
+      
+      const results = [];
+      
+      for (const notification of recentNotifications) {
+        const emailText = notification.rawEmailContent || "";
+        
+        // Тестуємо старий regex
+        const oldTimeMatch = emailText.match(/^(\d{1,2}:\d{2})/);
+        
+        // Тестуємо новий regex
+        const newTimeMatch = emailText.match(/(?:^|<br>\s*)(\d{1,2}:\d{2})/);
+        
+        results.push({
+          notificationId: notification.id,
+          invoiceNumber: notification.invoiceNumber,
+          emailPreview: emailText.substring(0, 100) + "...",
+          oldRegexResult: oldTimeMatch ? oldTimeMatch[1] : null,
+          newRegexResult: newTimeMatch ? newTimeMatch[1] : null,
+          hasTimeInPayment: !!notification.paymentTime,
+          currentPaymentTime: notification.paymentTime
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: "Тестування витягування часу завершено",
+        results,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error("❌ Помилка тестування витягування часу:", error);
+      res.status(500).json({ 
+        error: "Помилка тестування витягування часу",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Process Unprocessed Bank Notifications - Fixed version using proper payment processing
   app.post("/api/bank-email/process-unprocessed", isSimpleAuthenticated, async (req, res) => {
     try {
