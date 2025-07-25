@@ -730,27 +730,15 @@ export default function Orders() {
 
 
 
+  // ОПТИМІЗАЦІЯ: Завантажуємо базові дані тільки коли відкривається форма
   const { data: orderStatuses = [] } = useQuery<OrderStatus[]>({
     queryKey: ["/api/order-statuses"],
-  });
-
-  const { data: allClients = [], isLoading: clientsLoading } = useQuery<any[]>({
-    queryKey: ["/api/clients/search"],
-    queryFn: async () => {
-      const response = await fetch("/api/clients/search?limit=100");
-      if (!response.ok) throw new Error('Failed to fetch clients');
-      return response.json();
-    },
-  });
-
-  // ВИДАЛЕНО ЗАЙВИЙ ЗАПИТ - використовуємо дані з замовлення
-
-  const { data: allClientContacts = [] } = useQuery<any[]>({
-    queryKey: ["/api/client-contacts"],
+    enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
   });
 
   const { data: carriers = [] } = useQuery<any[]>({
     queryKey: ["/api/carriers"],
+    enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
   });
 
   // Стабільне оновлення серверної пагінації при зміні фільтрів
@@ -787,8 +775,12 @@ export default function Orders() {
 
 
 
+  // ОПТИМІЗАЦІЯ: Товари завантажуються тільки коли користувач почне вводити товари
+  const [shouldLoadProducts, setShouldLoadProducts] = useState(false);
+  
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+    enabled: shouldLoadProducts, // Завантажуємо тільки коли потрібно
   });
 
 
@@ -804,6 +796,7 @@ export default function Orders() {
     return () => clearTimeout(timer);
   }, [clientSearchValue]);
 
+  // ОПТИМІЗАЦІЯ: Пошук клієнтів тільки при відкритті форми і наявності пошукового запиту
   const { data: clientSearchData, isLoading: isSearchingClients } = useQuery({
     queryKey: ["/api/clients/search", debouncedSearchValue],
     queryFn: async () => {
@@ -817,7 +810,7 @@ export default function Orders() {
       if (!response.ok) throw new Error('Failed to search clients');
       return response.json();
     },
-    enabled: true,
+    enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
   });
 
   // Запит для завантаження контактів вибраного клієнта
@@ -870,20 +863,12 @@ export default function Orders() {
   
   const clientsList = clientSearchData?.clients || [];
 
-  const { data: orderStatusList = [] } = useQuery({
-    queryKey: ["/api/order-statuses"],
-  });
+  // ВИДАЛЕНО ДУБЛІКАТИ: orderStatusList вже є в orderStatuses
 
-  const { data: clientContacts = [] } = useQuery({
-    queryKey: ["/api/client-contacts"],
-  });
-
-  const { data: allCarriers = [] } = useQuery({
-    queryKey: ["/api/carriers"],
-  });
-
+  // ОПТИМІЗАЦІЯ: Компанії завантажуються тільки при відкритті форми
   const { data: companies = [], isLoading: companiesLoading } = useQuery({
     queryKey: ["/api/companies"],
+    enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
   }) as { data: Company[]; isLoading: boolean };
 
   // ВИДАЛЕНО ПРОБЛЕМНИЙ useEffect - встановлюємо компанію при створенні нового замовлення
@@ -1313,6 +1298,8 @@ export default function Orders() {
     setClientSearchValue("");
     setClientComboboxOpen(false);
     setSelectedCompanyId("");
+    // ОПТИМІЗАЦІЯ: Скидаємо завантаження товарів при закритті форми
+    setShouldLoadProducts(false);
     form.reset({
       clientId: "",
       customerEmail: "",
@@ -1387,6 +1374,11 @@ export default function Orders() {
     }
 
     // ContactPersonAutocomplete управляє своїм власним станом
+    
+    // ОПТИМІЗАЦІЯ: Завантажуємо товари тільки якщо в замовленні є позиції
+    if (order.items && order.items.length > 0) {
+      setShouldLoadProducts(true);
+    }
 
     // Оптимізоване встановлення товарів
     const items = order.items?.map((item: any) => ({
@@ -1413,6 +1405,10 @@ export default function Orders() {
 
   // Функції для управління товарами в замовленні
   const addOrderItem = () => {
+    // ОПТИМІЗАЦІЯ: Завантажуємо товари тільки коли користувач починає додавати позиції
+    if (!shouldLoadProducts) {
+      setShouldLoadProducts(true);
+    }
     setOrderItems([...orderItems, { productId: 0, itemName: "", quantity: "", unitPrice: "" }]);
   };
 
