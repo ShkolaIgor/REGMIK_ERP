@@ -11442,6 +11442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
   // API для перевірки оплат на пошті
   app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
     const startTime = Date.now();
