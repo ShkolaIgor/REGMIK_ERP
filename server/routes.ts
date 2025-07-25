@@ -14070,9 +14070,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Логуємо спробу тестування email
       await storage.createSystemLog({
         level: 'info',
-        component: 'bank-email-test',
+        category: 'bank-email',
+        module: 'testing',
         message: 'Тестування банківського email',
-        metadata: { 
+        details: { 
+          component: 'bank-email-test',
           emailLength: emailContent.length,
           userId: req.session?.user?.id 
         },

@@ -474,23 +474,10 @@ export class BankEmailService {
                     
                     console.log(`🏦 DEBUG: Email ${seqno} - realMessageId: "${realMessageId}", messageId: "${messageId}"`);
                     
-                    // ПЕРЕВІРЯЄМО ЧИ ЦЕЙ EMAIL ВЖЕ ОБРОБЛЕНИЙ
-                    const existingNotification = await storage.getBankNotificationByMessageId(messageId);
-                    if (existingNotification) {
-                      console.log(`🏦⏭️ Email ${seqno} (${messageId}) вже оброблений, пропускаємо`);
-                      processedCount++;
-                      
-                      if (processedCount === results.length) {
-                        console.log(`🏦 Обробка завершена: ${processedCount}/${results.length} email`);
-                        imap.end();
-                        resolve();
-                      }
-                      return;
-                    }
-                    
+                    // ПОКРАЩЕНА ПЕРЕВІРКА ДУБЛІКАТІВ - за subject + correspondent + amount
                     const actualSubject = emailSubject || 'Банківське повідомлення';
                     
-                    // Декодуємо Base64 контент якщо потрібно
+                    // Спочатку витягуємо інформацію з email для перевірки дублікатів
                     let decodedContent = emailContent;
                     try {
                       if (/^[A-Za-z0-9+/]+=*$/.test(emailContent.replace(/\s/g, ''))) {
@@ -502,6 +489,44 @@ export class BankEmailService {
                       decodedContent = emailContent;
                     }
 
+                    // Швидко витягуємо основні дані для перевірки дублікатів
+                    const quickPaymentInfo = this.analyzeBankEmailContent(decodedContent);
+                    
+                    // ПЕРЕВІРКА ДУБЛІКАТІВ ЗА КОМБІНАЦІЄЮ ПОЛІВ (НАДІЙНІШЕ ЗА MESSAGE-ID)
+                    if (quickPaymentInfo.correspondent && quickPaymentInfo.amount) {
+                      const isDuplicate = await storage.checkPaymentDuplicate({
+                        subject: actualSubject,
+                        correspondent: quickPaymentInfo.correspondent,
+                        amount: quickPaymentInfo.amount.toString()
+                      });
+                      
+                      if (isDuplicate) {
+                        console.log(`🏦⏭️ Email ${seqno} є дублікатом (subject+correspondent+amount), пропускаємо`);
+                        processedCount++;
+                        
+                        if (processedCount === results.length) {
+                          console.log(`🏦 Обробка завершена: ${processedCount}/${results.length} email`);
+                          imap.end();
+                          resolve();
+                        }
+                        return;
+                      }
+                    } else {
+                      // Fallback на MessageId якщо немає даних для складної перевірки
+                      const existingNotification = await storage.getBankNotificationByMessageId(messageId);
+                      if (existingNotification) {
+                        console.log(`🏦⏭️ Email ${seqno} (${messageId}) вже оброблений за MessageId, пропускаємо`);
+                        processedCount++;
+                        
+                        if (processedCount === results.length) {
+                          console.log(`🏦 Обробка завершена: ${processedCount}/${results.length} email`);
+                          imap.end();
+                          resolve();
+                        }
+                        return;
+                      }
+                    }
+                    
                     // Створюємо об'єкт email зі справжнім messageId
                     const emailData = {
                       messageId: messageId,
@@ -755,9 +780,52 @@ export class BankEmailService {
         };
       }
 
+      // НОВА ЛОГІКА: Створюємо записи для ВСІХ банківських email незалежно від номеру рахунку
+      console.log("🏦 НОВА ЛОГІКА: Обробляємо email без номеру рахунку або не 'зараховано'");
+      
+      // Перевіряємо чи цей email вже оброблений за новою системою дублікатів
+      const isDuplicate = await storage.checkPaymentDuplicate({
+        subject: emailContent.subject,
+        correspondent: paymentInfo.correspondent,
+        amount: paymentInfo.amount.toString()
+      });
+
+      if (isDuplicate) {
+        console.log(`🏦 ⚠️ Дублікат знайдено за новою системою перевірки`);
+        return { 
+          success: false, 
+          skipLogging: true, // Не логуємо дублікати
+          message: "Email вже оброблений (дублікат за subject+correspondent+amount)" 
+        };
+      }
+
+      // Створюємо запис про банківське повідомлення для ВСІХ email
+      const notification: InsertBankPaymentNotification = {
+        messageId: emailContent.messageId,
+        subject: emailContent.subject,
+        fromAddress: emailContent.fromAddress,
+        receivedAt: validReceivedAt,
+        accountNumber: paymentInfo.accountNumber,  
+        currency: paymentInfo.currency,
+        operationType: paymentInfo.operationType,
+        amount: paymentInfo.amount.toString(),
+        correspondent: paymentInfo.correspondent,
+        paymentPurpose: paymentInfo.paymentPurpose,
+        invoiceNumber: paymentInfo.invoiceNumber || null,
+        invoiceDate: validInvoiceDate || null,
+        vatAmount: paymentInfo.vatAmount?.toString() || null,
+        processed: false, // Всі записи починають як необроблені
+        orderId: null,
+        rawEmailContent: emailContent.textContent,
+      };
+
+      const savedNotification = await storage.createBankPaymentNotification(notification);
+      console.log(`🏦 ✅ Створено запис банківського повідомлення ID: ${savedNotification.id} для ВСІХ типів email`);
+
       return {
-        success: false,
-        message: "Банківське повідомлення не є зарахуванням коштів або не містить номер рахунку"
+        success: true,
+        message: `Банківське повідомлення збережено: ${paymentInfo.operationType} на суму ${paymentInfo.amount} ${paymentInfo.currency}`,
+        notification: savedNotification
       };
 
     } catch (error) {

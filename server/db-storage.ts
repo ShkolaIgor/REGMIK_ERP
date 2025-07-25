@@ -4590,6 +4590,28 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async checkPaymentDuplicate(criteria: { subject: string; correspondent: string; amount: string }): Promise<boolean> {
+    try {
+      const [existing] = await db
+        .select()
+        .from(bankPaymentNotifications) 
+        .where(
+          and(
+            eq(bankPaymentNotifications.subject, criteria.subject),
+            eq(bankPaymentNotifications.correspondent, criteria.correspondent),
+            eq(bankPaymentNotifications.amount, criteria.amount)
+          )
+        )
+        .limit(1);
+      
+      return !!existing;
+    } catch (error) {
+      console.error("Error checking payment duplicate:", error);
+      // При помилці перевірки дублікатів, дозволяємо обробку (false)
+      return false;
+    }
+  }
+
   // Order Payment methods
   async createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment> {
     try {

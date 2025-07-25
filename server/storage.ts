@@ -573,6 +573,7 @@ export interface IStorage {
   updateBankPaymentNotification(id: number, updates: Partial<BankPaymentNotification>): Promise<BankPaymentNotification | undefined>;
   markBankNotificationAsProcessed(notificationId: number, processed?: boolean, processingError?: string): Promise<boolean>;
   getBankNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined>;
+  checkPaymentDuplicate(criteria: { subject: string; correspondent: string; amount: string }): Promise<boolean>;
 
   // Order Payments
   createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment>;
@@ -2414,6 +2415,11 @@ export class MemStorage implements IStorage {
   async getBankPaymentNotificationByMessageId(messageId: string): Promise<BankPaymentNotification | undefined> {
     console.log(`MemStorage: getBankPaymentNotificationByMessageId(${messageId})`);
     return undefined; // Always return undefined for testing
+  }
+
+  async checkPaymentDuplicate(criteria: { subject: string; correspondent: string; amount: string }): Promise<boolean> {
+    // MemStorage завжди повертає false (немає дублікатів)
+    return false;
   }
 
   // Order Payments methods for MemStorage
