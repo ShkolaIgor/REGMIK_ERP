@@ -33,6 +33,7 @@ import { OrdersXmlImport } from "@/components/OrdersXmlImport";
 import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
 import { PrintPreviewModal } from "@/components/PrintPreviewModal";
 import ComponentDeductions from "@/components/ComponentDeductions";
+import { ContactPersonAutocomplete } from "@/components/ContactPersonAutocomplete";
 // Типи
 type Order = {
   id: number;
@@ -204,13 +205,10 @@ export default function Orders() {
   const [newClientName, setNewClientName] = useState("");
   const [isStatusSettingsOpen, setIsStatusSettingsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
-  const [selectedContactId, setSelectedContactId] = useState<string>("");
   const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
   const [printData, setPrintData] = useState<any>(null);
   const [printOrderId, setPrintOrderId] = useState<number>(0);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
-  const [contactComboboxOpen, setContactComboboxOpen] = useState(false);
-  const [contactSearchValue, setContactSearchValue] = useState("");
   const [companyComboboxOpen, setCompanyComboboxOpen] = useState(false);
   const [companySearchValue, setCompanySearchValue] = useState("");
   const [clientContactsForOrder, setClientContactsForOrder] = useState<any[]>([]);
@@ -1314,7 +1312,6 @@ export default function Orders() {
     setOrderItems([]);
     setClientSearchValue("");
     setClientComboboxOpen(false);
-    setSelectedContactId("");
     setSelectedCompanyId("");
     form.reset({
       clientId: "",
@@ -1389,8 +1386,7 @@ export default function Orders() {
       setCompanySearchValue("");
     }
 
-    // Швидке встановлення контакту
-    setSelectedContactId(order.clientContactsId?.toString() || "");
+    // ContactPersonAutocomplete управляє своїм власним станом
 
     // Оптимізоване встановлення товарів
     const items = order.items?.map((item: any) => ({
@@ -1947,86 +1943,30 @@ export default function Orders() {
                   </div>
                   <div>
                     <Label htmlFor="clientContactsId">Контактна особа</Label>
-                    <div className="relative">
-                      <Input
-                        placeholder={!form.watch("clientId") ? "Спочатку оберіть клієнта" : "Почніть вводити ім'я контакта..."}
-                        value={form.watch("clientContactsId") ? 
-                          clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"))?.fullName || contactSearchValue 
-                          : contactSearchValue}
-                        disabled={!form.watch("clientId")}
-                        onChange={(e) => {
-                          // Якщо є обраний контакт і користувач редагує, скидаємо вибір
-                          if (form.watch("clientContactsId")) {
-                            form.setValue("clientContactsId", "");
-                          }
-                          setContactSearchValue(e.target.value);
-                          // Список залишається відкритим при введенні тексту
-                          if (form.watch("clientId") && clientContactsForOrder && clientContactsForOrder.length > 0) {
-                            setContactComboboxOpen(true);
-                          }
-                        }}
-                        onFocus={() => {
-                          // При фокусі відразу відкриваємо список контактів, якщо є клієнт
-                          if (form.watch("clientId") && clientContactsForOrder && clientContactsForOrder.length > 0) {
-                            setContactComboboxOpen(true);
-                          }
-                          
-                          // Якщо є обраний контакт, підготовуємо його для редагування
-                          if (form.watch("clientContactsId") && !contactSearchValue) {
-                            const selectedContact = clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"));
-                            if (selectedContact) {
-                              setContactSearchValue(selectedContact.fullName);
+                    <ContactPersonAutocomplete
+                      clientId={form.watch("clientId") ? parseInt(form.watch("clientId")) : undefined}
+                      value={form.watch("clientContactsId") ? 
+                        clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"))?.fullName || ""
+                        : ""}
+                      onChange={(contactId, contactName) => {
+                        form.setValue("clientContactsId", contactId ? contactId.toString() : "");
+                        
+                        // Автозаповнення email та телефону з контактної особи
+                        if (contactId && clientContactsForOrder) {
+                          const selectedContact = clientContactsForOrder.find((c: any) => c.id === contactId);
+                          if (selectedContact) {
+                            if (selectedContact.email) {
+                              form.setValue("customerEmail", selectedContact.email);
+                            }
+                            if (selectedContact.primaryPhone || selectedContact.phone) {
+                              form.setValue("customerPhone", selectedContact.primaryPhone || selectedContact.phone);
                             }
                           }
-                        }}
-                        onBlur={() => setTimeout(() => setContactComboboxOpen(false), 200)}
-                        className={cn(
-                          form.formState.errors.clientContactsId ? "border-red-500" : "",
-                          // Червоний фон якщо контакт видалений (є clientContactsId але контакт не знайдений)
-                          isEditMode && form.watch("clientContactsId") && !clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId")) ? "bg-red-50 border-red-300" : ""
-                        )}
-                      />
-                      
-                      {contactComboboxOpen && clientContactsForOrder && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                          {clientContactsForOrder
-                            .filter((contact: any) => 
-                              !contactSearchValue || contact.fullName.toLowerCase().includes(contactSearchValue.toLowerCase())
-                            )
-                            .map((contact: any) => (
-                              <div
-                                key={contact.id}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                onClick={() => {
-                                  form.setValue("clientContactsId", contact.id.toString());
-                                  setContactSearchValue(contact.fullName);
-                                  setContactComboboxOpen(false);
-                                  
-                                  // Автозаповнення email та телефону з контактної особи
-                                  if (contact.email) {
-                                    form.setValue("customerEmail", contact.email);
-                                  }
-                                  if (contact.phone) {
-                                    form.setValue("customerPhone", contact.phone);
-                                  }
-                                }}
-                              >
-                                <div className="font-medium">{contact.fullName}</div>
-                                {contact.email && (
-                                  <div className="text-sm text-gray-500">{contact.email}</div>
-                                )}
-                              </div>
-                            ))}
-                          {clientContactsForOrder.filter((contact: any) => 
-                            !contactSearchValue || contact.fullName.toLowerCase().includes(contactSearchValue.toLowerCase())
-                          ).length === 0 && (
-                            <div className="px-3 py-2 text-gray-500">
-                              {contactSearchValue ? "Контактів не знайдено" : "Немає доступних контактів"}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                        }
+                      }}
+                      placeholder={!form.watch("clientId") ? "Спочатку оберіть клієнта" : "Почніть вводити ім'я контакта..."}
+                      disabled={!form.watch("clientId")}
+                    />
                   </div>
                 </div>
 
