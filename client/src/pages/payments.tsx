@@ -118,16 +118,16 @@ export default function Payments() {
       
       if (response.success) {
         toast({
-          title: "Дублікати видалено",
-          description: `Успішно видалено ${response.details.totalDeleted} дублікатів платежів`,
+          title: "Платежі очищено",
+          description: response.message || `Очищення завершено успішно`,
         });
       }
     },
     onError: (error: any) => {
       console.error("Error removing duplicates:", error);
       toast({
-        title: "Помилка видалення дублікатів",
-        description: error.message || "Не вдалося видалити дублікати платежів",
+        title: "Помилка очищення платежів",
+        description: error.message || "Не вдалося очистити платежі",
         variant: "destructive",
       });
     },
@@ -457,15 +457,15 @@ export default function Payments() {
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" className="text-red-600 hover:text-red-700" size="sm">
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Видалити дублікати
+                          Очистити платежі
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Підтвердити видалення дублікатів</AlertDialogTitle>
+                          <AlertDialogTitle>Підтвердити очищення платежів</AlertDialogTitle>
                           <AlertDialogDescription>
-                  Ця операція знайде та видалить всі дублікати платежів (однакові замовлення, суми та кореспонденти).
-                  Перший платіж з групи дублікатів залишиться, решта будуть видалені.
+                  Ця операція знайде та видалить дублікати платежів, а також спробує автоматично прив'язати неприв'язані платежі до замовлень за номерами рахунків.
+                  Це допоможе навести порядок у системі платежів.
                   Цю дію неможливо скасувати.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
@@ -476,7 +476,7 @@ export default function Payments() {
                   className="bg-red-600 hover:bg-red-700"
                   disabled={removeDuplicatesMutation.isPending}
                 >
-                  {removeDuplicatesMutation.isPending ? "Видаляю..." : "Видалити дублікати"}
+                  {removeDuplicatesMutation.isPending ? "Очищаю..." : "Очистити платежі"}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

@@ -14564,26 +14564,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Тимчасова функція для видалення дублікатів платежів
+  // Функція для видалення дублікатів платежів та прив'язування неприв'язаних платежів
   app.post("/api/payments/remove-duplicates", isSimpleAuthenticated, async (req, res) => {
     try {
-      console.log("🗑️ Початок видалення дублікатів платежів...");
+      console.log("🗑️ Початок аналізу та очищення платежів...");
       
-      // Знаходимо дублікати платежів (однаковий order_id, payment_amount, correspondent)
+      // Діагностика платежів
+      const diagnosticsQuery = `
+        SELECT 
+          COUNT(*) as total_payments,
+          COUNT(DISTINCT id) as unique_payments,
+          COUNT(CASE WHEN order_id IS NOT NULL THEN 1 END) as order_linked_payments,
+          COUNT(CASE WHEN order_id IS NULL THEN 1 END) as unlinked_payments
+        FROM order_payments
+      `;
+      
+      const diagnostics = await storage.query(diagnosticsQuery);
+      console.log("🔍 Діагностика платежів:", diagnostics.rows[0]);
+      
+      // Пошук дублікатів за bank_notification_id
       const duplicatesQuery = `
-        WITH duplicated_payments AS (
-          SELECT 
-            order_id, 
-            payment_amount, 
-            correspondent,
-            COUNT(*) as count,
-            array_agg(id ORDER BY created_at ASC) as payment_ids,
-            array_agg(created_at ORDER BY created_at ASC) as created_dates
-          FROM order_payments 
-          GROUP BY order_id, payment_amount, correspondent
-          HAVING COUNT(*) > 1
-        )
-        SELECT * FROM duplicated_payments ORDER BY order_id
+        SELECT 
+          bank_notification_id,
+          payment_amount,
+          correspondent,
+          COUNT(*) as count,
+          array_agg(id ORDER BY created_at ASC) as payment_ids
+        FROM order_payments 
+        WHERE bank_notification_id IS NOT NULL
+        GROUP BY bank_notification_id, payment_amount, correspondent
+        HAVING COUNT(*) > 1
+        ORDER BY bank_notification_id
       `;
       
       const result = await storage.query(duplicatesQuery);
@@ -14592,16 +14603,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let totalDeleted = 0;
       let deletionDetails = [];
       
+      // Видалення дублікатів
       for (const row of result.rows) {
         const paymentIds = row.payment_ids;
-        const orderid = row.order_id;
         const amount = row.payment_amount;
         const count = row.count;
         
-        // Залишаємо перший платіж, видаляємо решту
         const idsToDelete = paymentIds.slice(1); // Всі крім першого
         
-        console.log(`🗑️ Замовлення #${orderid}: ${count} дублікатів платежу ${amount}. Видаляємо ${idsToDelete.length} записів`);
+        console.log(`🗑️ Bank notification ${row.bank_notification_id}: ${count} дублікатів платежу ${amount}. Видаляємо ${idsToDelete.length} записів`);
         
         for (const idToDelete of idsToDelete) {
           await storage.deletePayment(idToDelete);
@@ -14609,7 +14619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         deletionDetails.push({
-          orderId: orderid,
+          bankNotificationId: row.bank_notification_id,
           paymentAmount: amount,
           totalDuplicates: count,
           deletedCount: idsToDelete.length,
@@ -14617,38 +14627,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Перерахунок сум оплат для всіх замовлень
-      console.log("🔄 Перерахунок сум оплат замовлень...");
-      const affectedOrders = [...new Set(result.rows.map(r => r.order_id))];
+      // Прив'язування неприв'язаних платежів до замовлень
+      console.log("🔗 Пошук неприв'язаних платежів для автоматичного прив'язування...");
       
-      for (const orderId of affectedOrders) {
-        const payments = await storage.getOrderPayments(orderId);
-        const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.paymentAmount || '0'), 0);
+      const unlinkedPaymentsQuery = `
+        SELECT id, payment_amount, correspondent, reference, notes
+        FROM order_payments 
+        WHERE order_id IS NULL
+      `;
+      
+      const unlinkedPayments = await storage.query(unlinkedPaymentsQuery);
+      let linkedCount = 0;
+      
+      for (const payment of unlinkedPayments.rows) {
+        // Спробуємо знайти замовлення за reference або notes
+        let invoiceNumber = payment.reference;
         
-        await storage.updateOrder(orderId, {
-          paidAmount: totalPaid.toFixed(2)
-        });
+        if (!invoiceNumber && payment.notes) {
+          // Витягуємо номер рахунку з notes
+          const matches = payment.notes.match(/РМ00-\d{6}|№\s*(\d+)/g);
+          if (matches) {
+            invoiceNumber = matches[0].includes('РМ00') ? matches[0] : `РМ00-0${matches[0].replace(/[^\d]/g, '').padStart(5, '0')}`;
+          }
+        }
         
-        console.log(`🔄 Замовлення #${orderId}: оновлено paidAmount = ${totalPaid.toFixed(2)}`);
+        if (invoiceNumber) {
+          // Шукаємо замовлення за номером рахунку
+          const orderQuery = `
+            SELECT id FROM orders 
+            WHERE invoice_number = $1 OR order_number = $1
+            LIMIT 1
+          `;
+          
+          const orderResult = await storage.query(orderQuery, [invoiceNumber]);
+          
+          if (orderResult.rows.length > 0) {
+            const orderId = orderResult.rows[0].id;
+            
+            // Оновлюємо платіж з прив'язкою до замовлення
+            await storage.query(
+              'UPDATE order_payments SET order_id = $1 WHERE id = $2',
+              [orderId, payment.id]
+            );
+            
+            linkedCount++;
+            console.log(`🔗 Платіж ${payment.id} прив'язано до замовлення #${orderId} (${invoiceNumber})`);
+          }
+        }
       }
       
-      console.log(`🗑️ Видалення дублікатів завершено: ${totalDeleted} платежів видалено`);
+      console.log(`🗑️ Очищення завершено: ${totalDeleted} дублікатів видалено, ${linkedCount} платежів прив'язано`);
       
       res.json({
         success: true,
-        message: `Успішно видалено ${totalDeleted} дублікатів платежів`,
+        message: `Очищення завершено: ${totalDeleted} дублікатів видалено, ${linkedCount} платежів прив'язано до замовлень`,
         details: {
           totalDeleted,
           duplicateGroups: result.rows.length,
-          affectedOrders: affectedOrders.length,
+          linkedPayments: linkedCount,
+          unlinkedPayments: unlinkedPayments.rows.length - linkedCount,
           deletionDetails
         }
       });
       
     } catch (error) {
-      console.error("❌ Помилка видалення дублікатів:", error);
+      console.error("❌ Помилка очищення платежів:", error);
       res.status(500).json({ 
-        error: "Помилка видалення дублікатів платежів",
+        error: "Помилка очищення платежів",
         message: error instanceof Error ? error.message : String(error)
       });
     }
