@@ -133,6 +133,30 @@ export default function Payments() {
     },
   });
 
+  // Мутація для повторного зчитування банківських листів
+  const reprocessBankEmailsMutation = useMutation({
+    mutationFn: () => apiRequest("/api/test-base64-banking", {
+      method: "GET",
+    }),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payments/stats"] });
+      
+      toast({
+        title: "Банківські листи оброблено",
+        description: "Усі листи з банківської пошти повторно проаналізовано та платежі додано",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Error reprocessing bank emails:", error);
+      toast({
+        title: "Помилка обробки банківських листів",
+        description: error.message || "Не вдалося обробити банківські листи",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "confirmed": return <CheckCircle className="h-4 w-4 text-green-600" />;
@@ -400,7 +424,35 @@ export default function Payments() {
             Управління та відстеження платежів за замовленнями</p>
                 </div>                 
                 <div className="flex items-center space-x-4">
-                  <div className="border-blue-200 text-purple-600 hover:bg-blue-50 flex gap-2">          
+                  <div className="border-blue-200 text-purple-600 hover:bg-blue-50 flex gap-2">
+                    {/* Кнопка для повторного зчитування банківських листів */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" className="text-blue-600 hover:text-blue-700" size="sm">
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Зчитати банківські листи
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Повторне зчитування банківських листів</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Ця операція повторно проаналізує всі листи з банківської пошти та створить платежі для знайдених замовлень.
+                            Дублікати платежів не будуть створені завдяки системі захисту.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Скасувати</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => reprocessBankEmailsMutation.mutate()}
+                            className="bg-blue-600 hover:bg-blue-700"
+                            disabled={reprocessBankEmailsMutation.isPending}
+                          >
+                            {reprocessBankEmailsMutation.isPending ? "Обробляю..." : "Зчитати листи"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>          
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" className="text-red-600 hover:text-red-700" size="sm">
