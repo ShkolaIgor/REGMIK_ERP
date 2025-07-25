@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Info, AlertTriangle, Bug, Trash2, Download, RefreshCw, Server, Activity } from "lucide-react";
+import { AlertCircle, Info, AlertTriangle, Bug, Trash2, Download, RefreshCw, Server, Activity, Mails, TriangleAlert, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
@@ -150,7 +150,7 @@ export default function SystemLogs() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 mb-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
@@ -184,52 +184,97 @@ export default function SystemLogs() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-8 pt-6">
         {/* Статистичні картки */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
-            <Card className="bg-white/80 backdrop-blur-sm border-blue-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-blue-600">Всього логів</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-900">{stats.totalLogs.toLocaleString()}</div>
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mails className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm text-blue-700 font-medium">Всього логів</p>
+                    </div>
+                    <p className="text-3xl font-bold text-emerald-900 mb-1">{stats.totalLogs.toLocaleString()}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Mails className="w-8 h-8 text-white" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-red-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-red-600">Помилки</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-900">{stats.errorCount.toLocaleString()}</div>
+            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-red-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShieldAlert className="w-4 h-4 text-purple-600" />
+                      <p className="text-sm text-red-700 font-medium">Помилки</p>
+                    </div>
+                    <p className="text-3xl font-bold text-red-900 mb-1">{stats.errorCount.toLocaleString()}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <ShieldAlert className="w-8 h-8 text-white" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-yellow-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-yellow-600">Попередження</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-900">{stats.warnCount.toLocaleString()}</div>
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TriangleAlert className="w-4 h-4 text-orange-600" />
+                      <p className="text-sm text-orange-700 font-medium">Попередження</p>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-900 mb-1">{stats.warnCount.toLocaleString()}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <TriangleAlert className="w-8 h-8 text-white" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-blue-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-blue-600">Інформація</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-900">{stats.infoCount.toLocaleString()}</div>
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Info className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm text-blue-700 font-medium">Інформація</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-900 mb-1">{stats.infoCount.toLocaleString()}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Info className="w-8 h-8 text-white" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Налагодження</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{stats.debugCount.toLocaleString()}</div>
+            <Card className="bg-gradient-to-br from-purple-50 to-blue-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Bug className="w-4 h-4 text-purple-600" />
+                      <p className="text-sm text-purple-700 font-medium">Налагодження</p>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-900 mb-1">{stats.debugCount.toLocaleString()}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Bug className="w-8 h-8 text-white" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
