@@ -679,31 +679,38 @@ export class BankEmailService {
           };
         }
         
-        // Спробуємо знайти замовлення ПЕРЕД створенням bank_payment_notification
-        const paymentResult = await this.processPayment(0, paymentInfo); // Передаємо 0 як тимчасовий ID
+        // ЗАВЖДИ створюємо bank_payment_notification (навіть якщо замовлення не знайдено)
+        const notification: InsertBankPaymentNotification = {
+          messageId: emailContent.messageId,
+          subject: emailContent.subject,
+          fromAddress: emailContent.fromAddress,
+          receivedAt: validReceivedAt,
+          accountNumber: paymentInfo.accountNumber,
+          currency: paymentInfo.currency,
+          operationType: paymentInfo.operationType,
+          amount: paymentInfo.amount.toString(),
+          correspondent: paymentInfo.correspondent,
+          paymentPurpose: paymentInfo.paymentPurpose,
+          invoiceNumber: paymentInfo.invoiceNumber,
+          invoiceDate: validInvoiceDate,
+          vatAmount: paymentInfo.vatAmount?.toString(),
+          processed: false, // Спочатку позначаємо як необроблений
+          orderId: null, // Спочатку без замовлення
+          rawEmailContent: emailContent.textContent,
+        };
+
+        const savedNotification = await storage.createBankPaymentNotification(notification);
+        
+        // ПІСЛЯ створення notification спробуємо знайти замовлення
+        const paymentResult = await this.processPayment(savedNotification.id, paymentInfo);
         
         if (paymentResult.success) {
-          // ТІЛЬКИ ЯКЩО ПЛАТІЖ УСПІШНИЙ - створюємо bank_payment_notification
-          const notification: InsertBankPaymentNotification = {
-            messageId: emailContent.messageId,
-            subject: emailContent.subject,
-            fromAddress: emailContent.fromAddress,
-            receivedAt: validReceivedAt,
-            accountNumber: paymentInfo.accountNumber,
-            currency: paymentInfo.currency,
-            operationType: paymentInfo.operationType,
-            amount: paymentInfo.amount.toString(),
-            correspondent: paymentInfo.correspondent,
-            paymentPurpose: paymentInfo.paymentPurpose,
-            invoiceNumber: paymentInfo.invoiceNumber,
-            invoiceDate: validInvoiceDate,
-            vatAmount: paymentInfo.vatAmount?.toString(),
-            processed: true,
-            orderId: paymentResult.orderId,
-            rawEmailContent: emailContent.textContent,
-          };
-
-          const savedNotification = await storage.createBankPaymentNotification(notification);
+          // Оновлюємо notification як оброблений з orderId
+          await storage.query(`
+            UPDATE bank_payment_notifications 
+            SET processed = true, order_id = $1 
+            WHERE id = $2
+          `, [paymentResult.orderId, savedNotification.id]);
           
           // Логуємо успішну обробку платежу
           await storage.createSystemLog({
@@ -720,11 +727,10 @@ export class BankEmailService {
             userId: null
           });
         } else {
-          // ЯКЩО ЗАМОВЛЕННЯ НЕ ЗНАЙДЕНО - НЕ створюємо bank_payment_notification
-          // Це дозволить повторно перевіряти цей email пізніше коли замовлення будуть створені
-          console.log("🏦⏭️ Замовлення не знайдено, НЕ створюємо запис - email буде перевірено знову пізніше");
+          // Залишаємо notification як необроблений (processed = false)
+          console.log("🏦⏭️ Замовлення не знайдено, банківське повідомлення збережено як необроблене");
           
-          // Логуємо помилку обробки платежу (але не створюємо bank_payment_notification)
+          // Логуємо помилку обробки платежу
           await storage.createSystemLog({
             level: 'warn',
             category: 'bank-payment',
@@ -734,7 +740,8 @@ export class BankEmailService {
               component: 'bank-email-service',
               invoiceNumber: paymentInfo.invoiceNumber,
               error: paymentResult.message,
-              amount: paymentInfo.amount
+              amount: paymentInfo.amount,
+              notificationId: savedNotification.id
             },
             userId: null
           });

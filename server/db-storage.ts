@@ -572,13 +572,19 @@ export class DatabaseStorage implements IStorage {
     // Застосування фільтрів
     const conditions = [];
 
-    // Пошук (спрощений варіант для тестування)
+    // Пошук за номером замовлення, номером рахунку, назвою клієнта та контактами
     if (search) {
       const searchLower = `%${search.toLowerCase()}%`;
       conditions.push(
         or(
           ilike(orders.orderNumber, searchLower),
-          ilike(orders.invoiceNumber, searchLower)
+          ilike(orders.invoiceNumber, searchLower),
+          ilike(clients.name, searchLower),
+          ilike(clients.fullName, searchLower),
+          ilike(clients.taxCode, searchLower),
+          ilike(clientContacts.name, searchLower),
+          ilike(clientContacts.email, searchLower),
+          ilike(clientContacts.phone, searchLower)
         )
       );
     }
@@ -14449,32 +14455,34 @@ export class DatabaseStorage implements IStorage {
 
   async getAllPayments(): Promise<any[]> {
     try {
-      const payments = await db
+      // Отримуємо ВСІ банківські повідомлення включно з тими що не мають пов'язаних замовлень
+      const allBankNotifications = await db
         .select({
-          id: orderPayments.id,
-          orderId: orderPayments.orderId,
+          id: sql`'bank-' || ${bankPaymentNotifications.id}`,
+          orderId: bankPaymentNotifications.orderId,
           orderNumber: orders.orderNumber,
           clientName: clients.name,
           correspondent: bankPaymentNotifications.correspondent,
-          paymentAmount: orderPayments.paymentAmount,
-          paymentType: orderPayments.paymentType,
-          paymentStatus: orderPayments.paymentStatus,
-          paymentDate: orderPayments.paymentDate,
-          bankAccount: orderPayments.bankAccount,
-          reference: orderPayments.reference,
-          notes: orderPayments.notes,
-          createdAt: orderPayments.createdAt,
-          bankNotificationId: orderPayments.bankNotificationId,
-          invoiceNumber: orders.invoiceNumber,
-          invoiceDate: orders.createdAt
+          paymentAmount: sql`CAST(${bankPaymentNotifications.amount} AS DECIMAL)`,
+          paymentType: sql`'bank_transfer'`,
+          paymentStatus: sql`CASE WHEN ${bankPaymentNotifications.processed} THEN 'confirmed' ELSE 'pending' END`,
+          paymentDate: bankPaymentNotifications.receivedAt,
+          bankAccount: bankPaymentNotifications.accountNumber,
+          reference: bankPaymentNotifications.invoiceNumber,
+          notes: sql`${bankPaymentNotifications.subject} || ' - ' || ${bankPaymentNotifications.paymentPurpose}`,
+          createdAt: bankPaymentNotifications.receivedAt,
+          bankNotificationId: bankPaymentNotifications.id,
+          invoiceNumber: sql`COALESCE(${orders.invoiceNumber}, ${bankPaymentNotifications.invoiceNumber})`,
+          invoiceDate: sql`COALESCE(${orders.createdAt}, ${bankPaymentNotifications.invoiceDate})`,
+          operationType: bankPaymentNotifications.operationType
         })
-        .from(orderPayments)
-        .leftJoin(orders, eq(orderPayments.orderId, orders.id))
+        .from(bankPaymentNotifications)
+        .leftJoin(orders, eq(bankPaymentNotifications.orderId, orders.id))
         .leftJoin(clients, eq(orders.clientId, clients.id))
-        .leftJoin(bankPaymentNotifications, eq(orderPayments.bankNotificationId, bankPaymentNotifications.id))
-        .orderBy(desc(orderPayments.createdAt));
+        .where(eq(bankPaymentNotifications.operationType, 'зараховано'))
+        .orderBy(desc(bankPaymentNotifications.receivedAt));
 
-      return payments;
+      return allBankNotifications;
     } catch (error) {
       console.error('Error fetching payments:', error);
       throw error;
@@ -14487,30 +14495,31 @@ export class DatabaseStorage implements IStorage {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+      // Отримуємо статистику з банківських повідомлень замість order_payments
       const [totalStats, todayStats, weekStats] = await Promise.all([
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(CAST(${bankPaymentNotifications.amount} AS DECIMAL)), 0)`.mapWith(Number),
           })
-          .from(orderPayments)
-          .where(eq(orderPayments.paymentStatus, 'confirmed')),
+          .from(bankPaymentNotifications)
+          .where(eq(bankPaymentNotifications.operationType, 'зараховано')),
           
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(CAST(${bankPaymentNotifications.amount} AS DECIMAL)), 0)`.mapWith(Number),
           })
-          .from(orderPayments)
-          .where(sql`${orderPayments.paymentDate} >= ${today} AND ${orderPayments.paymentStatus} = 'confirmed'`),
+          .from(bankPaymentNotifications)
+          .where(sql`${bankPaymentNotifications.receivedAt} >= ${today} AND ${bankPaymentNotifications.operationType} = 'зараховано'`),
           
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(CAST(${bankPaymentNotifications.amount} AS DECIMAL)), 0)`.mapWith(Number),
           })
-          .from(orderPayments)
-          .where(sql`${orderPayments.paymentDate} >= ${thisWeek} AND ${orderPayments.paymentStatus} = 'confirmed'`)
+          .from(bankPaymentNotifications)
+          .where(sql`${bankPaymentNotifications.receivedAt} >= ${thisWeek} AND ${bankPaymentNotifications.operationType} = 'зараховано'`)
       ]);
 
       // Додаткові статистики для різних статусів та типів
