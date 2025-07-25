@@ -424,7 +424,15 @@ export default function Orders() {
             );
           }
 
-          switch (paymentType) {
+          // Визначаємо актуальний статус оплати на основі paidAmount та totalAmount
+          const actualPaymentStatus = (() => {
+            if (paidAmount === 0) return 'none';
+            if (paidAmount >= totalAmount) return 'full';
+            if (paymentType === 'contract') return 'contract'; // Зберігаємо тип "по договору"
+            return 'partial';
+          })();
+
+          switch (actualPaymentStatus) {
             case 'full':
               return (
                 <div onClick={(e) => e.stopPropagation()}>
