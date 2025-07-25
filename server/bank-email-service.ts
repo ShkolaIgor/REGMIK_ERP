@@ -885,7 +885,7 @@ export class BankEmailService {
         correspondentMatch = emailText.match(/кореспондент:\s*(.+?)(?:,\s*<br>)/i);
       }
       // УНІВЕРСАЛЬНИЙ формат: "призначення платежу:" або "Призначення платежу:"
-      const purposeMatch = emailText.match(/призначення платежу:\s*(.+?)(?=\s*<br>|$)/i);
+      const purposeMatch = emailText.match(/призначення платежу:\s*(.+)/i);
       
       console.log("🏦 Результати пошуку регекспів:");
       console.log("  accountMatch:", accountMatch?.[1]);
@@ -984,8 +984,14 @@ export class BankEmailService {
           isFullInvoiceNumber = true;
           console.log("🏦 ✅ ПОВНИЙ НОМЕР в призначенні:", fullInvoiceMatch[0], "→", invoiceNumber);
         } else {
-          // Шукаємо частковий номер: "згідно рах.№ 27751", "рах №27759", "№ 27779"
-          const purposeInvoiceMatch = purposeMatch[1].match(/(?:рах\.?\s*)?№\s*(\d+)/i);
+          // Шукаємо частковий номер: "згідно рах.№ 27751", "рах №27759", "№ 27779", "No 27771"
+          let purposeInvoiceMatch = purposeMatch[1].match(/(?:рах\.?\s*)?№\s*(\d+)/i);
+          
+          // Додаємо підтримку англійського формату "No XXXXX"
+          if (!purposeInvoiceMatch) {
+            purposeInvoiceMatch = purposeMatch[1].match(/\bNo\s+(\d+)/i);
+          }
+          
           if (purposeInvoiceMatch) {
             partialInvoiceNumber = purposeInvoiceMatch[1];
             invoiceNumber = partialInvoiceNumber; // Тимчасово зберігаємо як є
