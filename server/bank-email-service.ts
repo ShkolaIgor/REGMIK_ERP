@@ -1518,11 +1518,8 @@ export class BankEmailService {
 
       // Оновлюємо статус оплати замовлення тільки якщо notificationId реальний
       console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus...`);
-      console.log(`🏦 DEBUG: emailContent provided: ${!!emailContent}`);
-      console.log(`🏦 DEBUG: emailDate from header: ${emailContent?.emailDate?.toISOString()}`);
-      console.log(`🏦 DEBUG: invoiceDate from bank message: ${paymentInfo.invoiceDate?.toISOString()}`);
-      console.log(`🏦 DEBUG: emailReceivedAt (current logic): ${emailContent?.receivedAt?.toISOString()}`);
-      console.log(`🏦 DEBUG: Final paymentDate will be: ${(paymentInfo.invoiceDate || emailContent?.emailDate || new Date()).toISOString()}`);
+      // ПРІОРИТЕТ: emailDate (заголовок email) -> fallback на invoiceDate -> поточна дата
+      const finalPaymentDate = emailContent?.emailDate || paymentInfo.invoiceDate || new Date();
       
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
@@ -1534,7 +1531,7 @@ export class BankEmailService {
         undefined, // reference
         undefined, // notes
         paymentInfo.paymentTime,
-        paymentInfo.invoiceDate || emailContent?.emailDate || new Date(), // ВИПРАВЛЕНО: Використовуємо дату рахунку з банківського повідомлення як фактичну дату платежу  
+        finalPaymentDate, // ВИПРАВЛЕНО: Використовуємо дату з email заголовка як пріоритет
         emailContent?.receivedAt || new Date()  // Дата отримання email ERP системою
       );
 
