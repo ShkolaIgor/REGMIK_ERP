@@ -435,8 +435,8 @@ export class BankEmailService {
                         }
                       }
                       
-                      // Витягуємо дату з email заголовків
-                      const dateMatch = buffer.match(/Date:\s*(.*?)\r?\n/i);
+                      // Витягуємо дату з email заголовків - шукаємо саме "Date:" з великої літери
+                      const dateMatch = buffer.match(/^Date:\s+(.+?)$/m);
                       if (dateMatch) {
                         try {
                           const rawDate = dateMatch[1].trim();
