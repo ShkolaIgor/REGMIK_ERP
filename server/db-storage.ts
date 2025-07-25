@@ -14597,31 +14597,30 @@ export class DatabaseStorage implements IStorage {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      // Отримуємо статистику з банківських повідомлень замість order_payments
+      // ВИПРАВЛЕНО: Отримуємо статистику з ФАКТИЧНИХ платежів (order_payments) замість банківських повідомлень
       const [totalStats, todayStats, weekStats] = await Promise.all([
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(CAST(${bankPaymentNotifications.amount} AS DECIMAL)), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
           })
-          .from(bankPaymentNotifications)
-          .where(eq(bankPaymentNotifications.operationType, 'зараховано')),
+          .from(orderPayments),
           
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(CAST(${bankPaymentNotifications.amount} AS DECIMAL)), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
           })
-          .from(bankPaymentNotifications)
-          .where(sql`${bankPaymentNotifications.receivedAt} >= ${today} AND ${bankPaymentNotifications.operationType} = 'зараховано'`),
+          .from(orderPayments)
+          .where(gte(orderPayments.createdAt, today)),
           
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(CAST(${bankPaymentNotifications.amount} AS DECIMAL)), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
           })
-          .from(bankPaymentNotifications)
-          .where(sql`${bankPaymentNotifications.receivedAt} >= ${thisWeek} AND ${bankPaymentNotifications.operationType} = 'зараховано'`)
+          .from(orderPayments)
+          .where(gte(orderPayments.createdAt, thisWeek))
       ]);
 
       // Додаткові статистики для різних статусів та типів
