@@ -1080,10 +1080,13 @@ export class BankEmailService {
       let partialInvoiceNumber = null; // Для збереження часткового номера
       
       if (purposeMatch?.[1]) {
-        console.log("🏦 Пошук номера рахунку в призначенні платежу:", purposeMatch[1]);
+        const purposeText = purposeMatch[1];
+        console.log("🏦 Пошук номера рахунку в призначенні платежу:", purposeText);
+        console.log("🏦 DEBUG: Довжина тексту призначення:", purposeText.length);
+        console.log("🏦 DEBUG: Перших 100 символів:", purposeText.substring(0, 100));
         
         // Спочатку шукаємо повний формат РМ00-XXXXXX
-        const fullInvoiceMatch = purposeMatch[1].match(/РМ00[-\s]*(\d{5,6})/i);
+        const fullInvoiceMatch = purposeText.match(/РМ00[-\s]*(\d{5,6})/i);
         if (fullInvoiceMatch) {
           const rawNumber = fullInvoiceMatch[1];
           invoiceNumber = `РМ00-${rawNumber.padStart(6, '0')}`;
@@ -1091,12 +1094,25 @@ export class BankEmailService {
           isFullInvoiceNumber = true;
           console.log("🏦 ✅ ПОВНИЙ НОМЕР в призначенні:", fullInvoiceMatch[0], "→", invoiceNumber);
         } else {
-          // Шукаємо частковий номер: "згідно рах.№ 27751", "рах №27759", "№ 27779", "No 27771"
-          let purposeInvoiceMatch = purposeMatch[1].match(/(?:рах\.?\s*)?№\s*(\d+)/i);
+          console.log("🏦 DEBUG: Повний формат РМ00-XXXXXX не знайдено");
+          
+          // Шукаємо частковий номер: "згідно рах.№ 27751", "рах №27759", "№ 27779", "No 27771", "рах. 27435"  
+          console.log("🏦 DEBUG: Тестуємо regex /рах\.?\s*№?\s*(\d+)/i на тексті:", purposeText);
+          let purposeInvoiceMatch = purposeText.match(/рах\.?\s*№?\s*(\d+)/i);
+          console.log("🏦 DEBUG: Результат regex 1:", purposeInvoiceMatch);
           
           // Додаємо підтримку англійського формату "No XXXXX"
           if (!purposeInvoiceMatch) {
-            purposeInvoiceMatch = purposeMatch[1].match(/\bNo\s+(\d+)/i);
+            console.log("🏦 DEBUG: Тестуємо regex /\\bNo\\s+(\d+)/i");
+            purposeInvoiceMatch = purposeText.match(/\bNo\s+(\d+)/i);
+            console.log("🏦 DEBUG: Результат regex 2 (No XXXXX):", purposeInvoiceMatch);
+          }
+          
+          // Додаємо підтримку просто "№ XXXXX"
+          if (!purposeInvoiceMatch) {
+            console.log("🏦 DEBUG: Тестуємо regex /№\\s*(\d+)/i");
+            purposeInvoiceMatch = purposeText.match(/№\s*(\d+)/i);
+            console.log("🏦 DEBUG: Результат regex 3 (№ XXXXX):", purposeInvoiceMatch);
           }
           
           if (purposeInvoiceMatch) {
@@ -1106,7 +1122,8 @@ export class BankEmailService {
             isFullInvoiceNumber = false;
             console.log("🏦 ✅ ЧАСТКОВИЙ НОМЕР в призначенні:", partialInvoiceNumber, "→ потребує складного пошуку");
           } else {
-            console.log("🏦 ❌ Номер не знайдено в призначенні");
+            console.log("🏦 ❌ Номер не знайдено в призначенні - жоден regex не спрацював");
+            console.log("🏦 ❌ Текст для тестування:", purposeText);
           }
         }
       }
@@ -1515,7 +1532,7 @@ export class BankEmailService {
         undefined, // reference
         undefined, // notes
         paymentInfo.paymentTime,
-        emailContent?.emailDate || new Date(), // Дата з Email заголовка (Date:) - фактична дата платежу
+        emailContent?.receivedAt || new Date(), // ВИПРАВЛЕНО: Використовуємо дату отримання email як дату платежу  
         emailContent?.receivedAt || new Date()  // Дата отримання email ERP системою
       );
 

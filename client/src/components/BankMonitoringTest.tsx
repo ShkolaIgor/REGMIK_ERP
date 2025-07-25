@@ -188,7 +188,12 @@ export function BankMonitoringTest() {
   });
 
   // Отримання статистики банківських платежів
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<{
+    total: number;
+    processed: number;
+    unprocessed: number;
+    lastWeek: number;
+  }>({
     queryKey: ["/api/bank-payments/stats"],
     refetchInterval: 30000, // Оновлюємо кожні 30 секунд
   });

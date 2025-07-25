@@ -4718,8 +4718,8 @@ export class DatabaseStorage implements IStorage {
       console.log(`🏦 DEBUG: Order updated successfully`);
 
       // Створюємо запис про платіж
-      // ОНОВЛЕНО: Використовуємо дату з email заголовка (Date:) як дату платежу
-      const paymentDate = emailDate || emailReceivedAt || new Date();
+      // ВИПРАВЛЕНО: Використовуємо дату отримання email як дату платежу (receivedAt)
+      const paymentDate = emailReceivedAt || new Date();
       const paymentData = {
         orderId: orderId,
         paymentAmount: paymentAmount.toString(),

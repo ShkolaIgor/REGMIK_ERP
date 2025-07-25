@@ -15192,6 +15192,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ТЕСТОВИЙ ENDPOINT: Перевірка виправленого парсингу номерів рахунків
+  app.get("/api/test-fixed-invoice-parsing", async (req, res) => {
+    try {
+      const testEmailContent = `
+рух коштів по рахунку: UA743510050000026005031648800,
+валюта: UAH,
+тип операції: зараховано,
+сумма: 12500.50,
+номер документу: 13999,
+корреспондент: ТОВ "ТЕСТ КОМПАНІЯ",
+рахунок кореспондента: UA333209840000026002210392065,
+призначення платежу: Оплата за товари зг. рах. 29999 від 15.07.2025р., у т.ч. ПДВ 20% - 2083.42 грн.,
+клієнт: НВФ "РЕГМІК".
+      `;
+
+      console.log("🔧 ТЕСТ ВИПРАВЛЕНОГО ПАРСИНГУ НОМЕРІВ РАХУНКІВ");
+      
+      // Використовуємо метод manualProcessEmail через bankEmailService  
+      const result = await bankEmailService.manualProcessEmail(testEmailContent);
+      
+      res.json({
+        success: true,
+        message: "Тест виправленого парсингу номерів рахунків завершено",
+        expected: {
+          amount: 12500.50,
+          currency: "UAH", 
+          correspondent: "ТОВ \"ТЕСТ КОМПАНІЯ\"",
+          invoiceNumber: "29999"
+        },
+        parsed: result,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("❌ Помилка тестування:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // ТЕСТОВИЙ ENDPOINT: Перевірка парсингу банківського email з реальною сумою
   app.get("/api/test-user-bank-parsing", async (req, res) => {
     try {
