@@ -205,6 +205,7 @@ export default function Orders() {
   const [newClientName, setNewClientName] = useState("");
   const [isStatusSettingsOpen, setIsStatusSettingsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [selectedContactId, setSelectedContactId] = useState<number | undefined>(undefined);
   const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
   const [printData, setPrintData] = useState<any>(null);
   const [printOrderId, setPrintOrderId] = useState<number>(0);
@@ -553,7 +554,7 @@ export default function Orders() {
       
       case 'shippedDate':
         const carrier = order.carrierId 
-          ? Array.isArray(allCarriers) && allCarriers.find((c: any) => c.id === order.carrierId)
+          ? Array.isArray(carriers) && carriers.find((c: any) => c.id === order.carrierId)
           : null;
         
         return (

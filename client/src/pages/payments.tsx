@@ -163,11 +163,6 @@ export default function Payments() {
 
   // Дані фільтруються на backend, тому використовуємо їх напряму
   const filteredPayments = payments || [];
-  
-  // DEBUG: Перевірмо що отримали від API
-  console.log("PAYMENTS DEBUG - API Response:", payments);
-  console.log("PAYMENTS DEBUG - Filtered length:", filteredPayments.length);
-  console.log("PAYMENTS DEBUG - First payment:", filteredPayments[0]);
 
   const columns = [
     {
