@@ -407,6 +407,20 @@ export class DatabaseStorage implements IStorage {
     return result[0] || undefined;
   }
 
+  async searchProducts(searchTerm: string, limit: number = 50): Promise<Product[]> {
+    const searchPattern = `%${searchTerm.toLowerCase()}%`;
+    const result = await db.select()
+      .from(products)
+      .where(
+        or(
+          ilike(products.name, searchPattern),
+          ilike(products.sku, searchPattern)
+        )
+      )
+      .limit(limit);
+    return result;
+  }
+
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     console.log(`🛠️ createProduct() отримав дані:`, JSON.stringify(insertProduct, null, 2));
     const result = await db.insert(products).values(insertProduct).returning();

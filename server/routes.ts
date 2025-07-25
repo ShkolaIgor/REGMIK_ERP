@@ -732,6 +732,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Пошук товарів для оптимізації форм
+  app.get("/api/products/search", async (req, res) => {
+    try {
+      const { q: searchTerm, limit = '50' } = req.query;
+      
+      if (!searchTerm || typeof searchTerm !== 'string' || searchTerm.trim().length < 2) {
+        return res.json([]);
+      }
+
+      const products = await storage.searchProducts(searchTerm.trim(), parseInt(limit as string));
+      res.json(products);
+    } catch (error) {
+      console.error("Error searching products:", error);
+      res.status(500).json({ error: "Failed to search products" });
+    }
+  });
+
   // Endpoint для отримання замовлених товарів (оплачені але не відвантажені)
   app.get("/api/products/ordered", async (req, res) => {
     try {

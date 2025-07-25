@@ -776,12 +776,33 @@ export default function Orders() {
 
 
 
-  // ОПТИМІЗАЦІЯ: Товари завантажуються тільки коли користувач почне вводити товари
-  const [shouldLoadProducts, setShouldLoadProducts] = useState(false);
-  
+  // ОПТИМІЗАЦІЯ: Динамічний пошук товарів з debounce
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [debouncedProductSearchTerm, setDebouncedProductSearchTerm] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProductSearchTerm(productSearchTerm);
+    }, 300); // 300мс затримка для оптимізації пошуку
+
+    return () => clearTimeout(timer);
+  }, [productSearchTerm]);
+
+  // Завантажуємо товари тільки при наявності пошукового запиту
   const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
-    enabled: shouldLoadProducts, // Завантажуємо тільки коли потрібно
+    queryKey: ["/api/products/search", debouncedProductSearchTerm],
+    queryFn: async () => {
+      if (!debouncedProductSearchTerm) return [];
+      
+      const params = new URLSearchParams();
+      params.append('q', debouncedProductSearchTerm);
+      params.append('limit', '50'); // Обмежуємо до 50 результатів
+      
+      const response = await fetch(`/api/products/search?${params}`);
+      if (!response.ok) throw new Error('Failed to search products');
+      return response.json();
+    },
+    enabled: debouncedProductSearchTerm.length >= 2, // Пошук тільки якщо введено мінімум 2 символи
   });
 
 
@@ -1299,8 +1320,7 @@ export default function Orders() {
     setClientSearchValue("");
     setClientComboboxOpen(false);
     setSelectedCompanyId("");
-    // ОПТИМІЗАЦІЯ: Скидаємо завантаження товарів при закритті форми
-    setShouldLoadProducts(false);
+    setProductSearchTerm(""); // Очищаємо пошук товарів
     form.reset({
       clientId: "",
       customerEmail: "",
@@ -1406,10 +1426,6 @@ export default function Orders() {
 
   // Функції для управління товарами в замовленні
   const addOrderItem = () => {
-    // ОПТИМІЗАЦІЯ: Завантажуємо товари тільки коли користувач починає додавати позиції
-    if (!shouldLoadProducts) {
-      setShouldLoadProducts(true);
-    }
     setOrderItems([...orderItems, { productId: 0, itemName: "", quantity: "", unitPrice: "" }]);
   };
 
@@ -2213,17 +2229,25 @@ export default function Orders() {
                                 return "";
                               })()}
                               onChange={(e) => {
+                                const value = e.target.value;
                                 // Оновлюємо itemName при введенні тексту
-                                updateOrderItem(index, "itemName", e.target.value);
+                                updateOrderItem(index, "itemName", value);
                                 // Скидаємо productId якщо користувач почав вводити власну назву
                                 if (item.productId > 0) {
                                   updateOrderItem(index, "productId", 0);
                                 }
+                                // Оновлюємо пошуковий термін для динамічного завантаження товарів
+                                setProductSearchTerm(value);
                               }}
                               onFocus={() => {
                                 // Показуємо випадаючий список при фокусі
                                 const dropdown = document.getElementById(`product-dropdown-${index}`);
                                 if (dropdown) dropdown.style.display = 'block';
+                                // Встановлюємо поточне значення як пошуковий термін
+                                const currentValue = item.itemName || (editingOrder?.items?.[index]?.itemName) || "";
+                                if (currentValue) {
+                                  setProductSearchTerm(currentValue);
+                                }
                               }}
                               onBlur={(e) => {
                                 // Приховуємо випадаючий список через короткий час (щоб дати час на клік)
@@ -2240,17 +2264,7 @@ export default function Orders() {
                               className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
                               style={{ display: 'none' }}
                             >
-                              {products?.filter((product: any) => {
-                                const currentValue = (() => {
-                                  if (item.productId > 0) {
-                                    const selectedProduct = products.find((p: any) => p.id === item.productId);
-                                    return selectedProduct?.name || "";
-                                  }
-                                  return item.itemName || (editingOrder?.items?.[index]?.itemName) || "";
-                                })();
-                                return !currentValue || product.name.toLowerCase().includes(currentValue.toLowerCase()) ||
-                                       product.sku.toLowerCase().includes(currentValue.toLowerCase());
-                              }).map((product: any) => (
+                              {products?.map((product: any) => (
                                 <div
                                   key={product.id}
                                   className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
@@ -2261,6 +2275,8 @@ export default function Orders() {
                                     if (product.retailPrice && (!item.unitPrice || item.unitPrice === "0")) {
                                       updateOrderItem(index, "unitPrice", product.retailPrice.toString());
                                     }
+                                    // Очищаємо пошук після вибору товару
+                                    setProductSearchTerm("");
                                     const dropdown = document.getElementById(`product-dropdown-${index}`);
                                     if (dropdown) dropdown.style.display = 'none';
                                   }}
@@ -2271,19 +2287,14 @@ export default function Orders() {
                                   </div>
                                 </div>
                               ))}
-                              {products?.filter((product: any) => {
-                                const currentValue = (() => {
-                                  if (item.productId > 0) {
-                                    const selectedProduct = products.find((p: any) => p.id === item.productId);
-                                    return selectedProduct?.name || "";
-                                  }
-                                  return item.itemName || (editingOrder?.items?.[index]?.itemName) || "";
-                                })();
-                                return !currentValue || product.name.toLowerCase().includes(currentValue.toLowerCase()) ||
-                                       product.sku.toLowerCase().includes(currentValue.toLowerCase());
-                              }).length === 0 && (
+                              {products?.length === 0 && debouncedProductSearchTerm.length >= 2 && (
                                 <div className="px-3 py-2 text-gray-500">
                                   Товарів не знайдено
+                                </div>
+                              )}
+                              {debouncedProductSearchTerm.length > 0 && debouncedProductSearchTerm.length < 2 && (
+                                <div className="px-3 py-2 text-gray-500">
+                                  Введіть мінімум 2 символи для пошуку
                                 </div>
                               )}
                             </div>

@@ -130,6 +130,7 @@ export interface IStorage {
   // Products
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
+  searchProducts(searchTerm: string, limit?: number): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
@@ -953,6 +954,22 @@ export class MemStorage implements IStorage {
 
   async getProduct(id: number): Promise<Product | undefined> {
     return this.products.get(id);
+  }
+
+  async searchProducts(searchTerm: string, limit: number = 50): Promise<Product[]> {
+    const term = searchTerm.toLowerCase();
+    const results: Product[] = [];
+    
+    for (const product of this.products.values()) {
+      if (results.length >= limit) break;
+      
+      if (product.name.toLowerCase().includes(term) || 
+          product.sku.toLowerCase().includes(term)) {
+        results.push(product);
+      }
+    }
+    
+    return results;
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
