@@ -878,7 +878,7 @@ export class BankEmailService {
         correspondentMatch = emailText.match(/кореспондент:\s*(.+?)(?:,\s*<br>)/i);
       }
       // УНІВЕРСАЛЬНИЙ формат: "призначення платежу:" або "Призначення платежу:"
-      const purposeMatch = emailText.match(/призначення платежу:\s*([^\n\r]+)/i);
+      const purposeMatch = emailText.match(/призначення платежу:\s*(.+?)(?=\s*<br>|$)/i);
       
       console.log("🏦 Результати пошуку регекспів:");
       console.log("  accountMatch:", accountMatch?.[1]);
@@ -977,8 +977,8 @@ export class BankEmailService {
           isFullInvoiceNumber = true;
           console.log("🏦 ✅ ПОВНИЙ НОМЕР в призначенні:", fullInvoiceMatch[0], "→", invoiceNumber);
         } else {
-          // Шукаємо частковий номер: "згідно рах.№ 27751" або "рах №27759"
-          const purposeInvoiceMatch = purposeMatch[1].match(/рах\.?\s*№?\s*(\d+)/i);
+          // Шукаємо частковий номер: "згідно рах.№ 27751", "рах №27759", "№ 27779"
+          const purposeInvoiceMatch = purposeMatch[1].match(/(?:рах\.?\s*)?№\s*(\d+)/i);
           if (purposeInvoiceMatch) {
             partialInvoiceNumber = purposeInvoiceMatch[1];
             invoiceNumber = partialInvoiceNumber; // Тимчасово зберігаємо як є
@@ -989,32 +989,17 @@ export class BankEmailService {
             console.log("🏦 ❌ Номер не знайдено в призначенні");
           }
         }
-      } else {
-        console.log("🏦 ⚠️ purposeMatch відсутній");
       }
       
-      // Пріоритет 2: Пошук стандартних форматів РМ00-XXXXX в основному тексті
-      if (!invoiceMatch) {
-        const rm00Match = emailText.match(/РМ00[-\s]*(\d{5,6})/i);
-        if (rm00Match) {
-          const rawNumber = rm00Match[1];
-          invoiceNumber = `РМ00-${rawNumber.padStart(6, '0')}`;
-          invoiceMatch = rm00Match;
-          isFullInvoiceNumber = true;
-          console.log("🏦 ✅ ПОВНИЙ НОМЕР РМ00 в тексті:", invoiceNumber);
-        }
-      }
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: НЕ шукаємо номери рахунків в основному тексті!
+      // Тільки в призначенні платежу, щоб уникнути помилкового витягування номерів банківських рахунків
       
-      // Пріоритет 3: Пошук номерів з датами (будь-який текст між номером та датою)
+      // ЯКЩО НЕ ЗНАЙДЕНО В ПРИЗНАЧЕННІ - ВСТАНОВЛЮЄМО null
       if (!invoiceMatch) {
-        const numberDateMatch = emailText.match(/(\d{5,6}).*?(\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2}р?))/i);
-        if (numberDateMatch) {
-          partialInvoiceNumber = numberDateMatch[1];
-          invoiceNumber = partialInvoiceNumber; // Зберігаємо як частковий
-          invoiceMatch = numberDateMatch;
-          isFullInvoiceNumber = false;
-          console.log("🏦 ✅ ЧАСТКОВИЙ НОМЕР з датою:", partialInvoiceNumber, "→ потребує складного пошуку");
-        }
+        console.log("🏦 ❌ Номер рахунку НЕ знайдено в призначенні платежу - завершуємо пошук");
+        invoiceNumber = "";
+        partialInvoiceNumber = null;
+        isFullInvoiceNumber = false;
       }
       
       // Шукаємо дату рахунку (підтримка українських та числових форматів)
@@ -1116,6 +1101,17 @@ export class BankEmailService {
       console.log("🏦 🆕 НОВА ЛОГІКА: invoiceNumber:", invoiceNumber);
       console.log("🏦 Повертаю результат з operationType:", cleanOperationType);
 
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: Автоматичне додавання префіксу РМ00- до часткових номерів
+      let finalInvoiceNumber = invoiceNumber;
+      let finalPartialInvoiceNumber = partialInvoiceNumber;
+      
+      if (partialInvoiceNumber && !isFullInvoiceNumber) {
+        // Додаємо префікс РМ00- до часткового номера для правильного пошуку
+        const paddedNumber = partialInvoiceNumber.padStart(6, '0'); // 27779 → 027779
+        finalInvoiceNumber = `РМ00-${paddedNumber}`; // РМ00-027779
+        console.log(`🏦 ✅ АВТОПЕРЕТВОРЕННЯ: ${partialInvoiceNumber} → ${finalInvoiceNumber}`);
+      }
+
       return {
         accountNumber: accountMatch?.[1] || "CARD_OPERATION", // Для карткових операцій
         currency: currencyMatch?.[1] || "UAH",
@@ -1123,8 +1119,8 @@ export class BankEmailService {
         amount: amount,
         correspondent: correspondentMatch[1].trim(),
         paymentPurpose: purposeMatch?.[1]?.trim() || "",
-        invoiceNumber: invoiceNumber || undefined,
-        partialInvoiceNumber: partialInvoiceNumber,
+        invoiceNumber: finalInvoiceNumber || undefined,
+        partialInvoiceNumber: finalPartialInvoiceNumber,
         isFullInvoiceNumber: isFullInvoiceNumber,
         invoiceDate: invoiceDate,
         vatAmount: vatAmount,

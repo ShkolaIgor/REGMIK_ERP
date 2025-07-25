@@ -14968,5 +14968,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ТЕСТОВИЙ ENDPOINT: Перевірка виправленого алгоритму банківського email парсингу
+  app.post("/api/test-fixed-bank-parsing", async (req, res) => {
+    try {
+      // Імпортуємо bankEmailService для доступу до analyzeBankEmailContent
+      const testEmailContent = `
+<br>  12:37 <br> рух коштів по рахунку: UA743510050000026005031648800, <br> валюта: UAH, <br> тип операції: зараховано, <br> сумма: 20459.96, <br> номер документу: 4008, <br> корреспондент: ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ "ТОРГОВИЙ ДІМ "ІНТМАКС", <br> рахунок кореспондента: UA983282090000026009010049356, <br> призначення платежу: Оплата за ТМЦ, згідно рахунка на оплату № 27779 від 23 липня 2025 в т. ч. ПДВ 20% 3409.99 грн., <br> клієнт: НВФ "РЕГМІК". <br> Якщо у Вас виникли додаткові питання, зателефонуйте на Інформаційну лінію Укрсіббанку за номером 729 (безкоштовно з мобільного).
+      `;
+
+      // Використовуємо метод analyzeBankEmailContent через bankEmailService
+      const result = await bankEmailService.manualProcessEmail(testEmailContent);
+      
+      res.json({
+        success: true,
+        message: "Тестування виправленого алгоритму парсингу",
+        testData: {
+          expectedInvoiceNumber: "РМ00-027779",
+          expectedPartialNumber: "27779"
+        },
+        result: result
+      });
+    } catch (error) {
+      console.error("Error testing fixed bank parsing:", error);
+      res.status(500).json({ 
+        error: "Failed to test fixed bank parsing",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   return httpServer;
 }
