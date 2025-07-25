@@ -367,16 +367,13 @@ export class BankEmailService {
 
             console.log(`🏦 Відкрито INBOX, всього повідомлень: ${box.messages.total}`);
 
-            // Шукаємо email від банку за останні 7 днів (включно з прочитаними)
-            const lastWeek = new Date();
-            lastWeek.setDate(lastWeek.getDate() - 7);
-            
+            // Шукаємо ВСІ email від банку (без часових обмежень для повної обробки архіву)
             const bankFromAddress = emailSettings?.bankEmailAddress || 'online@ukrsibbank.com';
-            console.log(`🏦 Пошук email за критеріями: від=${bankFromAddress}, з=${lastWeek.toDateString()}`);
+            console.log(`🏦 Пошук ВСІХ email за критеріями: від=${bankFromAddress} (без часових обмежень)`);
             
             imap.search([
-              ['FROM', bankFromAddress],
-              ['SINCE', lastWeek]
+              ['FROM', bankFromAddress]
+              // Видалено ['SINCE', lastWeek] щоб обробити всі банківські повідомлення
             ], (err: any, results: any) => {
               if (err) {
                 console.error("❌ Помилка пошуку email:", err);
@@ -388,15 +385,15 @@ export class BankEmailService {
               console.log(`🏦 Результати пошуку email: знайдено ${results ? results.length : 0} повідомлень`);
 
               if (!results || results.length === 0) {
-                console.log("🏦 Нових банківських email не знайдено (перевірено INBOX за останні 7 днів)");
-                console.log(`🏦 Пошук завершено для: ${bankFromAddress} з ${lastWeek.toDateString()}`);
+                console.log("🏦 Банківських email не знайдено (перевірено всі повідомлення в INBOX)");
+                console.log(`🏦 Пошук завершено для: ${bankFromAddress} (весь архів)`);
                 imap.end();
                 resolve();
                 return;
               }
 
-              console.log(`🏦 Знайдено ${results.length} нових банківських email`);
-              console.log(`🏦 Початок обробки email повідомлень...`);
+              console.log(`🏦 Знайдено ${results.length} банківських email (всього в архіві)`);
+              console.log(`🏦 Початок обробки всіх банківських повідомлень...`);
 
               // Обробляємо кожен email - отримуємо headers та зміст
               const fetch = imap.fetch(results, { 
@@ -1504,16 +1501,13 @@ export class BankEmailService {
 
             console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: INBOX відкрито, всього повідомлень: ${box.messages.total}`);
 
-            // Шукаємо ВСІ email від банку (включно з прочитаними) за останні 7 днів
-            const lastWeek = new Date();
-            lastWeek.setDate(lastWeek.getDate() - 7);
-            
+            // Шукаємо ВСІ email від банку (включно з прочитаними) БЕЗ часових обмежень
             const bankFromAddress = emailSettings.bankEmailAddress || 'online@ukrsibbank.com';
-            console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Пошук за критеріями: від=${bankFromAddress}, за останні 7 днів (ВСІ повідомлення)`);
+            console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Пошук за критеріями: від=${bankFromAddress} (весь архів, ВСІ повідомлення)`);
             
             imap.search([
-              ['FROM', bankFromAddress],
-              ['SINCE', lastWeek]
+              ['FROM', bankFromAddress]
+              // Видалено ['SINCE', lastWeek] щоб обробити весь архів
               // НЕ додаємо 'UNSEEN' щоб отримати ВСІ повідомлення а не тільки непрочитані
             ], (err: any, results: any) => {
               if (err) {
