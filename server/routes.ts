@@ -9515,12 +9515,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Фільтрація за пошуковим терміном (включно з номером рахунку)
       if (search) {
         const searchTerm = search.toString().toLowerCase();
-        filteredPayments = filteredPayments.filter(payment => 
-          (payment.orderNumber && payment.orderNumber.toLowerCase().includes(searchTerm)) ||
-          (payment.clientName && payment.clientName.toLowerCase().includes(searchTerm)) ||
-          (payment.correspondent && payment.correspondent.toLowerCase().includes(searchTerm)) ||
-          (payment.invoiceNumber && payment.invoiceNumber.toLowerCase().includes(searchTerm))
-        );
+        filteredPayments = filteredPayments.filter(payment => {
+          // Перевіряємо всі можливі поля для пошуку
+          const matchesOrderNumber = payment.orderNumber && payment.orderNumber.toLowerCase().includes(searchTerm);
+          const matchesClientName = payment.clientName && payment.clientName.toLowerCase().includes(searchTerm);
+          const matchesCorrespondent = payment.correspondent && payment.correspondent.toLowerCase().includes(searchTerm);
+          const matchesInvoiceNumber = payment.invoiceNumber && payment.invoiceNumber.toLowerCase().includes(searchTerm);
+          const matchesOrderId = payment.orderId && payment.orderId.toString().includes(searchTerm);
+          const matchesPaymentId = payment.id && payment.id.toString().includes(searchTerm);
+          
+          return matchesOrderNumber || matchesClientName || matchesCorrespondent || 
+                 matchesInvoiceNumber || matchesOrderId || matchesPaymentId;
+        });
       }
       
       // Фільтрація за статусом
@@ -14535,43 +14541,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ==================== PAYMENTS API ====================
-  
-  // Отримати всі платежі з фільтрацією
-  app.get("/api/payments", isSimpleAuthenticated, async (req, res) => {
-    try {
-      const payments = await storage.getAllPayments();
-      res.json(payments);
-    } catch (error) {
-      console.error("Error fetching payments:", error);
-      res.status(500).json({ error: "Failed to fetch payments" });
-    }
-  });
-
-  // Отримати статистику платежів
-  app.get("/api/payments/stats", isSimpleAuthenticated, async (req, res) => {
-    try {
-      const stats = await storage.getPaymentStats();
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching payment stats:", error);
-      res.status(500).json({ error: "Failed to fetch payment stats" });
-    }
-  });
-
-  // Отримати платіж за ID
-  app.get("/api/payments/:id", isSimpleAuthenticated, async (req, res) => {
-    try {
-      const payment = await storage.getPayment(parseInt(req.params.id));
-      if (!payment) {
-        return res.status(404).json({ error: "Payment not found" });
-      }
-      res.json(payment);
-    } catch (error) {
-      console.error("Error fetching payment:", error);
-      res.status(500).json({ error: "Failed to fetch payment" });
-    }
-  });
+  // ==================== ДУБЛІКАТ ВИДАЛЕНО ====================
+  // Дублікат payments endpoints видалено - залишена тільки основна реалізація на лінії 9508
 
   // Створити новий платіж
   app.post("/api/payments", isSimpleAuthenticated, async (req, res) => {
