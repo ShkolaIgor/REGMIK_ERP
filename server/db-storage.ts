@@ -14539,7 +14539,6 @@ export class DatabaseStorage implements IStorage {
           paymentTime: orderPayments.paymentTime,
           paymentType: orderPayments.paymentType,
           paymentStatus: orderPayments.paymentStatus,
-          paymentDate: orderPayments.paymentDate,
           bankAccount: orderPayments.bankAccount,
           reference: orderPayments.reference,
           notes: orderPayments.notes,
