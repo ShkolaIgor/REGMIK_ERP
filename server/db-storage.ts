@@ -4724,6 +4724,7 @@ export class DatabaseStorage implements IStorage {
         orderId: orderId,
         paymentAmount: paymentAmount.toString(),
         paymentDate: paymentDate,
+        receivedAt: emailReceivedAt, // КРИТИЧНЕ ДОДАННЯ: дата отримання email від банку
         paymentTime: paymentTime,
         paymentType: paymentType,
         paymentStatus: "confirmed" as const,
@@ -4734,9 +4735,7 @@ export class DatabaseStorage implements IStorage {
         notes: notes || `Автоматично створено з банківського повідомлення`
       };
       
-      console.log(`🏦 DEBUG: Creating payment record:`, paymentData);
       const payment = await this.createOrderPayment(paymentData);
-      console.log(`🏦 DEBUG: Payment created successfully with ID=${payment.id}`);
 
       return { order: updatedOrder, payment };
     } catch (error) {

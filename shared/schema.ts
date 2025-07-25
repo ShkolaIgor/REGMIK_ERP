@@ -1003,6 +1003,7 @@ export const orderPayments = pgTable("order_payments", {
   orderId: integer("order_id").references(() => orders.id).notNull(),
   paymentAmount: decimal("payment_amount", { precision: 12, scale: 2 }).notNull(),
   paymentDate: timestamp("payment_date").notNull(),
+  receivedAt: timestamp("received_at"), // Дата отримання email з банку (для банківських платежів)
   paymentTime: varchar("payment_time", { length: 10 }), // Час платежу (наприклад "13:01")
   paymentType: varchar("payment_type", { length: 50 }).notNull().default("bank_transfer"), // bank_transfer, cash, card
   paymentStatus: varchar("payment_status", { length: 50 }).notNull().default("confirmed"), // pending, confirmed, cancelled

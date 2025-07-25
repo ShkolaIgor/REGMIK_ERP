@@ -407,7 +407,9 @@ export class BankEmailService {
                 let emailContent = '';
                 let emailSubject = '';
                 let realMessageId = '';
-                let emailDate = new Date();
+                let emailDate: Date | null = null; // Спочатку null, щоб ідентифікувати що дата не знайдена
+                let headerProcessed = false;
+                let textProcessed = false;
 
                 // Отримуємо заголовки та зміст
                 msg.on('body', (stream: any, info: any) => {
@@ -433,18 +435,37 @@ export class BankEmailService {
                         }
                       }
                       
-                      // Витягуємо дату
+                      // Витягуємо дату з email заголовків
                       const dateMatch = buffer.match(/Date:\s*(.*?)\r?\n/i);
                       if (dateMatch) {
                         try {
-                          emailDate = new Date(dateMatch[1].trim());
+                          const rawDate = dateMatch[1].trim();
+                          console.log(`🏦 DEBUG: Витягнуто дату з email ${seqno}: "${rawDate}"`);
+                          
+                          emailDate = new Date(rawDate);
+                          
+                          // Перевіряємо чи дата валідна
+                          if (isNaN(emailDate.getTime())) {
+                            console.log(`🏦 ⚠️ Невалідна дата email ${seqno}: "${rawDate}", використовуємо поточну дату`);
+                            emailDate = new Date();
+                          } else {
+                            console.log(`🏦 ✅ Дата email ${seqno} валідна: ${emailDate.toISOString()}`);
+                          }
                         } catch (e) {
+                          console.log(`🏦 ❌ Помилка парсингу дати email ${seqno}:`, e);
                           emailDate = new Date();
                         }
+                      } else {
+                        console.log(`🏦 ⚠️ Дата не знайдена в заголовках email ${seqno}, використовуємо поточну дату`);
+                        emailDate = new Date();
                       }
+                      headerProcessed = true;
+                      checkAndProcessEmail(); // Перевіряємо чи готові всі частини
                     } else if (info.which === 'TEXT') {
                       emailContent = buffer;
                       console.log(`🏦 Отримано зміст email ${seqno}, довжина: ${buffer.length} символів`);
+                      textProcessed = true;
+                      checkAndProcessEmail(); // Перевіряємо чи готові всі частини
                     }
                   });
                 });
@@ -464,12 +485,23 @@ export class BankEmailService {
                   }
                 });
 
-                msg.once('end', async () => {
+                // Функція для перевірки завершення обробки і запуску фінальної обробки
+                const checkAndProcessEmail = async () => {
+                  if (!headerProcessed || !textProcessed) {
+                    return; // Чекаємо поки всі частини будуть оброблені
+                  }
+
                   try {
                     // Використовуємо fallback якщо не вдалося отримати Message-ID
                     const messageId = realMessageId || `imap-${seqno}-${Date.now()}`;
                     
-                    console.log(`🏦 DEBUG: Email ${seqno} - realMessageId: "${realMessageId}", messageId: "${messageId}"`);
+                    // Встановлюємо fallback дату якщо не знайдено валідну
+                    const finalEmailDate = emailDate || new Date();
+                    
+                    console.log(`🏦 DEBUG: Email ${seqno} - messageId: "${messageId}"`);
+                    console.log(`🏦 DEBUG: Email ${seqno} - emailDate: ${emailDate ? emailDate.toISOString() : 'NULL'}`);
+                    console.log(`🏦 DEBUG: Email ${seqno} - finalEmailDate: ${finalEmailDate.toISOString()}`);
+                    console.log(`🏦 DEBUG: Email ${seqno} - headerProcessed: ${headerProcessed}, textProcessed: ${textProcessed}`);
                     
                     // ПОКРАЩЕНА ПЕРЕВІРКА ДУБЛІКАТІВ - за subject + correspondent + amount
                     const actualSubject = emailSubject || 'Банківське повідомлення';
@@ -524,35 +556,19 @@ export class BankEmailService {
                       }
                     }
                     
-                    // Створюємо об'єкт email зі справжнім messageId
+                    // Створюємо об'єкт email зі справжнім messageId та ПРАВИЛЬНОЮ ДАТОЮ
                     const emailData = {
                       messageId: messageId,
                       subject: actualSubject,
                       fromAddress: emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua',
-                      receivedAt: emailDate,
+                      receivedAt: finalEmailDate, // ВИПРАВЛЕНО: Використовуємо фінальну дату
                       textContent: decodedContent
                     };
 
                     console.log(`🏦 Обробляємо НОВИЙ email ${seqno}:`);
                     console.log(`  Message-ID: ${messageId}`);
                     console.log(`  Subject: ${actualSubject}`);
-                    
-                    // Безпечне логування дати
-                    let dateString = 'Invalid Date';
-                    try {
-                      if (emailDate && !isNaN(emailDate.getTime())) {
-                        dateString = emailDate.toISOString();
-                      } else {
-                        emailDate = new Date(); // Fallback на поточну дату
-                        dateString = emailDate.toISOString();
-                      }
-                    } catch (e) {
-                      emailDate = new Date();
-                      dateString = emailDate.toISOString();
-                    }
-                    
-                    console.log(`  Date: ${dateString}`);
-                    console.log(`  Content length: ${decodedContent.length} символів`);
+                    console.log(`  ReceivedAt: ${finalEmailDate.toISOString()}`);
 
                     const result = await this.processBankEmail(emailData);
                     
@@ -561,7 +577,6 @@ export class BankEmailService {
                     } else if (!result.skipLogging) {
                       console.log(`🏦⚠️ Email ${seqno}: ${result.message}`);
                     }
-                    // Якщо skipLogging === true, то не логуємо - рахунок у кеші
 
                     processedCount++;
                     
@@ -579,7 +594,7 @@ export class BankEmailService {
                       resolve();
                     }
                   }
-                });
+                };
               });
 
               fetch.once('error', (err: any) => {
@@ -669,9 +684,13 @@ export class BankEmailService {
       
       // Перевіряємо чи receivedAt валідна дата
       let validReceivedAt = emailContent.receivedAt;
+      console.log(`🏦 DEBUG: emailContent.receivedAt = ${emailContent.receivedAt?.toISOString()} (valid: ${!isNaN(emailContent.receivedAt?.getTime() || 0)})`);
+      
       if (isNaN(emailContent.receivedAt.getTime())) {
-        console.log("🏦 ⚠️ emailContent.receivedAt невалідна, використовуємо поточну дату");
+        console.log("🏦 ⚠️ emailContent.receivedAt невалідна, використовуємо поточну дату (це джерело проблеми з датою платежу!)");
         validReceivedAt = new Date();
+      } else {
+        console.log(`🏦 ✅ emailContent.receivedAt валідна: ${validReceivedAt.toISOString()}`);
       }
 
       // Якщо це зарахування коштів та знайдено номер рахунку - обробляємо платіж  
