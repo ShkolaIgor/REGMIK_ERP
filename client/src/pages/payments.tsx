@@ -20,6 +20,7 @@ interface Payment {
   clientName?: string;
   paymentAmount: number;
   paymentDate: string;
+  paymentTime?: string;
   paymentType: string;
   paymentStatus: string;
   correspondent?: string;
@@ -290,14 +291,21 @@ export default function Payments() {
     {
       key: "paymentDate",
       label: "Дата платежу",
-      width: 110,
+      width: 130,
       render: (value: any, row: any) => (
         <div className="text-sm">
-          {new Date(value).toLocaleDateString('uk-UA', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          })}
+          <div>
+            {new Date(value).toLocaleDateString('uk-UA', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })}
+          </div>
+          {row.paymentTime && (
+            <div className="text-blue-600 font-semibold text-xs">
+              {row.paymentTime}
+            </div>
+          )}
         </div>
       ),
     },
@@ -344,7 +352,12 @@ export default function Payments() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Дата платежу</label>
-                    <div>{new Date(selectedPayment.paymentDate).toLocaleString('uk-UA')}</div>
+                    <div>
+                      {new Date(selectedPayment.paymentDate).toLocaleDateString('uk-UA')}
+                      {selectedPayment.paymentTime && (
+                        <span className="ml-2 text-blue-600 font-semibold">{selectedPayment.paymentTime}</span>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Дата створення</label>

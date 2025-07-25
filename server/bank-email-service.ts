@@ -867,10 +867,16 @@ export class BankEmailService {
     invoiceNumber?: string;
     invoiceDate?: Date;
     vatAmount?: number;
+    paymentTime?: string;
   } | null {
     try {
       console.log("🏦 СТАРТ АНАЛІЗУ EMAIL КОНТЕНТУ");
       console.log("🏦 Аналіз тексту email:", emailText.substring(0, 200) + "...");
+      
+      // Витягуємо час оплати з першого рядка (формат: "13:01")
+      const timeMatch = emailText.match(/^(\d{1,2}:\d{2})/);
+      const paymentTime = timeMatch ? timeMatch[1] : undefined;
+      console.log("🏦 Час платежу з першого рядка:", paymentTime);
       
       // УНІВЕРСАЛЬНІ регекси на основі реального формату Укрсіббанку (українська/російська)
       const accountMatch = emailText.match(/рух коштів по рахунку:\s*([A-Z0-9]+)/i);
@@ -1137,6 +1143,7 @@ export class BankEmailService {
         isFullInvoiceNumber: isFullInvoiceNumber,
         invoiceDate: invoiceDate,
         vatAmount: vatAmount,
+        paymentTime: paymentTime,
       };
 
     } catch (error) {
@@ -1349,7 +1356,10 @@ export class BankEmailService {
         "bank_transfer",
         notificationId,
         paymentInfo.accountNumber,
-        paymentInfo.correspondent
+        paymentInfo.correspondent,
+        undefined, // reference
+        undefined, // notes
+        paymentInfo.paymentTime
       );
 
       console.log(`🏦 DEBUG: updateOrderPaymentStatus result:`, result);

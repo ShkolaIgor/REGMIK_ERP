@@ -4640,7 +4640,7 @@ export class DatabaseStorage implements IStorage {
 
 
 
-  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string): Promise<{ order: Order; payment: OrderPayment }> {
+  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string, reference?: string, notes?: string, paymentTime?: string): Promise<{ order: Order; payment: OrderPayment }> {
     try {
       console.log(`🏦 DEBUG: updateOrderPaymentStatus(orderId=${orderId}, paymentAmount=${paymentAmount}, paymentType=${paymentType})`);
       
@@ -4700,12 +4700,14 @@ export class DatabaseStorage implements IStorage {
         orderId: orderId,
         paymentAmount: paymentAmount.toString(),
         paymentDate: new Date(),
+        paymentTime: paymentTime,
         paymentType: paymentType,
         paymentStatus: "confirmed" as const,
         bankNotificationId: bankNotificationId,
         bankAccount: bankAccount,
         correspondent: correspondent,
-        notes: `Автоматично створено з банківського повідомлення`
+        reference: reference,
+        notes: notes || `Автоматично створено з банківського повідомлення`
       };
       
       console.log(`🏦 DEBUG: Creating payment record:`, paymentData);
@@ -14509,6 +14511,8 @@ export class DatabaseStorage implements IStorage {
           clientName: clients.name,
           correspondent: orderPayments.correspondent,
           paymentAmount: orderPayments.paymentAmount,
+          paymentDate: orderPayments.paymentDate,
+          paymentTime: orderPayments.paymentTime,
           paymentType: orderPayments.paymentType,
           paymentStatus: orderPayments.paymentStatus,
           paymentDate: orderPayments.paymentDate,
@@ -14656,6 +14660,7 @@ export class DatabaseStorage implements IStorage {
           paymentType: orderPayments.paymentType,
           paymentStatus: orderPayments.paymentStatus,
           paymentDate: orderPayments.paymentDate,
+          paymentTime: orderPayments.paymentTime,
           bankAccount: orderPayments.bankAccount,
           reference: orderPayments.reference,
           notes: orderPayments.notes,
