@@ -147,6 +147,20 @@ export interface IStorage {
 
   // Orders
   getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]>;
+  getOrdersPaginated(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    statusFilter?: string;
+    paymentFilter?: string;
+    dateRangeFilter?: string;
+  }): Promise<{
+    orders: (Order & { items: (OrderItem & { product: Product })[] })[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>;
   getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined>;
   getOrderByInvoiceNumber(invoiceNumber: string): Promise<Order | undefined>;
   findOrdersByPaymentInfo(paymentInfo: {
@@ -1064,6 +1078,24 @@ export class MemStorage implements IStorage {
   // Orders
   async getOrders(): Promise<Order[]> {
     return Array.from(this.orders.values());
+  }
+
+  async getOrdersPaginated(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    statusFilter?: string;
+    paymentFilter?: string;
+    dateRangeFilter?: string;
+  }): Promise<{
+    orders: (Order & { items: (OrderItem & { product: Product })[] })[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    // Basic implementation - delegate to db-storage method
+    throw new Error("MemStorage pagination not implemented - using database storage");
   }
 
   async getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined> {

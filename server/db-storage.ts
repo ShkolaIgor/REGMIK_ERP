@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, lt, isNull, isNotNull, ne, or, not, inArray, ilike } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, lt, gt, isNull, isNotNull, ne, or, not, inArray, ilike } from "drizzle-orm";
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import * as xml2js from 'xml2js';
@@ -563,109 +563,90 @@ export class DatabaseStorage implements IStorage {
   }> {
     const { page, limit, search = '', statusFilter = '', paymentFilter = '', dateRangeFilter = '' } = params;
     const offset = (page - 1) * limit;
+    
+    // Будуємо WHERE умови з параметрами
+    let whereConditions = [];
+    let queryParams: any[] = [];
+    let paramIndex = 1;
 
-    // Початковий запит для підрахунку та фільтрації  
-    let baseQuery = db.select().from(orders)
-      .leftJoin(clients, eq(orders.clientId, clients.id))
-      .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id));
-
-    // Застосування фільтрів
-    const conditions = [];
-
-    // Пошук за номером замовлення, номером рахунку, назвою клієнта та контактами
+    // Пошук
     if (search) {
-      const searchLower = `%${search.toLowerCase()}%`;
-      conditions.push(
-        or(
-          ilike(orders.orderNumber, searchLower),
-          ilike(orders.invoiceNumber, searchLower),
-          ilike(clients.name, searchLower),
-          ilike(clients.fullName, searchLower),
-          ilike(clients.taxCode, searchLower),
-          ilike(clientContacts.name, searchLower),
-          ilike(clientContacts.email, searchLower),
-          ilike(clientContacts.phone, searchLower)
-        )
-      );
+      const searchPattern = `%${search.toLowerCase()}%`;
+      whereConditions.push(`(
+        LOWER(orders.order_number) LIKE $${paramIndex} OR
+        LOWER(orders.invoice_number) LIKE $${paramIndex + 1} OR
+        LOWER(clients.name) LIKE $${paramIndex + 2} OR
+        LOWER(clients.full_name) LIKE $${paramIndex + 3} OR
+        LOWER(clients.tax_code) LIKE $${paramIndex + 4} OR
+        LOWER(client_contacts.full_name) LIKE $${paramIndex + 5} OR
+        LOWER(client_contacts.email) LIKE $${paramIndex + 6} OR
+        LOWER(client_contacts.primary_phone) LIKE $${paramIndex + 7}
+      )`);
+      for (let i = 0; i < 8; i++) {
+        queryParams.push(searchPattern);
+      }
+      paramIndex += 8;
     }
 
     // Фільтр за статусом
     if (statusFilter && statusFilter !== 'all') {
-      conditions.push(eq(orders.status, statusFilter));
+      whereConditions.push(`orders.status = $${paramIndex}`);
+      queryParams.push(statusFilter);
+      paramIndex++;
     }
 
-    // Фільтр за оплатою - використовуємо paidAmount замість paymentDate
+    // Фільтр за оплатою
     if (paymentFilter && paymentFilter !== 'all') {
       if (paymentFilter === 'paid') {
-        conditions.push(gt(orders.paidAmount, '0'));
+        whereConditions.push(`orders.paid_amount::numeric > 0`);
       } else if (paymentFilter === 'unpaid') {
-        conditions.push(or(
-          isNull(orders.paidAmount),
-          eq(orders.paidAmount, '0')
-        ));
+        whereConditions.push(`(orders.paid_amount IS NULL OR orders.paid_amount::numeric = 0)`);
       } else if (paymentFilter === 'overdue') {
-        conditions.push(
-          and(
-            or(
-              isNull(orders.paidAmount),
-              eq(orders.paidAmount, '0')
-            ),
-            isNotNull(orders.dueDate),
-            lt(orders.dueDate, new Date())
-          )
-        );
+        whereConditions.push(`(orders.paid_amount IS NULL OR orders.paid_amount::numeric = 0) AND orders.due_date IS NOT NULL AND orders.due_date < NOW()`);
       }
     }
 
     // Фільтр за датами
     if (dateRangeFilter && dateRangeFilter !== 'all') {
-      const now = new Date();
       if (dateRangeFilter === 'today') {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        conditions.push(
-          and(
-            gte(orders.createdAt, today),
-            lt(orders.createdAt, tomorrow)
-          )
-        );
+        whereConditions.push(`orders.created_at >= CURRENT_DATE AND orders.created_at < CURRENT_DATE + INTERVAL '1 day'`);
       } else if (dateRangeFilter === 'week') {
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        conditions.push(gte(orders.createdAt, weekAgo));
+        whereConditions.push(`orders.created_at >= NOW() - INTERVAL '7 days'`);
       } else if (dateRangeFilter === 'month') {
-        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        conditions.push(gte(orders.createdAt, monthAgo));
+        whereConditions.push(`orders.created_at >= NOW() - INTERVAL '30 days'`);
       }
     }
 
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
     // Підрахунок загальної кількості
-    let countQuery = db.select({ count: sql<number>`COUNT(DISTINCT orders.id)` }).from(orders)
-      .leftJoin(clients, eq(orders.clientId, clients.id))
-      .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id));
-    if (conditions.length > 0) {
-      countQuery = countQuery.where(and(...conditions));
-    }
-    const [{ count: total }] = await countQuery;
+    const countResult = await pool.query(`
+      SELECT COUNT(DISTINCT orders.id) as count
+      FROM orders
+      LEFT JOIN clients ON orders.client_id = clients.id
+      LEFT JOIN client_contacts ON orders.client_contacts_id = client_contacts.id
+      ${whereClause}
+    `, queryParams);
+    const total = Number(countResult.rows[0]?.count || 0);
+
+    // Параметри для LIMIT та OFFSET
+    const limitParamIndex = queryParams.length + 1;
+    const offsetParamIndex = queryParams.length + 2;
 
     // Отримання замовлень з пагінацією
-    let ordersQuery = db.select(orders).from(orders)
-      .leftJoin(clients, eq(orders.clientId, clients.id))
-      .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id));
-      
-    if (conditions.length > 0) {
-      ordersQuery = ordersQuery.where(and(...conditions));
-    }
-    
-    const ordersResult = await ordersQuery
-      .orderBy(desc(orders.orderSequenceNumber))
-      .limit(limit)
-      .offset(offset);
+    const ordersResult = await pool.query(`
+      SELECT orders.*
+      FROM orders
+      LEFT JOIN clients ON orders.client_id = clients.id
+      LEFT JOIN client_contacts ON orders.client_contacts_id = client_contacts.id
+      ${whereClause}
+      ORDER BY orders.order_sequence_number DESC
+      LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
+    `, [...queryParams, limit, offset]);
 
     // Завантаження товарів, клієнтів та контактів для кожного замовлення
     const ordersWithItems = await Promise.all(
-      ordersResult.map(async (order) => {
+      ordersResult.rows.map(async (order: any) => {
         // Завантаження товарів замовлення
         const itemsResult = await db.select({
           id: orderItems.id,
@@ -724,37 +705,61 @@ export class DatabaseStorage implements IStorage {
           }
         }));
 
+        // Конвертація snake_case полів в camelCase для сумісності
+        const orderData = {
+          id: order.id,
+          orderSequenceNumber: order.order_sequence_number,
+          orderNumber: order.order_number,
+          invoiceNumber: order.invoice_number,
+          clientId: order.client_id,
+          clientContactsId: order.client_contacts_id,
+          carrierId: order.carrier_id,
+          companyId: order.company_id,
+          status: order.status,
+          totalAmount: order.total_amount,
+          paidAmount: order.paid_amount,
+          shippingCost: order.shipping_cost,
+          createdAt: order.created_at,
+          updatedAt: order.updated_at,
+          dueDate: order.due_date,
+          deliveryDate: order.delivery_date,
+          notes: order.notes,
+          external1cId: order.external_1c_id,
+          trackingNumber: order.tracking_number,
+          isActive: order.is_active
+        };
+
         // Завантаження інформації про клієнта з таблиці clients
         let clientData = null;
-        if (order.clientId) {
+        if (orderData.clientId) {
           try {
             const clientResult = await db.select()
               .from(clients)
-              .where(eq(clients.id, order.clientId))
+              .where(eq(clients.id, orderData.clientId))
               .limit(1);
             
             if (clientResult.length > 0) {
               clientData = clientResult[0];
             }
           } catch (error) {
-            console.error(`Error fetching client ${order.clientId}:`, error);
+            console.error(`Error fetching client ${orderData.clientId}:`, error);
           }
         }
 
         // Завантаження інформації про контакт з таблиці client_contacts
         let contactData = null;
-        if (order.clientContactsId) {
+        if (orderData.clientContactsId) {
           try {
             const contactResult = await db.select()
               .from(clientContacts)
-              .where(eq(clientContacts.id, order.clientContactsId))
+              .where(eq(clientContacts.id, orderData.clientContactsId))
               .limit(1);
             
             if (contactResult.length > 0) {
               contactData = contactResult[0];
             }
           } catch (error) {
-            console.error(`Error fetching contact ${order.clientContactsId}:`, error);
+            console.error(`Error fetching contact ${orderData.clientContactsId}:`, error);
           }
         }
 
@@ -763,7 +768,7 @@ export class DatabaseStorage implements IStorage {
         try {
           const lastPayment = await db.select()
             .from(orderPayments)
-            .where(eq(orderPayments.orderId, order.id))
+            .where(eq(orderPayments.orderId, orderData.id))
             .orderBy(desc(orderPayments.paymentDate))
             .limit(1);
           
@@ -775,7 +780,7 @@ export class DatabaseStorage implements IStorage {
         }
 
         return {
-          ...order,
+          ...orderData,
           items: filteredItems as (OrderItem & { product: Product })[],
           client: clientData,
           contact: contactData,
