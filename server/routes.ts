@@ -14549,20 +14549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Видалити платіж
-  app.delete("/api/payments/:id", isSimpleAuthenticated, async (req, res) => {
-    try {
-      const paymentId = parseInt(req.params.id);
-      const deleted = await storage.deletePayment(paymentId);
-      if (!deleted) {
-        return res.status(404).json({ error: "Payment not found" });
-      }
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting payment:", error);
-      res.status(500).json({ error: "Failed to delete payment" });
-    }
-  });
+  // ВИДАЛЕНО ДУБЛІКАТ DELETE endpoint - використовується основна реалізація на лінії 9583
 
   // Функція для видалення дублікатів платежів та прив'язування неприв'язаних платежів
   app.post("/api/payments/remove-duplicates", isSimpleAuthenticated, async (req, res) => {
