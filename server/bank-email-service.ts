@@ -953,25 +953,51 @@ export class BankEmailService {
         console.log("🏦 DEBUG: Контекст навколо 'кореспондент':", contextAround);
       }
       
-      // УНІВЕРСАЛЬНИЙ ПОШУК НОМЕРІВ РАХУНКІВ
-      // 1. Спочатку шукаємо стандартні формати РМ00-XXXXX
-      let invoiceMatch = emailText.match(/РМ00-(\d+)/i);
+      // ВИПРАВЛЕНИЙ ПОШУК НОМЕРІВ РАХУНКІВ
+      // 1. Шукаємо в тексті призначення платежу номери рахунків
+      let invoiceMatch = null;
+      let invoiceNumber = "";
       
-      // 2. Якщо не знайшли, шукаємо формат "рахунка №XXXXX"
+      console.log("🏦 🔍 ПОЧАТОК НОВОГО АЛГОРИТМУ ПОШУКУ НОМЕРІВ РАХУНКІВ");
+      
+      // Пріоритет 1: Пошук в purposeMatch (призначення платежу)
+      if (purposeMatch?.[1]) {
+        console.log("🏦 Пошук номера рахунку в призначенні платежу:", purposeMatch[1]);
+        
+        // Формат: "згідно рах.№ 27751" або "рах №27759"
+        const purposeInvoiceMatch = purposeMatch[1].match(/рах\.?\s*№?\s*(\d+)/i);
+        if (purposeInvoiceMatch) {
+          const rawNumber = purposeInvoiceMatch[1];
+          // Автоматично додаємо префікс РМ00- для номерів без нього
+          invoiceNumber = rawNumber.startsWith('РМ00-') ? rawNumber : `РМ00-${rawNumber}`;
+          invoiceMatch = purposeInvoiceMatch;
+          console.log("🏦 ✅ ВИПРАВЛЕНИЙ АЛГОРИТМ: Знайдено номер в призначенні:", rawNumber, "→", invoiceNumber);
+        } else {
+          console.log("🏦 ❌ ВИПРАВЛЕНИЙ АЛГОРИТМ: Номер не знайдено в призначенні");
+        }
+      } else {
+        console.log("🏦 ⚠️ ВИПРАВЛЕНИЙ АЛГОРИТМ: purposeMatch відсутній");
+      }
+      
+      // Пріоритет 2: Пошук стандартних форматів РМ00-XXXXX в основному тексті
       if (!invoiceMatch) {
-        invoiceMatch = emailText.match(/рахунка?\s*№?\s*(\d+)/i);
-        if (invoiceMatch) {
-          // Створюємо структуру як для РМ00 формату
-          invoiceMatch = [invoiceMatch[0], invoiceMatch[1]];
+        const rm00Match = emailText.match(/РМ00-(\d+)/i);
+        if (rm00Match) {
+          invoiceNumber = "РМ00-" + rm00Match[1];
+          invoiceMatch = rm00Match;
+          console.log("🏦 ✅ Знайдено РМ00 формат:", invoiceNumber);
         }
       }
       
-      // 3. Якщо все ще не знайшли, шукаємо номери з датами (будь-який текст між номером та датою)
+      // Пріоритет 3: Пошук номерів з датами (будь-який текст між номером та датою)
       if (!invoiceMatch) {
         const numberDateMatch = emailText.match(/(\d{5,6}).*?(\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2}р?))/i);
         if (numberDateMatch) {
-          // Створюємо структуру як для стандартного match
-          invoiceMatch = [numberDateMatch[0], numberDateMatch[1]];
+          const rawNumber = numberDateMatch[1];
+          // Автоматично додаємо префікс РМ00- для номерів без нього
+          invoiceNumber = `РМ00-${rawNumber}`;
+          invoiceMatch = numberDateMatch;
+          console.log("🏦 ✅ ВИПРАВЛЕНИЙ АЛГОРИТМ: Знайдено номер з датою:", rawNumber, "→", invoiceNumber);
         }
       }
       
@@ -987,22 +1013,19 @@ export class BankEmailService {
       // Шукаємо ПДВ
       const vatMatch = emailText.match(/ПДВ.*?(\d+[,\.]\d+)/i);
       
-      // ДОДАТКОВИЙ ПОШУК: Якщо не знайшли в основному тексті, шукаємо в purposeMatch
-      if (!invoiceMatch && purposeMatch?.[1]) {
-        const purposeText = purposeMatch[1];
-        
-        // Шукаємо номер рахунку в тексті призначення
-        const purposeInvoiceMatch = purposeText.match(/рахунка?\s*№?\s*(\d+)/i);
-        
-        if (purposeInvoiceMatch) {
-          invoiceMatch = [purposeInvoiceMatch[0], purposeInvoiceMatch[1]];
-        }
-      }
+      // Видалено дублікат пошуку - основний алгоритм вже перевіряє purposeMatch
       
       console.log("🏦 Додаткові регекси:");
       console.log("  invoiceMatch:", invoiceMatch);
+      console.log("  invoiceNumber (final):", invoiceNumber);
       console.log("  dateMatch:", dateMatch);
       console.log("  vatMatch:", vatMatch);
+      
+      // ОСТАТОЧНА ПЕРЕВІРКА: Якщо invoiceNumber не має префіксу РМ00-, додаємо його
+      if (invoiceNumber && !invoiceNumber.startsWith('РМ00-') && /^\d+$/.test(invoiceNumber)) {
+        invoiceNumber = `РМ00-${invoiceNumber}`;
+        console.log("🏦 ОСТАТОЧНА КОРЕКЦІЯ: Додано префікс РМ00- до номера:", invoiceNumber);
+      }
 
       // FINAL FIX: Якщо correspondentMatch не спрацював, витягуємо з додаткових регексів
       if (!correspondentMatch && invoiceMatch?.input) {
@@ -1085,7 +1108,7 @@ export class BankEmailService {
         amount: amount,
         correspondent: correspondentMatch[1].trim(),
         paymentPurpose: purposeMatch?.[1]?.trim() || "",
-        invoiceNumber: invoiceMatch ? `РМ00-${invoiceMatch[1]}` : undefined,
+        invoiceNumber: invoiceNumber || undefined,
         invoiceDate: invoiceDate,
         vatAmount: vatAmount,
       };
