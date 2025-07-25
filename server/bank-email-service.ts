@@ -10,10 +10,31 @@ export class BankEmailService {
   private transporter: nodemailer.Transporter | null = null;
   private monitoringInterval: NodeJS.Timeout | null = null;
   private isMonitoring = false;
+  private notFoundInvoicesCache = new Map<string, number>(); // номер рахунку -> timestamp останньої перевірки
 
   constructor() {
     // Не викликаємо initializeMonitoring() тут, щоб уникнути проблем з БД
     // Буде викликано з index.ts після ініціалізації сервера
+  }
+
+  /**
+   * Очищення старих записів з кешу неіснуючих рахунків (старших за 24 години)
+   */
+  private cleanupNotFoundCache(): void {
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    
+    let cleanedCount = 0;
+    for (const [invoiceNumber, timestamp] of this.notFoundInvoicesCache.entries()) {
+      if ((now - timestamp) > TWENTY_FOUR_HOURS) {
+        this.notFoundInvoicesCache.delete(invoiceNumber);
+        cleanedCount++;
+      }
+    }
+    
+    if (cleanedCount > 0) {
+      console.log(`🏦 Очищено ${cleanedCount} старих записів з кешу неіснуючих рахунків`);
+    }
   }
 
   /**
@@ -515,9 +536,10 @@ export class BankEmailService {
                     
                     if (result.success) {
                       console.log(`🏦✅ Email ${seqno} оброблено успішно`);
-                    } else {
+                    } else if (!result.skipLogging) {
                       console.log(`🏦⚠️ Email ${seqno}: ${result.message}`);
                     }
+                    // Якщо skipLogging === true, то не логуємо - рахунок у кеші
 
                     processedCount++;
                     
@@ -632,6 +654,20 @@ export class BankEmailService {
 
       // Якщо це зарахування коштів та знайдено номер рахунку - обробляємо платіж  
       if (paymentInfo.operationType === "зараховано" && paymentInfo.invoiceNumber) {
+        // Перевіряємо кеш неіснуючих рахунків (не логуємо частіше ніж раз на годину)
+        const now = Date.now();
+        const lastCheck = this.notFoundInvoicesCache.get(paymentInfo.invoiceNumber);
+        const ONE_HOUR = 60 * 60 * 1000; // 1 година в мілісекундах
+        
+        if (lastCheck && (now - lastCheck) < ONE_HOUR) {
+          // Рахунок перевірявся менше години назад і не був знайдений - пропускаємо без логування
+          return { 
+            success: false, 
+            message: `Рахунок ${paymentInfo.invoiceNumber} пропущено (перевірено менше години назад)`,
+            skipLogging: true
+          };
+        }
+        
         console.log("🏦 Розпочинаю обробку платежу...");
         
         // ПЕРЕВІРЯЄМО ЧИ ЦЕЙ EMAIL ВЖЕ ОБРОБЛЕНИЙ (за комбінацією полів замість Message-ID)
@@ -695,7 +731,7 @@ export class BankEmailService {
           });
         } else {
           // ЯКЩО ЗАМОВЛЕННЯ НЕ ЗНАЙДЕНО - НЕ створюємо bank_payment_notification
-          // Це дозволить повторно перевіряти цей email пізніше
+          // Це дозволить повторно перевіряти цей email пізніше коли замовлення будуть створені
           console.log("🏦⏭️ Замовлення не знайдено, НЕ створюємо запис - email буде перевірено знову пізніше");
           
           // Логуємо помилку обробки платежу (але не створюємо bank_payment_notification)
@@ -1269,6 +1305,8 @@ export class BankEmailService {
    */
   async checkForProcessedEmails(): Promise<void> {
     try {
+      // Очищуємо старі записи з кешу неіснуючих рахунків
+      this.cleanupNotFoundCache();
       const emailSettings = await storage.getEmailSettings();
       
       const bankEmailUser = emailSettings?.bankEmailUser || process.env.BANK_EMAIL_USER;
@@ -1404,9 +1442,10 @@ export class BankEmailService {
                     
                     if (result.success) {
                       console.log(`🏦✅ ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} оброблено успішно - ${result.message}`);
-                    } else {
+                    } else if (!result.skipLogging) {
                       console.log(`🏦⚠️ ОБРОБКА ПРОЧИТАНИХ: Email ${seqno}: ${result.message}`);
                     }
+                    // Якщо skipLogging === true, то не логуємо - рахунок у кеші
 
                     processedCount++;
                     

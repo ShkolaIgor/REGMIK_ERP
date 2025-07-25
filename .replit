@@ -38,3 +38,6 @@ waitForPort = 5000
 
 [deployment]
 deploymentTarget = "cloudrun"
+
+[agent]
+integrations = ["javascript_websocket==1.0.0"]
