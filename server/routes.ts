@@ -14631,50 +14631,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("🔗 Пошук неприв'язаних платежів для автоматичного прив'язування...");
       
       const unlinkedPaymentsQuery = `
-        SELECT id, payment_amount, correspondent, reference, notes
-        FROM order_payments 
-        WHERE order_id IS NULL
+        SELECT op.id, op.payment_amount, op.correspondent, op.reference, op.notes,
+               o.id as order_id, o.invoice_number
+        FROM order_payments op
+        LEFT JOIN orders o ON (
+          (op.reference = o.invoice_number) OR 
+          (op.notes LIKE '%' || o.invoice_number || '%') OR
+          (op.notes ~ ('РМ00-0*' || SUBSTRING(o.invoice_number FROM 'РМ00-0*([0-9]+)') || '[^0-9]'))
+        )
+        WHERE op.order_id IS NULL 
+          AND o.id IS NOT NULL
       `;
       
       const unlinkedPayments = await storage.query(unlinkedPaymentsQuery);
       let linkedCount = 0;
       
       for (const payment of unlinkedPayments.rows) {
-        // Спробуємо знайти замовлення за reference або notes
-        let invoiceNumber = payment.reference;
+        const orderId = payment.order_id;
+        const invoiceNumber = payment.invoice_number;
         
-        if (!invoiceNumber && payment.notes) {
-          // Витягуємо номер рахунку з notes
-          const matches = payment.notes.match(/РМ00-\d{6}|№\s*(\d+)/g);
-          if (matches) {
-            invoiceNumber = matches[0].includes('РМ00') ? matches[0] : `РМ00-0${matches[0].replace(/[^\d]/g, '').padStart(5, '0')}`;
-          }
-        }
+        // Оновлюємо платіж з прив'язкою до замовлення
+        await storage.query(
+          'UPDATE order_payments SET order_id = $1 WHERE id = $2',
+          [orderId, payment.id]
+        );
         
-        if (invoiceNumber) {
-          // Шукаємо замовлення за номером рахунку
-          const orderQuery = `
-            SELECT id FROM orders 
-            WHERE invoice_number = $1 OR order_number = $1
-            LIMIT 1
-          `;
-          
-          const orderResult = await storage.query(orderQuery, [invoiceNumber]);
-          
-          if (orderResult.rows.length > 0) {
-            const orderId = orderResult.rows[0].id;
-            
-            // Оновлюємо платіж з прив'язкою до замовлення
-            await storage.query(
-              'UPDATE order_payments SET order_id = $1 WHERE id = $2',
-              [orderId, payment.id]
-            );
-            
-            linkedCount++;
-            console.log(`🔗 Платіж ${payment.id} прив'язано до замовлення #${orderId} (${invoiceNumber})`);
-          }
-        }
+        linkedCount++;
+        console.log(`🔗 Платіж ${payment.id} прив'язано до замовлення #${orderId} (${invoiceNumber})`);
       }
+      
+      // Оновлення paid_amount для всіх замовлень що мають платежі
+      console.log("💰 Оновлення сум оплат для всіх замовлень...");
+      
+      const updatePaidAmountsQuery = `
+        UPDATE orders 
+        SET paid_amount = COALESCE(payment_totals.total_paid, 0)
+        FROM (
+          SELECT 
+            order_id, 
+            SUM(payment_amount::numeric) as total_paid
+          FROM order_payments 
+          WHERE order_id IS NOT NULL
+          GROUP BY order_id
+        ) payment_totals
+        WHERE orders.id = payment_totals.order_id
+      `;
+      
+      const updateResult = await storage.query(updatePaidAmountsQuery);
+      console.log(`💰 Оновлено суми оплат для замовлень`);
+      
+      // Також оновимо замовлення без платежів (встановимо paid_amount = 0)
+      await storage.query(`
+        UPDATE orders 
+        SET paid_amount = 0 
+        WHERE id NOT IN (
+          SELECT DISTINCT order_id 
+          FROM order_payments 
+          WHERE order_id IS NOT NULL
+        ) AND (paid_amount IS NULL OR paid_amount > 0)
+      `);
       
       console.log(`🗑️ Очищення завершено: ${totalDeleted} дублікатів видалено, ${linkedCount} платежів прив'язано`);
       
