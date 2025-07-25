@@ -1520,7 +1520,9 @@ export class BankEmailService {
       console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus...`);
       console.log(`🏦 DEBUG: emailContent provided: ${!!emailContent}`);
       console.log(`🏦 DEBUG: emailDate from header: ${emailContent?.emailDate?.toISOString()}`);
+      console.log(`🏦 DEBUG: invoiceDate from bank message: ${paymentInfo.invoiceDate?.toISOString()}`);
       console.log(`🏦 DEBUG: emailReceivedAt (current logic): ${emailContent?.receivedAt?.toISOString()}`);
+      console.log(`🏦 DEBUG: Final paymentDate will be: ${(paymentInfo.invoiceDate || emailContent?.emailDate || new Date()).toISOString()}`);
       
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
@@ -1532,7 +1534,7 @@ export class BankEmailService {
         undefined, // reference
         undefined, // notes
         paymentInfo.paymentTime,
-        emailContent?.receivedAt || new Date(), // ВИПРАВЛЕНО: Використовуємо дату отримання email як дату платежу  
+        paymentInfo.invoiceDate || emailContent?.emailDate || new Date(), // ВИПРАВЛЕНО: Використовуємо дату рахунку з банківського повідомлення як фактичну дату платежу  
         emailContent?.receivedAt || new Date()  // Дата отримання email ERP системою
       );
 
@@ -1753,6 +1755,7 @@ export class BankEmailService {
         subject: "Банківське повідомлення",
         fromAddress: fromAddress,
         receivedAt: new Date(),
+        emailDate: new Date(), // Додаємо дату email заголовка для тестування
         textContent: emailContent,
       };
 
