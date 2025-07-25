@@ -1520,11 +1520,7 @@ export class BankEmailService {
       console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus...`);
       // ПРІОРИТЕТ: emailDate (заголовок email) -> fallback на invoiceDate -> поточна дата
       const finalPaymentDate = emailContent?.emailDate || paymentInfo.invoiceDate || new Date();
-      console.log(`🏦 🎯 ПЕРЕД ВИКЛИКОМ updateOrderPaymentStatus:`);
-      console.log(`🏦 🎯 emailContent?.emailDate = ${emailContent?.emailDate?.toISOString()}`);
-      console.log(`🏦 🎯 paymentInfo.invoiceDate = ${paymentInfo.invoiceDate?.toISOString()}`);
-      console.log(`🏦 🎯 finalPaymentDate = ${finalPaymentDate.toISOString()}`);
-      
+
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
         paymentInfo.amount, 
