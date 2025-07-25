@@ -9508,38 +9508,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/payments", isSimpleAuthenticated, async (req, res) => {
     try {
       const { search, status, type } = req.query;
-      const payments = await storage.getAllPayments();
       
-      let filteredPayments = payments;
+      // Використовуємо новий метод фільтрованого пошуку
+      const payments = await storage.getFilteredPayments({
+        search: search as string,
+        status: status as string,
+        type: type as string
+      });
       
-      // Фільтрація за пошуковим терміном (включно з номером рахунку)
-      if (search) {
-        const searchTerm = search.toString().toLowerCase();
-        filteredPayments = filteredPayments.filter(payment => {
-          // Перевіряємо всі можливі поля для пошуку
-          const matchesOrderNumber = payment.orderNumber && payment.orderNumber.toLowerCase().includes(searchTerm);
-          const matchesClientName = payment.clientName && payment.clientName.toLowerCase().includes(searchTerm);
-          const matchesCorrespondent = payment.correspondent && payment.correspondent.toLowerCase().includes(searchTerm);
-          const matchesInvoiceNumber = payment.invoiceNumber && payment.invoiceNumber.toLowerCase().includes(searchTerm);
-          const matchesOrderId = payment.orderId && payment.orderId.toString().includes(searchTerm);
-          const matchesPaymentId = payment.id && payment.id.toString().includes(searchTerm);
-          
-          return matchesOrderNumber || matchesClientName || matchesCorrespondent || 
-                 matchesInvoiceNumber || matchesOrderId || matchesPaymentId;
-        });
-      }
-      
-      // Фільтрація за статусом
-      if (status && status !== 'all') {
-        filteredPayments = filteredPayments.filter(payment => payment.paymentStatus === status);
-      }
-      
-      // Фільтрація за типом платежу
-      if (type && type !== 'all') {
-        filteredPayments = filteredPayments.filter(payment => payment.paymentType === type);
-      }
-      
-      res.json(filteredPayments);
+      res.json(payments);
     } catch (error) {
       console.error("Error fetching payments:", error);
       res.status(500).json({ error: "Помилка отримання платежів" });

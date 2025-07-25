@@ -14489,6 +14489,81 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getFilteredPayments(filters: {
+    search?: string;
+    status?: string;
+    type?: string;
+  }): Promise<any[]> {
+    try {
+      // Базовий запит
+      let query = db
+        .select({
+          id: sql`'bank-' || ${bankPaymentNotifications.id}`,
+          orderId: bankPaymentNotifications.orderId,
+          orderNumber: orders.orderNumber,
+          clientName: clients.name,
+          correspondent: bankPaymentNotifications.correspondent,
+          paymentAmount: sql`CAST(${bankPaymentNotifications.amount} AS DECIMAL)`,
+          paymentType: sql`'bank_transfer'`,
+          paymentStatus: sql`CASE WHEN ${bankPaymentNotifications.processed} THEN 'confirmed' ELSE 'pending' END`,
+          paymentDate: bankPaymentNotifications.receivedAt,
+          bankAccount: bankPaymentNotifications.accountNumber,
+          reference: bankPaymentNotifications.invoiceNumber,
+          notes: sql`${bankPaymentNotifications.subject} || ' - ' || ${bankPaymentNotifications.paymentPurpose}`,
+          createdAt: bankPaymentNotifications.receivedAt,
+          bankNotificationId: bankPaymentNotifications.id,
+          invoiceNumber: sql`COALESCE(${orders.invoiceNumber}, ${bankPaymentNotifications.invoiceNumber})`,
+          invoiceDate: sql`COALESCE(${orders.createdAt}, ${bankPaymentNotifications.invoiceDate})`,
+          operationType: bankPaymentNotifications.operationType
+        })
+        .from(bankPaymentNotifications)
+        .leftJoin(orders, eq(bankPaymentNotifications.orderId, orders.id))
+        .leftJoin(clients, eq(orders.clientId, clients.id));
+
+      // Застосування фільтрів
+      const conditions = [eq(bankPaymentNotifications.operationType, 'зараховано')];
+
+      // Пошук за номером замовлення, номером рахунку, назвою клієнта, кореспондентом та ЄДРПОУ
+      if (filters.search) {
+        const searchLower = `%${filters.search.toLowerCase()}%`;
+        conditions.push(
+          or(
+            ilike(orders.orderNumber, searchLower),
+            ilike(orders.invoiceNumber, searchLower),
+            ilike(bankPaymentNotifications.invoiceNumber, searchLower),
+            ilike(clients.name, searchLower),
+            ilike(clients.fullName, searchLower),
+            ilike(clients.taxCode, searchLower),
+            ilike(bankPaymentNotifications.correspondent, searchLower),
+            ilike(bankPaymentNotifications.paymentPurpose, searchLower),
+            ilike(bankPaymentNotifications.subject, searchLower)
+          )
+        );
+      }
+
+      // Фільтр за статусом
+      if (filters.status && filters.status !== 'all') {
+        if (filters.status === 'confirmed') {
+          conditions.push(eq(bankPaymentNotifications.processed, true));
+        } else if (filters.status === 'pending') {
+          conditions.push(eq(bankPaymentNotifications.processed, false));
+        }
+      }
+
+      // Фільтр за типом (поки що тільки bank_transfer)
+      // В майбутньому тут можна додати інші типи платежів
+
+      const result = await query
+        .where(and(...conditions))
+        .orderBy(desc(bankPaymentNotifications.receivedAt));
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching filtered payments:', error);
+      throw error;
+    }
+  }
+
   async getPaymentStats(): Promise<any> {
     try {
       const now = new Date();

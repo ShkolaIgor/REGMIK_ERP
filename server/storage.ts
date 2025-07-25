@@ -691,6 +691,11 @@ export interface IStorage {
 
   // Payments Methods
   getAllPayments(): Promise<any[]>;
+  getFilteredPayments(filters: {
+    search?: string;
+    status?: string;
+    type?: string;
+  }): Promise<any[]>;
   getPaymentStats(): Promise<any>;
   getPayment(id: number): Promise<any>;
   createPayment(paymentData: any): Promise<any>;
@@ -2394,6 +2399,14 @@ export class MemStorage implements IStorage {
 
   // Payments Methods
   async getAllPayments(): Promise<any[]> {
+    return [];
+  }
+
+  async getFilteredPayments(filters: {
+    search?: string;
+    status?: string;
+    type?: string;
+  }): Promise<any[]> {
     return [];
   }
 
