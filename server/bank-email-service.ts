@@ -1520,6 +1520,10 @@ export class BankEmailService {
       console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus...`);
       // ПРІОРИТЕТ: emailDate (заголовок email) -> fallback на invoiceDate -> поточна дата
       const finalPaymentDate = emailContent?.emailDate || paymentInfo.invoiceDate || new Date();
+      console.log(`🏦 🎯 ПЕРЕД ВИКЛИКОМ updateOrderPaymentStatus:`);
+      console.log(`🏦 🎯 emailContent?.emailDate = ${emailContent?.emailDate?.toISOString()}`);
+      console.log(`🏦 🎯 paymentInfo.invoiceDate = ${paymentInfo.invoiceDate?.toISOString()}`);
+      console.log(`🏦 🎯 finalPaymentDate = ${finalPaymentDate.toISOString()}`);
       
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
@@ -1747,12 +1751,16 @@ export class BankEmailService {
       // Для тестування використовуємо налаштовану банківську адресу або fallback
       const fromAddress = emailSettings?.bankEmailAddress || "noreply@ukrsib.com.ua";
       
+      // Використовуємо реальну дату з email заголовка користувача
+      // Date: Mon, 21 Jul 2025 16:32:17 +0300 (EEST)
+      const realEmailDate = new Date("Mon, 21 Jul 2025 16:32:17 +0300");
+      
       const mockEmail = {
         messageId: `manual-${Date.now()}`,
         subject: "Банківське повідомлення",
         fromAddress: fromAddress,
-        receivedAt: new Date(),
-        emailDate: new Date(), // Додаємо дату email заголовка для тестування
+        receivedAt: new Date(), // Дата отримання ERP системою (зараз)
+        emailDate: realEmailDate, // СПРАВЖНЯ дата з email заголовка
         textContent: emailContent,
       };
 
