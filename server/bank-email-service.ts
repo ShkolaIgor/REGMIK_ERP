@@ -653,6 +653,7 @@ export class BankEmailService {
       }
 
       // Якщо це зарахування коштів та знайдено номер рахунку - обробляємо платіж  
+      console.log(`🏦 ПЕРЕВІРКА УМОВ: operationType="${paymentInfo.operationType}", invoiceNumber="${paymentInfo.invoiceNumber}"`);
       if (paymentInfo.operationType === "зараховано" && paymentInfo.invoiceNumber) {
         // Очищуємо кеш неіснуючих рахунків при кожній перевірці для актуальності
         this.notFoundInvoicesCache.clear();
@@ -961,31 +962,46 @@ export class BankEmailService {
       console.log("🏦 🔍 ПОЧАТОК НОВОГО АЛГОРИТМУ ПОШУКУ НОМЕРІВ РАХУНКІВ");
       
       // Пріоритет 1: Пошук в purposeMatch (призначення платежу)
+      let isFullInvoiceNumber = false; // Флаг для визначення чи є номер повним
+      let partialInvoiceNumber = null; // Для збереження часткового номера
+      
       if (purposeMatch?.[1]) {
         console.log("🏦 Пошук номера рахунку в призначенні платежу:", purposeMatch[1]);
         
-        // Формат: "згідно рах.№ 27751" або "рах №27759"
-        const purposeInvoiceMatch = purposeMatch[1].match(/рах\.?\s*№?\s*(\d+)/i);
-        if (purposeInvoiceMatch) {
-          const rawNumber = purposeInvoiceMatch[1];
-          // Автоматично додаємо префікс РМ00- для номерів без нього
-          invoiceNumber = rawNumber.startsWith('РМ00-') ? rawNumber : `РМ00-${rawNumber}`;
-          invoiceMatch = purposeInvoiceMatch;
-          console.log("🏦 ✅ ВИПРАВЛЕНИЙ АЛГОРИТМ: Знайдено номер в призначенні:", rawNumber, "→", invoiceNumber);
+        // Спочатку шукаємо повний формат РМ00-XXXXXX
+        const fullInvoiceMatch = purposeMatch[1].match(/РМ00[-\s]*(\d{5,6})/i);
+        if (fullInvoiceMatch) {
+          const rawNumber = fullInvoiceMatch[1];
+          invoiceNumber = `РМ00-${rawNumber.padStart(6, '0')}`;
+          invoiceMatch = fullInvoiceMatch;
+          isFullInvoiceNumber = true;
+          console.log("🏦 ✅ ПОВНИЙ НОМЕР в призначенні:", fullInvoiceMatch[0], "→", invoiceNumber);
         } else {
-          console.log("🏦 ❌ ВИПРАВЛЕНИЙ АЛГОРИТМ: Номер не знайдено в призначенні");
+          // Шукаємо частковий номер: "згідно рах.№ 27751" або "рах №27759"
+          const purposeInvoiceMatch = purposeMatch[1].match(/рах\.?\s*№?\s*(\d+)/i);
+          if (purposeInvoiceMatch) {
+            partialInvoiceNumber = purposeInvoiceMatch[1];
+            invoiceNumber = partialInvoiceNumber; // Тимчасово зберігаємо як є
+            invoiceMatch = purposeInvoiceMatch;
+            isFullInvoiceNumber = false;
+            console.log("🏦 ✅ ЧАСТКОВИЙ НОМЕР в призначенні:", partialInvoiceNumber, "→ потребує складного пошуку");
+          } else {
+            console.log("🏦 ❌ Номер не знайдено в призначенні");
+          }
         }
       } else {
-        console.log("🏦 ⚠️ ВИПРАВЛЕНИЙ АЛГОРИТМ: purposeMatch відсутній");
+        console.log("🏦 ⚠️ purposeMatch відсутній");
       }
       
       // Пріоритет 2: Пошук стандартних форматів РМ00-XXXXX в основному тексті
       if (!invoiceMatch) {
-        const rm00Match = emailText.match(/РМ00-(\d+)/i);
+        const rm00Match = emailText.match(/РМ00[-\s]*(\d{5,6})/i);
         if (rm00Match) {
-          invoiceNumber = "РМ00-" + rm00Match[1];
+          const rawNumber = rm00Match[1];
+          invoiceNumber = `РМ00-${rawNumber.padStart(6, '0')}`;
           invoiceMatch = rm00Match;
-          console.log("🏦 ✅ Знайдено РМ00 формат:", invoiceNumber);
+          isFullInvoiceNumber = true;
+          console.log("🏦 ✅ ПОВНИЙ НОМЕР РМ00 в тексті:", invoiceNumber);
         }
       }
       
@@ -993,11 +1009,11 @@ export class BankEmailService {
       if (!invoiceMatch) {
         const numberDateMatch = emailText.match(/(\d{5,6}).*?(\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2}р?))/i);
         if (numberDateMatch) {
-          const rawNumber = numberDateMatch[1];
-          // Автоматично додаємо префікс РМ00- для номерів без нього
-          invoiceNumber = `РМ00-${rawNumber}`;
+          partialInvoiceNumber = numberDateMatch[1];
+          invoiceNumber = partialInvoiceNumber; // Зберігаємо як частковий
           invoiceMatch = numberDateMatch;
-          console.log("🏦 ✅ ВИПРАВЛЕНИЙ АЛГОРИТМ: Знайдено номер з датою:", rawNumber, "→", invoiceNumber);
+          isFullInvoiceNumber = false;
+          console.log("🏦 ✅ ЧАСТКОВИЙ НОМЕР з датою:", partialInvoiceNumber, "→ потребує складного пошуку");
         }
       }
       
@@ -1018,14 +1034,10 @@ export class BankEmailService {
       console.log("🏦 Додаткові регекси:");
       console.log("  invoiceMatch:", invoiceMatch);
       console.log("  invoiceNumber (final):", invoiceNumber);
+      console.log("  isFullInvoiceNumber:", isFullInvoiceNumber);
+      console.log("  partialInvoiceNumber:", partialInvoiceNumber);
       console.log("  dateMatch:", dateMatch);
       console.log("  vatMatch:", vatMatch);
-      
-      // ОСТАТОЧНА ПЕРЕВІРКА: Якщо invoiceNumber не має префіксу РМ00-, додаємо його
-      if (invoiceNumber && !invoiceNumber.startsWith('РМ00-') && /^\d+$/.test(invoiceNumber)) {
-        invoiceNumber = `РМ00-${invoiceNumber}`;
-        console.log("🏦 ОСТАТОЧНА КОРЕКЦІЯ: Додано префікс РМ00- до номера:", invoiceNumber);
-      }
 
       // FINAL FIX: Якщо correspondentMatch не спрацював, витягуємо з додаткових регексів
       if (!correspondentMatch && invoiceMatch?.input) {
@@ -1099,6 +1111,9 @@ export class BankEmailService {
       
       console.log("🏦 Очищена operationType:", cleanOperationType);
       console.log("🏦 Перевірка чи це 'зараховано':", cleanOperationType === "зараховано");
+      console.log("🏦 🆕 НОВА ЛОГІКА: isFullInvoiceNumber:", isFullInvoiceNumber);
+      console.log("🏦 🆕 НОВА ЛОГІКА: partialInvoiceNumber:", partialInvoiceNumber);
+      console.log("🏦 🆕 НОВА ЛОГІКА: invoiceNumber:", invoiceNumber);
       console.log("🏦 Повертаю результат з operationType:", cleanOperationType);
 
       return {
@@ -1109,6 +1124,8 @@ export class BankEmailService {
         correspondent: correspondentMatch[1].trim(),
         paymentPurpose: purposeMatch?.[1]?.trim() || "",
         invoiceNumber: invoiceNumber || undefined,
+        partialInvoiceNumber: partialInvoiceNumber,
+        isFullInvoiceNumber: isFullInvoiceNumber,
         invoiceDate: invoiceDate,
         vatAmount: vatAmount,
       };
@@ -1127,98 +1144,130 @@ export class BankEmailService {
     try {
       console.log(`🏦 processPayment called with notificationId=${notificationId}, paymentInfo:`, paymentInfo);
       
+      // Перевіряємо, чи це операція зарахування
+      console.log(`🏦 DEBUG operationType: "${paymentInfo.operationType}"`);
+      if (!paymentInfo.operationType || paymentInfo.operationType !== "зараховано") {
+        console.log(`🏦⏭️ Пропускаємо: operationType = "${paymentInfo.operationType}" (не зараховано)`);
+        return { success: false, message: `Операція "${paymentInfo.operationType}" пропущена` };
+      }
+      
       let order = null;
       let searchDetails = "";
 
-      // Спочатку пробуємо простий пошук за номером рахунку
+      // РОЗУМНИЙ ПОШУК ЗАМОВЛЕНЬ - НОВИЙ АЛГОРИТМ
+      console.log(`🏦 🔍 РОЗУМНИЙ ПОШУК ПОЧАТОК`);
+      console.log(`🏦 🔍 paymentInfo.invoiceNumber = "${paymentInfo.invoiceNumber}"`);
+      console.log(`🏦 🔍 paymentInfo.isFullInvoiceNumber = ${paymentInfo.isFullInvoiceNumber}`);
+      console.log(`🏦 🔍 paymentInfo.partialInvoiceNumber = "${paymentInfo.partialInvoiceNumber}"`);
+      
       if (paymentInfo.invoiceNumber) {
-        console.log(`🏦 Searching for order by invoice number: ${paymentInfo.invoiceNumber}`);
-        order = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
-        console.log(`🏦 Simple search result:`, order ? `Found order ID ${order.id}` : 'Not found');
-        searchDetails += `Пошук за номером: ${paymentInfo.invoiceNumber}`;
-        
-        // ПОКРАЩЕННЯ: Перевіряємо точне співпадіння суми
-        if (order && paymentInfo.amount) {
-          const orderTotal = parseFloat(order.totalAmount?.toString() || '0');
-          const paymentAmount = parseFloat(paymentInfo.amount.toString());
+        if (paymentInfo.isFullInvoiceNumber) {
+          // Якщо є повний номер типу РМ00-027689, шукаємо точно
+          console.log(`🏦 📋 ПОВНИЙ НОМЕР: Пошук за ${paymentInfo.invoiceNumber}`);
+          order = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
+          console.log(`🏦 📋 ПОВНИЙ НОМЕР результат:`, order ? `✅ Знайдено ID ${order.id}` : '❌ НЕ ЗНАЙДЕНО');
+          searchDetails += `Пошук за повним номером: ${paymentInfo.invoiceNumber}`;
           
-          console.log(`🏦 Перевірка співпадіння суми:`);
-          console.log(`  - Сума замовлення: ${orderTotal} UAH`);
-          console.log(`  - Сума платежу: ${paymentAmount} UAH`);
-          console.log(`  - Точне співпадіння: ${orderTotal === paymentAmount}`);
+          // Для повних номерів можемо перевірити суму, але це не критично
+          if (order && paymentInfo.amount) {
+            const orderTotal = parseFloat(order.totalAmount?.toString() || '0');
+            const paymentAmount = parseFloat(paymentInfo.amount.toString());
+            
+            console.log(`🏦 📋 Перевірка співпадіння суми: ${orderTotal} vs ${paymentAmount}`);
+            
+            if (orderTotal === paymentAmount) {
+              console.log(`🏦✅ PERFECT! Повний номер + точна сума: ${paymentInfo.invoiceNumber} = ${paymentAmount} UAH`);
+            } else {
+              console.log(`🏦⚠️ Повний номер знайдено, але сума відрізняється: ${orderTotal} vs ${paymentAmount}. Приймаємо все одно.`);
+              // НЕ скидаємо order для повних номерів - якщо номер правильний, то це наше замовлення
+            }
+          }
+        } else {
+          // Якщо частковий номер типу "27741", використовуємо комплексний пошук
+          console.log(`🏦 🔍 ЧАСТКОВИЙ НОМЕР: Спочатку пробуємо простий пошук за ${paymentInfo.invoiceNumber}`);
+          order = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
           
-          if (orderTotal === paymentAmount) {
-            console.log(`🏦✅ ТОЧНЕ СПІВПАДІННЯ! Рахунок ${paymentInfo.invoiceNumber} та сума ${paymentAmount} UAH`);
-            // Продовжуємо з цим замовленням
+          if (order) {
+            console.log(`🏦 🔍 ✅ Частковий номер знайдено простим пошуком: ID ${order.id}`);
+            searchDetails += `Простий пошук частково: ${paymentInfo.invoiceNumber}`;
           } else {
-            console.log(`🏦⚠️ Сума не співпадає для ${paymentInfo.invoiceNumber}. Шукаємо далі...`);
-            order = null; // Скидаємо щоб продовжити пошук
+            console.log(`🏦 🔍 ❌ Частковий номер НЕ знайдено простим пошуком. Переходимо до розширеного пошуку.`);
+            // Перейдемо до розширеного пошуку нижче
           }
         }
       }
 
-      // Якщо не знайдено, використовуємо розширений пошук
+      // РОЗШИРЕНИЙ ПОШУК для часткових номерів або коли основний пошук не дав результатів
       if (!order) {
-        console.log("🔍 Розширений пошук замовлення за додатковими критеріями...");
+        console.log("🔍 🎯 РОЗШИРЕНИЙ ПОШУК замовлення за комплексними критеріями...");
         
-        // Витягуємо частковий номер з призначення платежу
-        let partialInvoiceNumber = null;
-        if (paymentInfo.paymentPurpose) {
-          const partialMatch = paymentInfo.paymentPurpose.match(/№\s*(\d+)/);
-          if (partialMatch) {
-            partialInvoiceNumber = partialMatch[1];
-            console.log(`🔍 Знайдено частковий номер рахунку: ${partialInvoiceNumber}`);
+        // Використовуємо частковий номер з paymentInfo якщо є
+        let partialNumber = paymentInfo.partialInvoiceNumber || paymentInfo.invoiceNumber;
+        
+        // Якщо номер має формат РМ00-, витягуємо числову частину
+        if (partialNumber && partialNumber.startsWith('РМ00-')) {
+          const match = partialNumber.match(/РМ00-(\d+)/);
+          if (match) {
+            partialNumber = match[1];
+            console.log(`🔍 📋 Витягуємо числову частину з ${partialNumber}: ${partialNumber}`);
           }
         }
-
+        
         // Створюємо об'єкт для розширеного пошуку
         const searchCriteria: any = {};
         
-        if (partialInvoiceNumber) {
-          searchCriteria.partialInvoiceNumber = partialInvoiceNumber;
+        if (partialNumber) {
+          searchCriteria.partialInvoiceNumber = partialNumber;
+          console.log(`🔍 🎯 Додаємо частковий номер до пошуку: ${partialNumber}`);
         }
         
         if (paymentInfo.invoiceDate) {
           searchCriteria.invoiceDate = paymentInfo.invoiceDate;
+          console.log(`🔍 📅 Додаємо дату рахунку: ${paymentInfo.invoiceDate}`);
         }
         
         if (paymentInfo.correspondent) {
           searchCriteria.correspondent = paymentInfo.correspondent;
+          console.log(`🔍 👤 Додаємо клієнта: ${paymentInfo.correspondent}`);
         }
         
         if (paymentInfo.amount) {
           searchCriteria.amount = paymentInfo.amount;
+          console.log(`🔍 💰 Додаємо суму: ${paymentInfo.amount} UAH`);
         }
 
+        console.log(`🔍 🎯 Критерії розширеного пошуку:`, searchCriteria);
         const foundOrders = await storage.findOrdersByPaymentInfo(searchCriteria);
         
         if (foundOrders.length > 0) {
-          console.log(`🔍 Знайдено ${foundOrders.length} замовлень за розширеним пошуком`);
+          console.log(`🔍 ✅ Знайдено ${foundOrders.length} замовлень за розширеним пошуком`);
           
-          // ПОКРАЩЕННЯ: Пріоритизуємо замовлення з точним співпадінням суми
+          // ПРІОРИТИЗАЦІЯ: Точне співпадіння суми має найвищий пріоритет
           if (paymentInfo.amount && foundOrders.length > 1) {
             const paymentAmount = parseFloat(paymentInfo.amount.toString());
-            console.log(`🔍 Шукаємо серед ${foundOrders.length} замовлень з точним співпадінням суми ${paymentAmount}`);
+            console.log(`🔍 💰 Шукаємо серед ${foundOrders.length} замовлень з точним співпадінням суми ${paymentAmount}`);
             
             for (const foundOrder of foundOrders) {
               const orderTotal = parseFloat(foundOrder.totalAmount?.toString() || '0');
-              console.log(`🔍 Перевіряємо замовлення ${foundOrder.invoiceNumber}: ${orderTotal} UAH`);
+              console.log(`🔍 💰 Перевіряємо замовлення ${foundOrder.invoiceNumber}: ${orderTotal} UAH`);
               
               if (orderTotal === paymentAmount) {
                 order = foundOrder;
-                console.log(`🔍✅ ЗНАЙДЕНО ТОЧНЕ СПІВПАДІННЯ: ${foundOrder.invoiceNumber} = ${paymentAmount} UAH`);
+                console.log(`🔍✅ PERFECT MATCH! ${foundOrder.invoiceNumber} = ${paymentAmount} UAH`);
                 break;
               }
             }
           }
           
-          // Якщо точного співпадіння суми немає, беремо перше знайдене
+          // Якщо точного співпадіння суми немає, беремо перше найближче
           if (!order) {
             order = foundOrders[0];
-            console.log(`🔍 Взято перше замовлення з результатів пошуку: ${order.invoiceNumber}`);
+            console.log(`🔍 📋 Взято найкраще з результатів пошуку: ${order.invoiceNumber}`);
           }
           
           searchDetails += `, розширений пошук: ${JSON.stringify(searchCriteria)}`;
+        } else {
+          console.log(`🔍 ❌ Розширений пошук не дав результатів для критеріїв:`, searchCriteria);
         }
       }
 
