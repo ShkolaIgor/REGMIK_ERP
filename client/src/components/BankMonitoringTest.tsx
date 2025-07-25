@@ -153,6 +153,40 @@ export function BankMonitoringTest() {
     },
   });
 
+  // Тестування реального банківського повідомлення користувача
+  const testUserBankMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/test-user-bank-parsing", {
+        method: "GET",
+      });
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "✅ Тест реального банківського повідомлення",
+          description: `Успішно розпізнано суму: ${data.parsed?.amount} ${data.parsed?.currency}`,
+          variant: "default",
+        });
+        console.log("Очікувані дані:", data.expected);
+        console.log("Розпізнані дані:", data.parsed);
+      } else {
+        toast({
+          title: "❌ Помилка парсингу",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "❌ Помилка тестування",
+        description: "Не вдалося протестувати реальне банківське повідомлення",
+        variant: "destructive",
+      });
+      console.error("User bank test error:", error);
+    },
+  });
+
   // Отримання статистики банківських платежів
   const { data: stats } = useQuery({
     queryKey: ["/api/bank-payments/stats"],
@@ -223,6 +257,22 @@ export function BankMonitoringTest() {
             </Button>
             <p className="text-sm text-gray-600">
               Перевіряє розпізнавання форматів: "27711 від 16.07.25", "згідно рах 27688", "рах.№27711" тощо
+            </p>
+          </div>
+
+          {/* Тестування реального банківського повідомлення */}
+          <div className="space-y-2">
+            <h4 className="font-semibold">Тест з реальним банківським повідомленням (сумма: 39535.20):</h4>
+            <Button
+              onClick={() => testUserBankMutation.mutate()}
+              disabled={testUserBankMutation.isPending}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              {testUserBankMutation.isPending ? "Перевірка парсингу..." : "Тестувати з реальними даними від АГРО-ОВЕН"}
+            </Button>
+            <p className="text-sm text-gray-600">
+              Перевіряє точність розпізнавання суми, кореспондента та номера рахунку з реального банківського повідомлення
             </p>
           </div>
 
