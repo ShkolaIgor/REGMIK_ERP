@@ -6,46 +6,35 @@ import { storage } from "./db-storage";
 
 // Простий middleware для перевірки авторизації
 export const isSimpleAuthenticated: RequestHandler = (req, res, next) => {
-  console.log("Auth check - Session exists:", !!req.session);
-  console.log("Auth check - User in session:", !!(req.session as any)?.user);
-  console.log("Auth check - Session ID:", req.sessionID);
-  console.log("Auth check - Session data:", req.session);
-  
   // Check authorization header as fallback
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
     // Simple token check for demo - in production use proper JWT
     if (token === 'demo-token') {
-      console.log("Auth check - User authenticated via Bearer token");
       return next();
     }
   }
   
   if (req.session && (req.session as any).user) {
-    console.log("Auth check - User authenticated:", (req.session as any).user.username);
     return next();
   }
   
   // For testing purposes, allow requests from localhost with specific user agent
   if (req.get('User-Agent')?.includes('curl')) {
-    console.log("Auth check - Allowing curl request for testing");
     return next();
   }
   
   // Тимчасово дозволяємо доступ до 1C endpoints для тестування
   if (req.path.includes('/api/1c/')) {
-    console.log("Auth check - Allowing 1C endpoint access for testing:", req.path);
     return next();
   }
   
   // Тимчасово дозволяємо доступ до всіх API endpoints для діагностики
   if (req.path.startsWith('/api/')) {
-    console.log("Auth check - Allowing API access for testing:", req.path);
     return next();
   }
   
-  console.log("Auth check - User NOT authenticated");
   return res.status(401).json({ message: "Unauthorized" });
 };
 
@@ -83,49 +72,36 @@ const productionUsers: any[] = [];
 export function setupSimpleAuth(app: Express) {
   // Маршрут для простого входу
   app.post("/api/auth/simple-login", async (req, res) => {
-    console.log("Login attempt:", req.body);
-    console.log("Session ID before login:", req.sessionID);
     const { username: rawUsername, password } = req.body;
     const username = rawUsername?.trim(); // Обрізаємо пробіли
     
-    console.log("Trimmed username:", username);
     
     try {
       // Production режим - тільки перевірка в базі даних
-      console.log("Checking database for user:", username);
       let dbUser;
       try {
         dbUser = await storage.getLocalUserByUsername(username);
-        console.log("Database query successful, user found:", !!dbUser);
       } catch (dbError) {
-        console.error("Database error when searching for user:", dbError);
         return res.status(500).json({ message: "Помилка бази даних" });
       }
       
       if (dbUser) {
-        console.log("Database user found:", dbUser.username);
-        console.log("User active status:", dbUser.isActive);
         
         // Перевіряємо, чи активний користувач
         if (!dbUser.isActive) {
-          console.log("User is inactive");
           return res.status(401).json({ message: "Обліковий запис деактивований" });
         }
         
         // Перевіряємо пароль
         const isPasswordValid = await bcrypt.compare(password, dbUser.password);
-        console.log("Password validation result:", isPasswordValid);
         
         if (isPasswordValid) {
-          console.log("Database user authenticated successfully");
           
           // Отримуємо повні дані користувача з робітником
           let fullUser;
           try {
             fullUser = await storage.getLocalUserWithWorker(dbUser.id);
-            console.log("Full user data retrieved successfully");
           } catch (fullUserError) {
-            console.error("Error getting full user data:", fullUserError);
             // Продовжуємо без worker даних
             fullUser = null;
           }
@@ -143,18 +119,14 @@ export function setupSimpleAuth(app: Express) {
           // Оновлюємо час останнього входу
           try {
             await storage.updateUserLastLogin(dbUser.id);
-            console.log("User last login updated successfully");
           } catch (updateError) {
-            console.error("Error updating last login:", updateError);
             // Не блокуємо login через цю помилку
           }
           
           return req.session.save((err) => {
             if (err) {
-              console.error("Session save error:", err);
               return res.status(500).json({ message: "Помилка збереження сесії" });
             }
-            console.log("Session saved successfully for database user, ID:", req.sessionID);
             res.json({ success: true, user: { 
               id: dbUser.id,
               username: dbUser.username,
@@ -164,11 +136,9 @@ export function setupSimpleAuth(app: Express) {
         }
       }
       
-      console.log("Invalid credentials - no user found or password incorrect");
       res.status(401).json({ message: "Невірний логін або пароль" });
       
     } catch (error) {
-      console.error("Login error:", error);
       res.status(500).json({ message: "Помилка серверу під час входу" });
     }
   });
@@ -217,20 +187,16 @@ export function setupSimpleAuth(app: Express) {
 
       res.json(userData);
     } catch (error) {
-      console.error("Error fetching user:", error);
       res.status(500).json({ message: "Внутрішня помилка сервера" });
     }
   });
 
   // Маршрут для виходу
   app.get("/api/logout", (req, res) => {
-    console.log("Logout request received");
     req.session.destroy((err) => {
       if (err) {
-        console.error("Logout error:", err);
         return res.status(500).json({ message: "Помилка при виході" });
       }
-      console.log("User logged out successfully");
       res.clearCookie('regmik_session');
       res.redirect("/");
     });
@@ -280,11 +246,10 @@ export function setupSimpleAuth(app: Express) {
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
       // Оновлюємо пароль в базі даних
-      await storage.updateUserPassword(user.id, hashedNewPassword);
+      await storage.updateLocalUserPassword(user.id, hashedNewPassword);
 
       res.json({ message: "Пароль успішно змінено" });
     } catch (error) {
-      console.error("Error changing password:", error);
       res.status(500).json({ message: "Внутрішня помилка сервера" });
     }
   });

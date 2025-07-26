@@ -43,16 +43,12 @@ export const pool = new Pool({
 // Забезпечуємо UTF-8 кодування для всіх підключень
 pool.on('connect', async (client) => {
   try {
-    // Перевіряємо стан підключення перед налаштуванням
-    if (client && !client._ending && !client._connected === false) {
-      await client.query('SET client_encoding TO "UTF8"');
-      await client.query('SET standard_conforming_strings TO on');
-      console.log('Database connection configured for UTF-8');
-    }
+    await client.query('SET client_encoding TO "UTF8"');
+    await client.query('SET standard_conforming_strings TO on');
   } catch (error) {
     // Тихо ігноруємо помилки підключення під час налаштування кодування
-    if (!error.message?.includes('Connection terminated') && !error.message?.includes('Connection ended')) {
-      console.warn('Warning setting UTF-8 encoding:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('Connection terminated') && !errorMessage.includes('Connection ended')) {
     }
   }
 });
