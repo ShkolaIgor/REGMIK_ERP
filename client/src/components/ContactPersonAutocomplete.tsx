@@ -69,7 +69,7 @@ export function ContactPersonAutocomplete({
       const response = await fetch(`/api/client-contacts?clientId=${clientId}`);
       if (!response.ok) throw new Error('Failed to fetch contacts');
       const data = await response.json();
-      return data.clientContacts || [];
+      return data || [];
     },
     enabled: !!clientId,
   });
@@ -262,7 +262,14 @@ export function ContactPersonAutocomplete({
             </>
           ) : (
             <div className="px-3 py-2">
-              <div className="text-gray-500 text-sm mb-2">Контакт не знайдено</div>
+              <div className="text-gray-500 text-sm mb-2">
+                Контакт не знайдено
+                {clientId && (
+                  <div className="text-xs text-blue-500 mt-1">
+                    Debug: clientId={clientId}, contacts={contactsData.length}, filtered={filteredContacts.length}
+                  </div>
+                )}
+              </div>
               <Button
                 variant="ghost"
                 className="w-full justify-start px-0 py-1"
