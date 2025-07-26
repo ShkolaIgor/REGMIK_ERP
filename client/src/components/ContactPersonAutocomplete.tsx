@@ -119,10 +119,12 @@ export function ContactPersonAutocomplete({
   });
 
   // Фільтрація контактів за пошуковим запитом
-  const filteredContacts = contactsData.filter((contact: any) =>
-    contact.fullName.toLowerCase().includes(searchValue.toLowerCase()) ||
-    (contact.position && contact.position.toLowerCase().includes(searchValue.toLowerCase()))
-  );
+  const filteredContacts = searchValue 
+    ? contactsData.filter((contact: any) =>
+        contact.fullName.toLowerCase().includes(searchValue.toLowerCase()) ||
+        (contact.position && contact.position.toLowerCase().includes(searchValue.toLowerCase()))
+      )
+    : contactsData; // Якщо пошук порожній, показуємо всіх контактів
 
   // Обробка вибору контакту
   const handleSelectContact = (contact: any) => {
@@ -152,7 +154,7 @@ export function ContactPersonAutocomplete({
 
   // Обробка фокусу на полі
   const handleFocus = () => {
-    if (searchValue && clientId) {
+    if (clientId) {
       setIsDropdownOpen(true);
     }
   };
@@ -220,7 +222,7 @@ export function ContactPersonAutocomplete({
         className={selectedContactId ? "border-green-500" : ""}
       />
 
-      {isDropdownOpen && searchValue && (
+      {isDropdownOpen && clientId && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
           {filteredContacts.length > 0 ? (
             <>
