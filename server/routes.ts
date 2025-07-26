@@ -12887,6 +12887,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Тестовий endpoint для перевірки обробки банківських платежів
+  app.post('/api/test-bank-payment-processing', async (req, res) => {
+    try {
+      const { emailContent } = req.body;
+      
+      if (!emailContent) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "emailContent обов'язковий" 
+        });
+      }
+
+      console.log('🧪 Тестування обробки банківського платежу...');
+      
+      // Імітуємо запуск банківського сервісу напряму
+      const { BankEmailService } = await import('./bank-email-service.js');
+      const bankService = new BankEmailService();
+      
+      // Аналізуємо контент банківського повідомлення
+      const analysisResult = bankService.analyzeBankEmailContent(emailContent, 'test@test.com');
+      
+      if (!analysisResult.success || !analysisResult.paymentInfo) {
+        return res.json({
+          success: false,
+          message: 'Не вдалося розпарсити банківське повідомлення',
+          details: analysisResult
+        });
+      }
+
+      // Пробуємо обробити платіж
+      const paymentResult = await bankService.processPayment(storage, 0, analysisResult.paymentInfo, {
+        emailDate: new Date(),
+        receivedAt: new Date()
+      });
+      
+      res.json({
+        success: paymentResult.success,
+        message: paymentResult.message,
+        orderId: paymentResult.orderId,
+        analysisResult: analysisResult,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error('❌ Помилка тестування банківського платежу:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Асинхронна перевірка зіставлення позиції накладної з компонентами
   app.post('/api/1c/check-item-mapping', isSimpleAuthenticated, async (req, res) => {
     try {

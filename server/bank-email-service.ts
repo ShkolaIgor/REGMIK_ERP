@@ -1338,6 +1338,11 @@ export class BankEmailService {
       let order = null;
       let searchDetails = "";
 
+      // Обчислюємо дату 6 місяців тому для фільтра
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      console.log(`🏦 📅 Фільтр дати: рахунки новіше ${sixMonthsAgo.toISOString().split('T')[0]}`);
+
       // РОЗУМНИЙ ПОШУК ЗАМОВЛЕНЬ - НОВИЙ АЛГОРИТМ
       console.log(`🏦 🔍 РОЗУМНИЙ ПОШУК ПОЧАТОК`);
       console.log(`🏦 🔍 paymentInfo.invoiceNumber = "${paymentInfo.invoiceNumber}"`);
@@ -1348,32 +1353,52 @@ export class BankEmailService {
         if (paymentInfo.isFullInvoiceNumber) {
           // Якщо є повний номер типу РМ00-027689, шукаємо точно
           console.log(`🏦 📋 ПОВНИЙ НОМЕР: Пошук за ${paymentInfo.invoiceNumber}`);
-          order = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
-          console.log(`🏦 📋 ПОВНИЙ НОМЕР результат:`, order ? `✅ Знайдено ID ${order.id}` : '❌ НЕ ЗНАЙДЕНО');
-          searchDetails += `Пошук за повним номером: ${paymentInfo.invoiceNumber}`;
+          const foundOrder = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
           
-          // Для повних номерів можемо перевірити суму, але це не критично
-          if (order && paymentInfo.amount) {
-            const orderTotal = parseFloat(order.totalAmount?.toString() || '0');
-            const paymentAmount = parseFloat(paymentInfo.amount.toString());
-            
-            console.log(`🏦 📋 Перевірка співпадіння суми: ${orderTotal} vs ${paymentAmount}`);
-            
-            if (orderTotal === paymentAmount) {
-              console.log(`🏦✅ PERFECT! Повний номер + точна сума: ${paymentInfo.invoiceNumber} = ${paymentAmount} UAH`);
+          if (foundOrder) {
+            const orderDate = new Date(foundOrder.createdAt);
+            if (orderDate >= sixMonthsAgo) {
+              order = foundOrder;
+              console.log(`🏦 📋 ✅ Повний номер знайдено та підходить за датою: ID ${order.id}, дата ${orderDate.toISOString().split('T')[0]}`);
+              searchDetails += `Пошук за повним номером: ${paymentInfo.invoiceNumber}`;
+              
+              // Для повних номерів можемо перевірити суму, але це не критично
+              if (paymentInfo.amount) {
+                const orderTotal = parseFloat(order.totalAmount?.toString() || '0');
+                const paymentAmount = parseFloat(paymentInfo.amount.toString());
+                
+                console.log(`🏦 📋 Перевірка співпадіння суми: ${orderTotal} vs ${paymentAmount}`);
+                
+                if (orderTotal === paymentAmount) {
+                  console.log(`🏦✅ PERFECT! Повний номер + точна сума: ${paymentInfo.invoiceNumber} = ${paymentAmount} UAH`);
+                } else {
+                  console.log(`🏦⚠️ Повний номер знайдено, але сума відрізняється: ${orderTotal} vs ${paymentAmount}. Приймаємо все одно.`);
+                  // НЕ скидаємо order для повних номерів - якщо номер правильний, то це наше замовлення
+                }
+              }
             } else {
-              console.log(`🏦⚠️ Повний номер знайдено, але сума відрізняється: ${orderTotal} vs ${paymentAmount}. Приймаємо все одно.`);
-              // НЕ скидаємо order для повних номерів - якщо номер правильний, то це наше замовлення
+              console.log(`🏦 📋 ❌ Повний номер знайдено, але занадто старий: дата ${orderDate.toISOString().split('T')[0]} (старше 6 місяців)`);
+              searchDetails += `знайдено ${paymentInfo.invoiceNumber}, але дата ${orderDate.toISOString().split('T')[0]} старше 6 місяців`;
             }
+          } else {
+            console.log(`🏦 📋 ❌ НЕ ЗНАЙДЕНО`);
+            searchDetails += `Пошук за повним номером: ${paymentInfo.invoiceNumber} - не знайдено`;
           }
         } else {
           // Якщо частковий номер типу "27741", використовуємо комплексний пошук
           console.log(`🏦 🔍 ЧАСТКОВИЙ НОМЕР: Спочатку пробуємо простий пошук за ${paymentInfo.invoiceNumber}`);
-          order = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
+          const foundOrder = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
           
-          if (order) {
-            console.log(`🏦 🔍 ✅ Частковий номер знайдено простим пошуком: ID ${order.id}`);
-            searchDetails += `Простий пошук частково: ${paymentInfo.invoiceNumber}`;
+          if (foundOrder) {
+            const orderDate = new Date(foundOrder.createdAt);
+            if (orderDate >= sixMonthsAgo) {
+              order = foundOrder;
+              console.log(`🏦 🔍 ✅ Частковий номер знайдено та підходить за датою: ID ${order.id}, дата ${orderDate.toISOString().split('T')[0]}`);
+              searchDetails += `Простий пошук частково: ${paymentInfo.invoiceNumber}`;
+            } else {
+              console.log(`🏦 🔍 ❌ Частковий номер знайдено, але занадто старий: дата ${orderDate.toISOString().split('T')[0]} (старше 6 місяців)`);
+              searchDetails += `знайдено ${paymentInfo.invoiceNumber}, але дата ${orderDate.toISOString().split('T')[0]} старше 6 місяців`;
+            }
           } else {
             console.log(`🏦 🔍 ❌ Частковий номер НЕ знайдено простим пошуком. Переходимо до розширеного пошуку.`);
             // Перейдемо до розширеного пошуку нижче
@@ -1424,32 +1449,45 @@ export class BankEmailService {
         const foundOrders = await storage.findOrdersByPaymentInfo(searchCriteria);
         
         if (foundOrders.length > 0) {
-          console.log(`🔍 ✅ Знайдено ${foundOrders.length} замовлень за розширеним пошуком`);
+          // Фільтруємо результати за датою
+          const recentOrders = foundOrders.filter(ord => {
+            const orderDate = new Date(ord.createdAt);
+            return orderDate >= sixMonthsAgo;
+          });
           
-          // ПРІОРИТИЗАЦІЯ: Точне співпадіння суми має найвищий пріоритет
-          if (paymentInfo.amount && foundOrders.length > 1) {
-            const paymentAmount = parseFloat(paymentInfo.amount.toString());
-            console.log(`🔍 💰 Шукаємо серед ${foundOrders.length} замовлень з точним співпадінням суми ${paymentAmount}`);
-            
-            for (const foundOrder of foundOrders) {
-              const orderTotal = parseFloat(foundOrder.totalAmount?.toString() || '0');
-              console.log(`🔍 💰 Перевіряємо замовлення ${foundOrder.invoiceNumber}: ${orderTotal} UAH`);
+          console.log(`🔍 ✅ Знайдено ${foundOrders.length} замовлень за розширеним пошуком, ${recentOrders.length} підходять за датою`);
+          
+          if (recentOrders.length > 0) {
+            // ПРІОРИТИЗАЦІЯ: Точне співпадіння суми має найвищий пріоритет
+            if (paymentInfo.amount && recentOrders.length > 1) {
+              const paymentAmount = parseFloat(paymentInfo.amount.toString());
+              console.log(`🔍 💰 Шукаємо серед ${recentOrders.length} підходящих замовлень з точним співпадінням суми ${paymentAmount}`);
               
-              if (orderTotal === paymentAmount) {
-                order = foundOrder;
-                console.log(`🔍✅ PERFECT MATCH! ${foundOrder.invoiceNumber} = ${paymentAmount} UAH`);
-                break;
+              for (const foundOrder of recentOrders) {
+                const orderTotal = parseFloat(foundOrder.totalAmount?.toString() || '0');
+                const orderDate = new Date(foundOrder.createdAt);
+                console.log(`🔍 💰 Перевіряємо замовлення ${foundOrder.invoiceNumber}: ${orderTotal} UAH, дата ${orderDate.toISOString().split('T')[0]}`);
+                
+                if (orderTotal === paymentAmount) {
+                  order = foundOrder;
+                  console.log(`🔍✅ PERFECT MATCH! ${foundOrder.invoiceNumber} = ${paymentAmount} UAH, дата підходить`);
+                  break;
+                }
               }
             }
+            
+            // Якщо точного співпадіння суми немає, беремо перше найближче з підходящих
+            if (!order) {
+              order = recentOrders[0];
+              const orderDate = new Date(order.createdAt);
+              console.log(`🔍 📋 Взято найкраще з підходящих результатів: ${order.invoiceNumber}, дата ${orderDate.toISOString().split('T')[0]}`);
+            }
+            
+            searchDetails += `, розширений пошук: ${recentOrders.length} підходящих з ${foundOrders.length} загальних`;
+          } else {
+            console.log(`🔍 ❌ Усі ${foundOrders.length} знайдених замовлень старше 6 місяців`);
+            searchDetails += `, розширений пошук: ${foundOrders.length} замовлень знайдено, але всі старше 6 місяців`;
           }
-          
-          // Якщо точного співпадіння суми немає, беремо перше найближче
-          if (!order) {
-            order = foundOrders[0];
-            console.log(`🔍 📋 Взято найкраще з результатів пошуку: ${order.invoiceNumber}`);
-          }
-          
-          searchDetails += `, розширений пошук: ${JSON.stringify(searchCriteria)}`;
         } else {
           console.log(`🔍 ❌ Розширений пошук не дав результатів для критеріїв:`, searchCriteria);
         }
@@ -1461,21 +1499,22 @@ export class BankEmailService {
         console.log(`🔄 Критерії: кореспондент="${paymentInfo.correspondent}", сума=${paymentInfo.amount}`);
         
         try {
-          // Шукаємо останнє замовлення з точним співпадінням суми та кореспондента
+          // Шукаємо останнє замовлення з точним співпадінням суми та кореспондента, новіше 6 місяців
           const fallbackOrders = await storage.query(`
             SELECT o.*, c.name as client_name 
             FROM orders o
             LEFT JOIN clients c ON o.client_id = c.id
-            WHERE c.name ILIKE $1 AND o.total_amount = $2::numeric
+            WHERE c.name ILIKE $1 AND o.total_amount = $2::numeric AND o.created_at >= $3
             ORDER BY o.created_at DESC
             LIMIT 5
-          `, [`%${paymentInfo.correspondent}%`, paymentInfo.amount.toString()]);
+          `, [`%${paymentInfo.correspondent}%`, paymentInfo.amount.toString(), sixMonthsAgo]);
           
           if (fallbackOrders.length > 0) {
             order = fallbackOrders[0]; // Беремо найновіше замовлення
+            const orderDate = new Date(order.created_at);
             console.log(`🔄✅ FALLBACK УСПІШНИЙ: Знайдено замовлення #${order.id} (${order.invoice_number || order.invoiceNumber}) для клієнта "${order.client_name}"`);
-            console.log(`🔄 Деталі: сума ${order.total_amount || order.totalAmount} UAH, дата ${order.created_at}`);
-            searchDetails += `, fallback пошук за кореспондентом та сумою`;
+            console.log(`🔄 Деталі: сума ${order.total_amount || order.totalAmount} UAH, дата ${orderDate.toISOString().split('T')[0]}`);
+            searchDetails += `, fallback пошук за кореспондентом та сумою (новіше 6 місяців)`;
             
             // Конвертуємо snake_case до camelCase для сумісності
             if (order.invoice_number && !order.invoiceNumber) {
@@ -1485,7 +1524,8 @@ export class BankEmailService {
               order.totalAmount = order.total_amount;
             }
           } else {
-            console.log(`🔄❌ FALLBACK: Не знайдено замовлень для кореспондента="${paymentInfo.correspondent}" та суми=${paymentInfo.amount}`);
+            console.log(`🔄❌ FALLBACK: Не знайдено замовлень для кореспондента="${paymentInfo.correspondent}" та суми=${paymentInfo.amount} новіших за 6 місяців`);
+            searchDetails += `, fallback пошук: не знайдено підходящих замовлень новіших за 6 місяців`;
           }
         } catch (fallbackError) {
           console.error("🔄❌ FALLBACK ERROR:", fallbackError);
