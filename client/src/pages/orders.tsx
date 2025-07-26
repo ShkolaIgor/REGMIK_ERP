@@ -596,7 +596,6 @@ export default function Orders() {
         
         const handleStatusChange = (newStatusId: string) => {
           const statusId = parseInt(newStatusId);
-          console.log("Status change handler called with:", { orderId: order.id, currentStatusId: order.statusId, newStatusId: statusId });
           updateStatusMutation.mutate({ id: order.id, statusId });
         };
         
@@ -943,10 +942,7 @@ export default function Orders() {
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
     mutationFn: (params: { id: number; statusId: number }) => {
-      console.log("Frontend: Updating order status - params:", params);
-      console.log("Frontend: Updating order status - id:", params.id, "statusId:", params.statusId);
       const requestData = { statusId: params.statusId };
-      console.log("Frontend: Request data being sent:", requestData);
       return apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
     },
     onSuccess: () => {
@@ -958,7 +954,6 @@ export default function Orders() {
       });
     },
     onError: (error: any) => {
-      console.error("Frontend: Error updating status:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити статус",
