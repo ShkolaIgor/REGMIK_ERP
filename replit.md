@@ -131,6 +131,10 @@ User has Russian-language 1C system and needs integration setup guidance.
 ## Recent Changes
 
 ### July 26, 2025
+- ✅ **REMOVED MAIL CHECK BUTTON ЗАВЕРШЕНО** - видалено кнопку та функціональність "Перевірити оплати на пошті" зі сторінки замовлень клієнтів
+- ✅ **FRONTEND CLEANUP** - видалено checkPostPaymentMutation, Mail icon import та відповідну кнопку з orders.tsx
+- ✅ **BACKEND CLEANUP** - видалено POST /api/orders/:id/check-post-payment API endpoint з server/routes.ts
+- ✅ **UI OPTIMIZATION** - спрощено інтерфейс замовлень, видалено непотрібну функціональність ручної перевірки платежів
 - ✅ **COMPLETE LOGGING CLEANUP ЗАВЕРШЕНО** - видалено всі зайві console.log/error/warn повідомлення з критичних файлів системи
 - ✅ **AUTHENTICATION LOGGING ОЧИЩЕНО** - видалено всі debug повідомлення з simple-auth.ts включно з session dumps та user data logging
 - ✅ **DATABASE CONNECTION LOGGING ОЧИЩЕНО** - видалено повторювані "Database connection configured for UTF-8" повідомлення з db.ts
