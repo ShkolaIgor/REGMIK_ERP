@@ -1,0 +1,36 @@
+Auth check - User authenticated: ShkolaIhor
+2025-07-26T08:59:52.112495+03:00 ERP regmik-erp[30770]: Database connection configured for UTF-8
+2025-07-26T08:59:52.112768+03:00 ERP regmik-erp[30770]: Database connection configured for UTF-8
+2025-07-26T08:59:52.113172+03:00 ERP regmik-erp[30770]: Database connection configured for UTF-8
+2025-07-26T08:59:52.116777+03:00 ERP regmik-erp[30770]: Database connection configured for UTF-8
+2025-07-26T08:59:52.117173+03:00 ERP regmik-erp[30770]: 8:59:52 AM [express] GET /api/payments/stats 200 in 23ms :: {"totalPayments":74,"totalAmount":709357…
+2025-07-26T08:59:52.118393+03:00 ERP regmik-erp[30770]: 8:59:52 AM [express] GET /api/payments 200 in 24ms :: [{"id":76,"orderId":51499,"orderNumber":"52486…
+2025-07-26T09:00:00.001527+03:00 ERP regmik-erp[30770]: Запуск автоматичного оновлення курсів
+2025-07-26T09:00:00.001684+03:00 ERP regmik-erp[30770]: Починаємо оновлення курсів валют...
+2025-07-26T09:00:00.002604+03:00 ERP regmik-erp[30770]: Запит курсу USD з НБУ: https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=USD&json
+2025-07-26T09:00:00.385052+03:00 ERP regmik-erp[30770]: Запит курсу EUR з НБУ: https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=EUR&json
+2025-07-26T09:00:00.415297+03:00 ERP regmik-erp[30770]: Currency update status: success
+2025-07-26T09:00:00.415371+03:00 ERP regmik-erp[30770]: Успішно оновлено курси для 2 валют
+2025-07-26T09:00:00.415540+03:00 ERP regmik-erp[30770]: Наступне оновлення курсів: 27.07.2025, 09:00:00
+2025-07-26T09:00:03.566916+03:00 ERP regmik-erp[30770]: Auth check - Session exists: true
+2025-07-26T09:00:03.567015+03:00 ERP regmik-erp[30770]: Auth check - User in session: true
+2025-07-26T09:00:03.567075+03:00 ERP regmik-erp[30770]: Auth check - Session ID: I7iWVI5BMmb1bQwQ-i19eoxVKvrisjcz
+2025-07-26T09:00:03.567089+03:00 ERP regmik-erp[30770]: Auth check - Session data: Session {
+2025-07-26T09:00:03.567104+03:00 ERP regmik-erp[30770]:   user: {
+2025-07-26T09:00:03.567115+03:00 ERP regmik-erp[30770]:     id: 1,
+2025-07-26T09:00:03.567126+03:00 ERP regmik-erp[30770]:     email: 'ihor@regmik.ua',
+2025-07-26T09:00:03.567136+03:00 ERP regmik-erp[30770]:     lastName: 'Школа',
+2025-07-26T09:00:03.567146+03:00 ERP regmik-erp[30770]:     username: 'ShkolaIhor',
+2025-07-26T09:00:03.567162+03:00 ERP regmik-erp[30770]:     firstName: 'Ігор',
+2025-07-26T09:00:03.567197+03:00 ERP regmik-erp[30770]:     profileImageUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/7QA2UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAABkcAmcAFFAzeWZ4NXF1M0xDZ2tveXd5UE1VAP/bAEMABQMEBAQDBQQEBAUFBQYHDAgHBwcHDwsLCQwRDxISEQ8RERMWHBcTFBoVEREYIRgaHR0fHx8TFyIkIh4kHB4fHv/>
+2025-07-26T09:00:03.567238+03:00 ERP regmik-erp[30770]:   },
+2025-07-26T09:00:03.567251+03:00 ERP regmik-erp[30770]:   cookie: {
+2025-07-26T09:00:03.567262+03:00 ERP regmik-erp[30770]:     path: '/',
+2025-07-26T09:00:03.567272+03:00 ERP regmik-erp[30770]:     _expires: 2025-07-29T07:12:43.746Z,
+2025-07-26T09:00:03.567283+03:00 ERP regmik-erp[30770]:     originalMaxAge: 604800000,
+2025-07-26T09:00:03.567293+03:00 ERP regmik-erp[30770]:     httpOnly: true,
+2025-07-26T09:00:03.567304+03:00 ERP regmik-erp[30770]:     secure: false,
+2025-07-26T09:00:03.567315+03:00 ERP regmik-erp[30770]:     sameSite: 'lax'
+2025-07-26T09:00:03.567325+03:00 ERP regmik-erp[30770]:   }
+2025-07-26T09:00:03.567340+03:00 ERP regmik-erp[30770]: }
+2025-07-26T09:00:03.567351+03:00 ERP regmik-erp[3077

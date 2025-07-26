@@ -108,55 +108,7 @@ export default function Payments() {
     },
   });
 
-  // Мутація для видалення дублікатів платежів
-  const removeDuplicatesMutation = useMutation({
-    mutationFn: () => apiRequest("/api/payments/remove-duplicates", {
-      method: "POST",
-    }),
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/payments/stats"] });
-      
-      if (response.success) {
-        toast({
-          title: "Платежі очищено",
-          description: response.message || `Очищення завершено успішно`,
-        });
-      }
-    },
-    onError: (error: any) => {
-      console.error("Error removing duplicates:", error);
-      toast({
-        title: "Помилка очищення платежів",
-        description: error.message || "Не вдалося очистити платежі",
-        variant: "destructive",
-      });
-    },
-  });
 
-  // Мутація для повторного зчитування банківських листів
-  const reprocessBankEmailsMutation = useMutation({
-    mutationFn: () => apiRequest("/api/test-base64-banking", {
-      method: "GET",
-    }),
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/payments/stats"] });
-      
-      toast({
-        title: "Банківські листи оброблено",
-        description: "Усі листи з банківської пошти повторно проаналізовано та платежі додано",
-      });
-    },
-    onError: (error: any) => {
-      console.error("Error reprocessing bank emails:", error);
-      toast({
-        title: "Помилка обробки банківських листів",
-        description: error.message || "Не вдалося обробити банківські листи",
-        variant: "destructive",
-      });
-    },
-  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -437,69 +389,11 @@ export default function Payments() {
             Управління та відстеження платежів за замовленнями</p>
                 </div>                 
                 <div className="flex items-center space-x-4">
-                  <div className="border-blue-200 text-purple-600 hover:bg-blue-50 flex gap-2">
-                    {/* Кнопка для повторного зчитування банківських листів */}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" className="text-blue-600 hover:text-blue-700" size="sm">
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Зчитати банківські листи
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Повторне зчитування банківських листів</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Ця операція повторно проаналізує всі листи з банківської пошти та створить платежі для знайдених замовлень.
-                            Дублікати платежів не будуть створені завдяки системі захисту.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Скасувати</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => reprocessBankEmailsMutation.mutate()}
-                            className="bg-blue-600 hover:bg-blue-700"
-                            disabled={reprocessBankEmailsMutation.isPending}
-                          >
-                            {reprocessBankEmailsMutation.isPending ? "Обробляю..." : "Зчитати листи"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>          
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" className="text-red-600 hover:text-red-700" size="sm">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Очистити платежі
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Підтвердити очищення платежів</AlertDialogTitle>
-                          <AlertDialogDescription>
-                  Ця операція знайде та видалить дублікати платежів, а також спробує автоматично прив'язати неприв'язані платежі до замовлень за номерами рахунків.
-                  Це допоможе навести порядок у системі платежів.
-                  Цю дію неможливо скасувати.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Скасувати</AlertDialogCancel>
-                          <AlertDialogAction
-                  onClick={() => removeDuplicatesMutation.mutate()}
-                  className="bg-red-600 hover:bg-red-700"
-                  disabled={removeDuplicatesMutation.isPending}
-                >
-                  {removeDuplicatesMutation.isPending ? "Очищаю..." : "Очистити платежі"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   <div className="flex items-center gap-1 text-sm text-gray-600">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            Автооновлення кожні 30с
-                    </div>
+                    Автооновлення кожні 30с
                   </div>
-             </div>
+                </div>
            </div>
           </div>
         </div>
