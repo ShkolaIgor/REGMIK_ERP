@@ -1314,7 +1314,6 @@ export default function Orders() {
 
   // Функція для початку редагування замовлення - МАКСИМАЛЬНО ОПТИМІЗОВАНА
   const handleEditOrder = (order: any) => {
-    console.log("EDIT ORDER STARTED - OPTIMIZED VERSION");
     
     // Швидке встановлення стану без зайвих операцій
     setEditingOrder(order);
@@ -1369,11 +1368,6 @@ export default function Orders() {
     }
 
     // ContactPersonAutocomplete управляє своїм власним станом
-    
-    // ОПТИМІЗАЦІЯ: Завантажуємо товари тільки якщо в замовленні є позиції
-    if (order.items && order.items.length > 0) {
-      setShouldLoadProducts(true);
-    }
 
     // Оптимізоване встановлення товарів
     const items = order.items?.map((item: any) => ({
@@ -1385,7 +1379,6 @@ export default function Orders() {
     setOrderItems(items);
     
     setIsDialogOpen(true);
-    console.log("EDIT ORDER COMPLETED - FAST MODE");
     
     // Встановлюємо фокус тільки для нових замовлень
     if (!order) {
