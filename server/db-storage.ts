@@ -5017,6 +5017,7 @@ export class DatabaseStorage implements IStorage {
           COALESCE(SUM(inv.quantity), 0) as "stockQuantity",
           GREATEST(0, SUM(oi.quantity - COALESCE(oi.shipped_quantity, 0)) - COALESCE(SUM(inv.quantity), 0)) as "quantityToProduce",
           COUNT(DISTINCT o.id) as "ordersCount",
+          SUM((oi.quantity - COALESCE(oi.shipped_quantity, 0)) * oi.unit_price) as "totalValue",
           STRING_AGG(DISTINCT o.order_number, ', ' ORDER BY o.order_number) as "orderNumbers",
           STRING_AGG(DISTINCT COALESCE(c.name, 'Не вказано'), ', ') as "clientNames",
           MIN(o.payment_date) as "earliestPaymentDate",
