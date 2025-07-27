@@ -1423,31 +1423,32 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderWithDepartments(id: number): Promise<any> {
     try {
-      // Отримуємо основні дані замовлення
-      const orderResult = await db
-        .select({
-          id: orders.id,
-          orderNumber: orders.orderNumber,
-          invoiceNumber: orders.invoiceNumber,
-          clientId: orders.clientId,
-          status: orders.status,
-          totalAmount: orders.totalAmount,
-          dueDate: orders.dueDate,
-          shippedDate: orders.shippedDate,
-          notes: orders.notes,
-          createdAt: orders.createdAt,
-          clientName: clients.name,
-          clientPhone: clients.phone
-        })
-        .from(orders)
-        .leftJoin(clients, eq(orders.clientId, clients.id))
-        .where(eq(orders.id, id));
+      // Отримуємо основні дані замовлення через прямий SQL
+      const orderQuery = `
+        SELECT 
+          o.id,
+          o.order_number,
+          o.invoice_number,
+          o.client_id,
+          o.status,
+          o.total_amount,
+          o.due_date,
+          o.shipped_date,
+          o.notes,
+          o.created_at,
+          c.name as client_name
+        FROM orders o
+        LEFT JOIN clients c ON o.client_id = c.id
+        WHERE o.id = $1
+      `;
 
-      if (orderResult.length === 0) {
+      const orderResult = await pool.query(orderQuery, [id]);
+
+      if (orderResult.rows.length === 0) {
         return null;
       }
 
-      const order = orderResult[0];
+      const order = orderResult.rows[0];
 
       // Отримуємо позиції замовлення з розподілом по відділах
       const itemsWithDepartmentsQuery = `
@@ -1478,7 +1479,6 @@ export class DatabaseStorage implements IStorage {
       // Групуємо товари по відділах
       const departmentGroups: { [key: string]: any } = {};
       const itemsWithoutDepartment: any[] = [];
-
       for (const item of itemsResult.rows) {
         const itemData = {
           id: item.id,
@@ -1509,10 +1509,19 @@ export class DatabaseStorage implements IStorage {
 
       return {
         order: {
-          ...order,
-          client: order.clientName ? {
-            name: order.clientName,
-            phone: order.clientPhone
+          id: order.id,
+          orderNumber: order.order_number,
+          invoiceNumber: order.invoice_number,
+          clientId: order.client_id,
+          status: order.status,
+          totalAmount: order.total_amount,
+          dueDate: order.due_date,
+          shippedDate: order.shipped_date,
+          notes: order.notes,
+          createdAt: order.created_at,
+          client: order.client_name ? {
+            name: order.client_name,
+            phone: null
           } : null,
           company: null
         },
@@ -1520,7 +1529,7 @@ export class DatabaseStorage implements IStorage {
         itemsWithoutDepartment
       };
     } catch (error) {
-      console.error("Error fetching order with departments:", error);
+      console.error("Error in getOrderWithDepartments:", error);
       throw error;
     }
   }
