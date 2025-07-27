@@ -543,7 +543,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const { getCategoriesWithDepartments } = await import("./simple-storage-methods");
+      const categories = await getCategoriesWithDepartments();
       res.json(categories);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch categories" });
@@ -613,6 +614,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete category" });
+    }
+  });
+
+  // Departments
+  app.get("/api/departments", async (req, res) => {
+    try {
+      const { getDepartments } = await import("./simple-storage-methods");
+      const departments = await getDepartments();
+      res.json(departments);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch departments" });
     }
   });
 
