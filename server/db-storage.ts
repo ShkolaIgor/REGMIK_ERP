@@ -1450,8 +1450,8 @@ export class DatabaseStorage implements IStorage {
 
       const order = orderResult.rows[0];
 
-      // Отримуємо позиції замовлення з розподілом по відділах
-      const itemsWithDepartmentsQuery = `
+      // Спочатку отримуємо всі товари замовлення
+      const allItemsQuery = `
         SELECT 
           oi.id,
           oi.quantity,
@@ -1462,23 +1462,46 @@ export class DatabaseStorage implements IStorage {
           p.name as product_name,
           p.sku as product_sku,
           p.category_id,
-          c.name as category_name,
-          d.id as department_id,
-          d.name as department_name
+          c.name as category_name
         FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.id
         LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN category_departments cd ON c.id = cd.category_id
-        LEFT JOIN departments d ON cd.department_id = d.id
         WHERE oi.order_id = $1
-        ORDER BY d.name NULLS LAST, oi.id
+        ORDER BY oi.id
       `;
 
-      const itemsResult = await pool.query(itemsWithDepartmentsQuery, [id]);
+      // Отримуємо мапінг категорій до відділів
+      const categoryDepartmentsQuery = `
+        SELECT 
+          cd.category_id,
+          d.id as department_id,
+          d.name as department_name
+        FROM category_departments cd
+        LEFT JOIN departments d ON cd.department_id = d.id
+        ORDER BY d.name
+      `;
+
+      const [itemsResult, categoryDepartmentsResult] = await Promise.all([
+        pool.query(allItemsQuery, [id]),
+        pool.query(categoryDepartmentsQuery)
+      ]);
+
+      // Створюємо мапінг категорій до відділів
+      const categoryToDepartments: { [categoryId: number]: any[] } = {};
+      for (const row of categoryDepartmentsResult.rows) {
+        if (!categoryToDepartments[row.category_id]) {
+          categoryToDepartments[row.category_id] = [];
+        }
+        categoryToDepartments[row.category_id].push({
+          departmentId: row.department_id,
+          departmentName: row.department_name
+        });
+      }
 
       // Групуємо товари по відділах
       const departmentGroups: { [key: string]: any } = {};
       const itemsWithoutDepartment: any[] = [];
+      
       for (const item of itemsResult.rows) {
         const itemData = {
           id: item.id,
@@ -1492,17 +1515,24 @@ export class DatabaseStorage implements IStorage {
           categoryName: item.category_name
         };
 
-        if (item.department_id && item.department_name) {
-          const deptKey = `${item.department_id}-${item.department_name}`;
-          if (!departmentGroups[deptKey]) {
-            departmentGroups[deptKey] = {
-              departmentId: item.department_id,
-              departmentName: item.department_name,
-              items: []
-            };
+        // Перевіряємо чи є відділи для цієї категорії
+        const departments = item.category_id ? categoryToDepartments[item.category_id] : null;
+        
+        if (departments && departments.length > 0) {
+          // Товар належить до відділів - додаємо його до ВСІХ відділів цієї категорії
+          for (const dept of departments) {
+            const deptKey = `${dept.departmentId}-${dept.departmentName}`;
+            if (!departmentGroups[deptKey]) {
+              departmentGroups[deptKey] = {
+                departmentId: dept.departmentId,
+                departmentName: dept.departmentName,
+                items: []
+              };
+            }
+            departmentGroups[deptKey].items.push(itemData);
           }
-          departmentGroups[deptKey].items.push(itemData);
         } else {
+          // Товар без відділу - додаємо до списку без відділу
           itemsWithoutDepartment.push(itemData);
         }
       }
