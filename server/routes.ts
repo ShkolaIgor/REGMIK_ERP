@@ -10388,6 +10388,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API для отримання даних для друку по відділах
+  app.get('/api/orders/:id/print-departments', async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      
+      // Отримуємо замовлення з розподілом по відділах
+      const data = await storage.getOrderWithDepartments(orderId);
+      
+      if (!data) {
+        return res.status(404).json({ message: "Замовлення не знайдено" });
+      }
+      
+      res.json(data);
+      
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Помилка отримання даних для друку по відділах",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // API для підтвердження друку (оновлення часу друку)
   app.post('/api/orders/:id/confirm-print', async (req, res) => {
     try {

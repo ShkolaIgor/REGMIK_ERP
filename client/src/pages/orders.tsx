@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp, Printer } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Building2 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
@@ -32,6 +32,7 @@ import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
 import { OrdersXmlImport } from "@/components/OrdersXmlImport";
 import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
 import { PrintPreviewModal } from "@/components/PrintPreviewModal";
+import { DepartmentPrintModal } from "@/components/DepartmentPrintModal";
 import ComponentDeductions from "@/components/ComponentDeductions";
 import { ContactPersonAutocomplete } from "@/components/ContactPersonAutocomplete";
 // Типи
@@ -209,6 +210,8 @@ export default function Orders() {
   const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
   const [printData, setPrintData] = useState<any>(null);
   const [printOrderId, setPrintOrderId] = useState<number>(0);
+  const [isDepartmentPrintOpen, setIsDepartmentPrintOpen] = useState(false);
+  const [departmentPrintOrderId, setDepartmentPrintOrderId] = useState<number>(0);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [companyComboboxOpen, setCompanyComboboxOpen] = useState(false);
   const [companySearchValue, setCompanySearchValue] = useState("");
@@ -651,6 +654,15 @@ export default function Orders() {
               className={order.printedAt ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
             >
               <Printer className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDepartmentPrint(order)}
+              title="Друк по відділах виробництва"
+              className="bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700"
+            >
+              <Building2 className="w-4 h-4" />
             </Button>
 
           </div>
@@ -1218,6 +1230,12 @@ export default function Orders() {
         variant: "destructive",
       });
     }
+  };
+
+  // Функція для друку по відділах
+  const handleDepartmentPrint = (order: any) => {
+    setDepartmentPrintOrderId(order.id);
+    setIsDepartmentPrintOpen(true);
   };
 
   // Функція для створення рахунку
@@ -2911,6 +2929,13 @@ export default function Orders() {
         onClose={() => setIsPrintPreviewOpen(false)}
         printData={printData}
         orderId={printOrderId}
+      />
+
+      {/* Друк по відділах */}
+      <DepartmentPrintModal
+        isOpen={isDepartmentPrintOpen}
+        onClose={() => setIsDepartmentPrintOpen(false)}
+        orderId={departmentPrintOrderId}
       />
     </div>
     </div>

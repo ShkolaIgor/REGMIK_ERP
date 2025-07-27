@@ -169,6 +169,7 @@ export interface IStorage {
     totalPages: number;
   }>;
   getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined>;
+  getOrderWithDepartments(id: number): Promise<any>;
   getOrderByInvoiceNumber(invoiceNumber: string): Promise<Order | undefined>;
   findOrdersByPaymentInfo(paymentInfo: {
     invoiceNumber?: string;

@@ -1421,6 +1421,114 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getOrderWithDepartments(id: number): Promise<any> {
+    try {
+      // Отримуємо основні дані замовлення
+      const orderResult = await db
+        .select({
+          id: orders.id,
+          orderNumber: orders.orderNumber,
+          invoiceNumber: orders.invoiceNumber,
+          clientId: orders.clientId,
+          status: orders.status,
+          totalAmount: orders.totalAmount,
+          dueDate: orders.dueDate,
+          shippedDate: orders.shippedDate,
+          notes: orders.notes,
+          createdAt: orders.createdAt,
+          clientName: clients.name,
+          clientPhone: clients.phone,
+          companyName: companies.name
+        })
+        .from(orders)
+        .leftJoin(clients, eq(orders.clientId, clients.id))
+        .leftJoin(companies, eq(orders.companyId, companies.id))
+        .where(eq(orders.id, id));
+
+      if (orderResult.length === 0) {
+        return null;
+      }
+
+      const order = orderResult[0];
+
+      // Отримуємо позиції замовлення з розподілом по відділах
+      const itemsWithDepartmentsQuery = `
+        SELECT 
+          oi.id,
+          oi.quantity,
+          oi.unit_price,
+          oi.total_price,
+          oi.notes as item_notes,
+          oi.item_name,
+          p.name as product_name,
+          p.sku as product_sku,
+          p.category_id,
+          c.name as category_name,
+          d.id as department_id,
+          d.name as department_name
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.id
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN category_departments cd ON c.id = cd.category_id
+        LEFT JOIN departments d ON cd.department_id = d.id
+        WHERE oi.order_id = $1
+        ORDER BY d.name NULLS LAST, oi.id
+      `;
+
+      const itemsResult = await pool.query(itemsWithDepartmentsQuery, [id]);
+
+      // Групуємо товари по відділах
+      const departmentGroups: { [key: string]: any } = {};
+      const itemsWithoutDepartment: any[] = [];
+
+      for (const item of itemsResult.rows) {
+        const itemData = {
+          id: item.id,
+          quantity: item.quantity,
+          unitPrice: item.unit_price,
+          totalPrice: item.total_price,
+          notes: item.item_notes,
+          itemName: item.item_name,
+          productName: item.product_name,
+          productSku: item.product_sku,
+          categoryName: item.category_name
+        };
+
+        if (item.department_id && item.department_name) {
+          const deptKey = `${item.department_id}-${item.department_name}`;
+          if (!departmentGroups[deptKey]) {
+            departmentGroups[deptKey] = {
+              departmentId: item.department_id,
+              departmentName: item.department_name,
+              items: []
+            };
+          }
+          departmentGroups[deptKey].items.push(itemData);
+        } else {
+          itemsWithoutDepartment.push(itemData);
+        }
+      }
+
+      return {
+        order: {
+          ...order,
+          client: order.clientName ? {
+            name: order.clientName,
+            phone: order.clientPhone
+          } : null,
+          company: order.companyName ? {
+            name: order.companyName
+          } : null
+        },
+        departments: Object.values(departmentGroups),
+        itemsWithoutDepartment
+      };
+    } catch (error) {
+      console.error("Error fetching order with departments:", error);
+      throw error;
+    }
+  }
+
   async deleteOrder(id: number): Promise<boolean> {
     try {
       // Спочатку видаляємо всі товари з замовлення
