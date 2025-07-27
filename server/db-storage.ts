@@ -17,7 +17,7 @@ import {
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   bankPaymentNotifications, orderPayments, systemLogs,
   supplierReceipts, supplierReceiptItems, supplierDocumentTypes,
-  clientSyncHistory, autoSyncSettings, userActionLogs,
+  clientSyncHistory, autoSyncSettings, userActionLogs, categoryDepartments,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
   type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
