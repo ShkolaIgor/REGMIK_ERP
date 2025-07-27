@@ -374,6 +374,7 @@ export default function Payments() {
   ];
 
   return (
+    <div className="flex-1 overflow-auto">
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
        {/* Header Section  sticky top-0 z-40 */}
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
@@ -389,19 +390,13 @@ export default function Payments() {
             Управління та відстеження платежів за замовленнями</p>
                 </div>                 
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    Автооновлення кожні 30с
-                  </div>
-              </div>
             </div>
           </div>
       </header> 
       
+      <main className="w-full px-8 pt-6">
       {/* Статистика */}
       {stats && !statsLoading && (
-      <div className="w-full px-8 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-3">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
@@ -431,7 +426,7 @@ export default function Payments() {
                     <RefreshCw className="w-4 h-4 text-emerald-600" />
                     <p className="text-sm text-emerald-700 font-medium">Сьогодні</p>
                   </div>
-                  <p className="text-3xl font-bold text-emerald-900 mb-1">         {stats.todayPayments}</p>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">{stats.todayPayments}</p>
                   <p className="text-xs text-emerald-600">{stats.todayAmount.toLocaleString()} грн</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
@@ -451,7 +446,7 @@ export default function Payments() {
                     <p className="text-sm text-purple-700 font-medium">Підтверджені</p>
                   </div>
                   <p className="text-3xl font-bold text-purple-900 mb-1">{stats.confirmedPayments}</p>
-                  <p className="text-xs text-purple-600">Грн.</p>
+                  <p className="text-xs text-purple-600"></p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <CheckCircle className="w-8 h-8 text-white" />
@@ -470,7 +465,7 @@ export default function Payments() {
                     <p className="text-sm text-orange-700 font-medium">Банківські перекази</p>
                   </div>
                   <p className="text-3xl font-bold text-orange-900 mb-1">{stats.bankTransfers}</p>
-                  <p className="text-xs text-orange-600">Грн.</p>
+                  <p className="text-xs text-orange-600"></p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <CreditCard className="w-8 h-8 text-white" />
@@ -479,11 +474,11 @@ export default function Payments() {
             </CardContent>
           </Card>
         </div>  
-      </div>  
+
       )}
-      
+
       {/* Фільтри */}
-      <div className="w-full px-8 pb-3"> {/* відступ знизу та зверху */}
+      <div className="w-full pb-3"> {/* відступ знизу та зверху */}
       <Card>
         <CardHeader>
           <CardTitle>Фільтри та пошук</CardTitle>
@@ -538,39 +533,26 @@ export default function Payments() {
       </Card>
       </div>
 
-      {/* Content */}
-      <div className="w-full space-y-6 flex-1 px-8 overflow-auto">
       {/* Таблиця платежів */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Список платежів</CardTitle>
-              <CardDescription>
-                Знайдено {filteredPayments.length} платежів • Автооновлення активне
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/payments"] })}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              Оновити
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable 
-            columns={columns} 
-            data={filteredPayments} 
-            loading={isLoading}
-            storageKey="payments"
-          />
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
+         <DataTable
+           data={filteredPayments}
+           columns={columns}
+           loading={isLoading}
+           title=
+            <div className="flex items-center space-x-4">
+             Список платежів 
+             <div className="flex items-center gap-1 text-sm text-gray-600">
+               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"> </div>
+               Автооновлення кожні 30с
+             </div>
+           </div>
+           storageKey="payments"
+         />
       </div>
-      
+        
+        </main>  
+      </div>
     </div>
   );
 }

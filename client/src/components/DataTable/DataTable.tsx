@@ -520,7 +520,7 @@ export function DataTable({
             className="hover:shadow-md transition-all duration-300 animate-fade-in" 
             style={{ animationDelay: `${index * 0.1}s` }}
           >
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3">             
               <div className="flex justify-between items-start">
                 <div className="space-y-2 flex-1">
                   <Skeleton className="h-5 w-3/4" shimmer />

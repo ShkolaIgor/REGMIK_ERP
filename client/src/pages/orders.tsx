@@ -256,29 +256,6 @@ export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Мутація для автоматичного зіставлення товарів з 1С з існуючими товарами
-  const linkProductsMutation = useMutation({
-    mutationFn: () => apiRequest("/api/orders/link-products", {
-      method: "POST",
-    }),
-    onSuccess: (result) => {
-      toast({
-        title: "Зіставлення завершено",
-        description: result.message,
-        variant: "default",
-      });
-      // Оновлюємо дані замовлень для відображення змін
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Помилка зіставлення",
-        description: error.details || "Не вдалося виконати зіставлення товарів",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Обробник зміни пошуку
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -1610,36 +1587,6 @@ export default function Orders() {
     }
   };
 
-
-
-
-
-  // Убрано індикатор завантаження що викликав перезавантаження сторінки
-
-  // Компонент для автоматичного зіставлення товарів з 1С
-  const LinkProductsButton = () => {
-    return (
-      <Button
-        onClick={() => linkProductsMutation.mutate()}
-        disabled={linkProductsMutation.isPending}
-        variant="outline"
-        className="flex items-center gap-2"
-      >
-        {linkProductsMutation.isPending ? (
-          <>
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            Зіставлення...
-          </>
-        ) : (
-          <>
-            <Plus className="w-4 h-4" />
-            Зіставити товари
-          </>
-        )}
-      </Button>
-    );
-  };
-
   return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         {/* Header Section */}
@@ -1677,7 +1624,6 @@ export default function Orders() {
                     description: "Позиції замовлень успішно імпортовані",
                   });
                 }} />
-                <LinkProductsButton />
               </div>
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 if (!open) {
@@ -2357,7 +2303,7 @@ export default function Orders() {
       {isStatusSettingsOpen && (
         <div className="bg-gray-50 border-b border-gray-200 p-6">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold text-gray-900">Управління статусами замовлень</h3>
               <Button
                 variant="outline"
@@ -2522,7 +2468,7 @@ export default function Orders() {
           {/* <main className="p-3 space-y-3"> */}
       {/* Statistics Cards */}
       <div className="w-full px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-3">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

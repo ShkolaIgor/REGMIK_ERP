@@ -149,7 +149,7 @@ export default function SystemLogs() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 mb-6">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 mb-3">
         <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -184,7 +184,7 @@ export default function SystemLogs() {
         </div>
       </div>
 
-      <div className="w-full px-8 pt-6">
+      <div className="w-full px-8 pt-3">
         {/* Статистичні картки */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
@@ -281,7 +281,7 @@ export default function SystemLogs() {
         )}
 
         {/* Фільтри */}
-        <Card className="bg-white/80 backdrop-blur-sm mb-6">
+        <Card className="bg-white/80 backdrop-blur-sm mb-3">
           <CardHeader>
             <CardTitle>Фільтри</CardTitle>
           </CardHeader>

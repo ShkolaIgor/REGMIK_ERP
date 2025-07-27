@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -405,8 +405,8 @@ export default function Recipes() {
           </div>
 
           {/* Статистичні картки - Statistics Cards */}
-          <main className="w-full px-8 py-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <main className="w-full px-8 pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-3">
               <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
                 <CardContent className="p-6 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -484,44 +484,51 @@ export default function Recipes() {
               </Card>
             </div>
           
-          {/* Пошук та фільтри */}
-            <div className="w-full py-3">
+            {/* Пошук та фільтри */}
+            <div className="w-full mb-3">
               <Card>
-                <CardContent className="p-6">
+                <CardHeader>
+                  <CardTitle>Фільтри та пошук</CardTitle>
+                  <CardDescription>
+                    Знайдіть потрібні рецепти за різними критеріями
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <div className="flex flex-wrap items-center justify-between gap-4">
-          <SearchFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Пошук рецептів за назвою або описом..."
-            filters={[
-              {
-                key: "status",
-                label: "Статус",
-                value: statusFilter,
-                options: [
-                  { value: "all", label: "Всі рецепти" },
-                  { value: "active", label: "З продуктом" },
-                  { value: "draft", label: "Чернетки" }
-                ],
-                onChange: setStatusFilter
-              },
-              {
-                key: "type",
-                label: "Тип",
-                value: typeFilter,
-                options: [
-                  { value: "all", label: "Всі типи" },
-                  { value: "with-product", label: "З продуктом" },
-                  { value: "without-product", label: "Без продукту" }
-                ],
-                onChange: setTypeFilter
-              }
-            ]}
-          />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                    <SearchFilters
+                      searchQuery={searchQuery}
+                      onSearchChange={setSearchQuery}
+                      searchPlaceholder="Пошук рецептів за назвою або описом..."
+                      filters={[
+                        {
+                          key: "status",
+                          label: "Статус",
+                          value: statusFilter,
+                          options: [
+                            { value: "all", label: "Всі рецепти" },
+                            { value: "active", label: "З продуктом" },
+                            { value: "draft", label: "Чернетки" }
+                          ],
+                          onChange: setStatusFilter
+                        },
+                        {
+                          key: "type",
+                          label: "Тип",
+                          value: typeFilter,
+                          options: [
+                            { value: "all", label: "Всі типи" },
+                            { value: "with-product", label: "З продуктом" },
+                            { value: "without-product", label: "Без продукту" }
+                          ],
+                          onChange: setTypeFilter
+                        }
+                      ]}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
 
           {/* Основна таблиця */}
           <main className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
