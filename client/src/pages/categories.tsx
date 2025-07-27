@@ -199,16 +199,16 @@ export default function CategoriesPage() {
               <div>
                 <Label htmlFor="departmentId">Відділ виробництва</Label>
                 <Select
-                  value={createForm.watch("departmentId")?.toString() || ""}
+                  value={createForm.watch("departmentId")?.toString() || "none"}
                   onValueChange={(value) => {
-                    createForm.setValue("departmentId", value ? parseInt(value) : null);
+                    createForm.setValue("departmentId", value === "none" ? null : parseInt(value));
                   }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Оберіть відділ" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Без відділу</SelectItem>
+                    <SelectItem value="none">Без відділу</SelectItem>
                     {departments.map((dept) => (
                       <SelectItem key={dept.id} value={dept.id.toString()}>
                         {dept.name}
@@ -343,16 +343,16 @@ export default function CategoriesPage() {
             <div>
               <Label htmlFor="edit-departmentId">Відділ виробництва</Label>
               <Select
-                value={editForm.watch("departmentId")?.toString() || ""}
+                value={editForm.watch("departmentId")?.toString() || "none"}
                 onValueChange={(value) => {
-                  editForm.setValue("departmentId", value ? parseInt(value) : null);
+                  editForm.setValue("departmentId", value === "none" ? null : parseInt(value));
                 }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть відділ" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Без відділу</SelectItem>
+                  <SelectItem value="none">Без відділу</SelectItem>
                   {departments.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id.toString()}>
                       {dept.name}
