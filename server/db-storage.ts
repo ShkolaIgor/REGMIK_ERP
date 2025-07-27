@@ -1437,12 +1437,10 @@ export class DatabaseStorage implements IStorage {
           notes: orders.notes,
           createdAt: orders.createdAt,
           clientName: clients.name,
-          clientPhone: clients.phone,
-          companyName: companies.name
+          clientPhone: clients.phone
         })
         .from(orders)
         .leftJoin(clients, eq(orders.clientId, clients.id))
-        .leftJoin(companies, eq(orders.companyId, companies.id))
         .where(eq(orders.id, id));
 
       if (orderResult.length === 0) {
@@ -1516,9 +1514,7 @@ export class DatabaseStorage implements IStorage {
             name: order.clientName,
             phone: order.clientPhone
           } : null,
-          company: order.companyName ? {
-            name: order.companyName
-          } : null
+          company: null
         },
         departments: Object.values(departmentGroups),
         itemsWithoutDepartment
