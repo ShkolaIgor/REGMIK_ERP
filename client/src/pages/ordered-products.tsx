@@ -30,8 +30,6 @@ export default function OrderedProductsPage() {
   const totalQuantity = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + parseInt(item.totalQuantityToShip || 0), 0);
   const totalValue = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + parseFloat(item.totalValue || 0), 0);
 
-
-
   // Фільтровані дані
   const filteredProducts = (orderedProducts as any[]).filter((item: any) => {
     const matchesSearch = !searchQuery || 
@@ -271,7 +269,7 @@ export default function OrderedProductsPage() {
                         <span className="font-medium text-gray-700">Деталі замовлень:</span>
                       </div>
                       
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                       {/*<div className="bg-gray-50 p-4 rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                           <div>
                             <span className="font-medium text-gray-600">Замовлення: </span>
@@ -295,28 +293,29 @@ export default function OrderedProductsPage() {
                             <span className="text-gray-900">{item.earliestPaymentDate ? new Date(item.earliestPaymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
                           </div>
                         </div>
-                      </div>
+                      </div>*/}
                     </div>
 
                     {/* Деталізовані замовлення */}
                     {item.orderDetails && item.orderDetails.length > 0 && (
                       <div className="mt-4">
-                        <details className="group">
+                        {/*<details className="group">
                           <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-800">
                             <ArrowRight className="h-4 w-4 transition-transform group-open:rotate-90" />
                             Детальна розбивка по замовленнях ({item.orderDetails.length})
-                          </summary>
+                          </summary>*/}
                           <div className="mt-3 space-y-2">
                             {item.orderDetails.map((detail: any, idx: number) => (
-                              <div key={idx} className="bg-white p-3 rounded border text-xs grid grid-cols-2 md:grid-cols-4 gap-2">
+                              <div key={idx} className="bg-white p-3 rounded border text-xs grid grid-cols-2 md:grid-cols-5 gap-2">
                                 <div><strong>№:</strong> {detail.orderNumber}</div>
                                 <div><strong>Кількість:</strong> {detail.quantityToShip} шт</div>
+                                <div><strong>Оплата:</strong> {detail.paymentDate ? new Date(detail.paymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</div>
                                 <div><strong>Термін:</strong> {detail.dueDate ? new Date(detail.dueDate).toLocaleDateString('uk-UA') : "Не вказано"}</div>
                                 <div><strong>Статус:</strong> {detail.status}</div>
                               </div>
                             ))}
                           </div>
-                        </details>
+                      {/*</details>*/}
                       </div>
                     )}
                   </Card>
