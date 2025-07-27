@@ -273,7 +273,7 @@ export default function Categories() {
         ))}
       </div>
 
-      {(!categories || categories.length === 0) && (
+      {(!categories || (Array.isArray(categories) && categories.length === 0)) && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />

@@ -14122,5 +14122,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // Category Departments API
+  app.get("/api/category-departments", async (req, res) => {
+    try {
+      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+      const categoryDepartments = await storage.getCategoryDepartments(categoryId);
+      res.json(categoryDepartments);
+    } catch (error) {
+      console.error("Error getting category departments:", error);
+      res.status(500).json({ error: "Помилка отримання зв'язків категорій з відділами" });
+    }
+  });
+
+  app.post("/api/category-departments", async (req, res) => {
+    try {
+      const { categoryId, departmentId } = req.body;
+      if (!categoryId || !departmentId) {
+        return res.status(400).json({ error: "categoryId та departmentId обов'язкові" });
+      }
+      const categoryDepartment = await storage.createCategoryDepartment(categoryId, departmentId);
+      res.json(categoryDepartment);
+    } catch (error) {
+      console.error("Error creating category department:", error);
+      res.status(500).json({ error: "Помилка створення зв'язку категорії з відділом" });
+    }
+  });
+
+  app.delete("/api/category-departments", async (req, res) => {
+    try {
+      const { categoryId, departmentId } = req.query;
+      if (!categoryId || !departmentId) {
+        return res.status(400).json({ error: "categoryId та departmentId обов'язкові" });
+      }
+      const deleted = await storage.deleteCategoryDepartment(parseInt(categoryId as string), parseInt(departmentId as string));
+      res.json({ success: deleted });
+    } catch (error) {
+      console.error("Error deleting category department:", error);
+      res.status(500).json({ error: "Помилка видалення зв'язку категорії з відділом" });
+    }
+  });
+
   return httpServer;
 }

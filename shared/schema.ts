@@ -171,6 +171,32 @@ export const categories = pgTable("categories", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Таблиця зв'язку багато-до-багатьох між категоріями та відділами
+export const categoryDepartments = pgTable("category_departments", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").references(() => categories.id).notNull(),
+  departmentId: integer("department_id").references(() => departments.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Відносини для категорій та відділів
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  categoryDepartments: many(categoryDepartments),
+}));
+
+
+
+export const categoryDepartmentsRelations = relations(categoryDepartments, ({ one }) => ({
+  category: one(categories, {
+    fields: [categoryDepartments.categoryId],
+    references: [categories.id],
+  }),
+  department: one(departments, {
+    fields: [categoryDepartments.departmentId],
+    references: [departments.id],
+  }),
+}));
+
 export const units = pgTable("units", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(), // назва одиниці вимірювання
@@ -585,6 +611,7 @@ export const productComponents = pgTable("product_components", {
 
 // Insert schemas (old user schema removed for Replit Auth)
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
+export const insertCategoryDepartmentSchema = createInsertSchema(categoryDepartments).omit({ id: true, createdAt: true });
 export const insertUnitSchema = createInsertSchema(units).omit({ id: true, createdAt: true });
 export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
@@ -1529,6 +1556,8 @@ export const insertOrderPaymentSchema = createInsertSchema(orderPayments).omit({
 export const insertUserSchemaAuth = createInsertSchema(users);
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type CategoryDepartment = typeof categoryDepartments.$inferSelect;
+export type InsertCategoryDepartment = z.infer<typeof insertCategoryDepartmentSchema>;
 export type Unit = typeof units.$inferSelect;
 export type InsertUnit = z.infer<typeof insertUnitSchema>;
 export type Warehouse = typeof warehouses.$inferSelect;
@@ -1618,8 +1647,13 @@ export const positionsRelations = relations(positions, ({ one }) => ({
   }),
 }));
 
-export const departmentsRelations = relations(departments, ({ many }) => ({
+export const departmentsRelations = relations(departments, ({ one, many }) => ({
+  manager: one(workers, {
+    fields: [departments.managerId],
+    references: [workers.id],
+  }),
   positions: many(positions),
+  categoryDepartments: many(categoryDepartments),
 }));
 
 

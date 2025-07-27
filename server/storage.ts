@@ -14,6 +14,7 @@ import {
   type OrderPayment, type InsertOrderPayment,
   type UserSortPreference, type InsertUserSortPreference,
   type Category, type InsertCategory,
+  type CategoryDepartment, type InsertCategoryDepartment,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
@@ -62,7 +63,8 @@ import {
   type SyncQueue, type InsertSyncQueue,
   type FieldMapping, type InsertFieldMapping,
   type SystemLog, type InsertSystemLog,
-  departments
+  departments,
+  categoryDepartments
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, count } from "drizzle-orm";
@@ -114,6 +116,11 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<boolean>;
+  
+  // Category Departments  
+  getCategoryDepartments(categoryId?: number): Promise<any[]>;
+  createCategoryDepartment(categoryId: number, departmentId: number): Promise<any>;
+  deleteCategoryDepartment(categoryId: number, departmentId: number): Promise<boolean>;
 
   // Units
   getUnits(): Promise<Unit[]>;
@@ -904,6 +911,21 @@ export class MemStorage implements IStorage {
 
   async deleteCategory(id: number): Promise<boolean> {
     return this.categories.delete(id);
+  }
+  
+  // Category Departments
+  async getCategoryDepartments(categoryId?: number): Promise<any[]> {
+    // MemStorage - повертаємо пустий масив
+    return [];
+  }
+  
+  async createCategoryDepartment(categoryId: number, departmentId: number): Promise<any> {
+    // MemStorage - базова реалізація
+    return { id: 1, categoryId, departmentId, createdAt: new Date() };
+  }
+  
+  async deleteCategoryDepartment(categoryId: number, departmentId: number): Promise<boolean> {
+    return true;
   }
 
   // Units

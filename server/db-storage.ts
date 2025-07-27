@@ -348,6 +348,83 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  // Category Departments methods
+  async getCategoryDepartments(categoryId?: number): Promise<any[]> {
+    try {
+      let query = db.select({
+        id: categoryDepartments.id,
+        categoryId: categoryDepartments.categoryId,
+        departmentId: categoryDepartments.departmentId,
+        createdAt: categoryDepartments.createdAt,
+        category: {
+          id: categories.id,
+          name: categories.name
+        },
+        department: {
+          id: departments.id,
+          name: departments.name
+        }
+      })
+      .from(categoryDepartments)
+      .leftJoin(categories, eq(categoryDepartments.categoryId, categories.id))
+      .leftJoin(departments, eq(categoryDepartments.departmentId, departments.id));
+
+      if (categoryId) {
+        query = query.where(eq(categoryDepartments.categoryId, categoryId));
+      }
+
+      return await query;
+    } catch (error) {
+      console.error("Error getting category departments:", error);
+      return [];
+    }
+  }
+
+  async createCategoryDepartment(categoryId: number, departmentId: number): Promise<any> {
+    try {
+      // Перевіряємо чи вже існує такий зв'язок
+      const existing = await db.select()
+        .from(categoryDepartments)
+        .where(and(
+          eq(categoryDepartments.categoryId, categoryId),
+          eq(categoryDepartments.departmentId, departmentId)
+        ))
+        .limit(1);
+
+      if (existing.length > 0) {
+        return existing[0];
+      }
+
+      const result = await db.insert(categoryDepartments)
+        .values({
+          categoryId,
+          departmentId,
+          createdAt: new Date()
+        })
+        .returning();
+
+      return result[0];
+    } catch (error) {
+      console.error("Error creating category department:", error);
+      throw error;
+    }
+  }
+
+  async deleteCategoryDepartment(categoryId: number, departmentId: number): Promise<boolean> {
+    try {
+      const result = await db.delete(categoryDepartments)
+        .where(and(
+          eq(categoryDepartments.categoryId, categoryId),
+          eq(categoryDepartments.departmentId, departmentId)
+        ));
+
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error("Error deleting category department:", error);
+      return false;
+    }
+  }
+
   // Warehouses
   async getWarehouses(): Promise<Warehouse[]> {
     return await db.select().from(warehouses);
