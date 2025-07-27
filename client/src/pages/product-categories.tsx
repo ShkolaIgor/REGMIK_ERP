@@ -54,10 +54,13 @@ export default function ProductCategories() {
 
   const createMutation = useMutation({
     mutationFn: (data: CategoryFormData) =>
-      apiRequest("/api/categories", {
+      fetch("/api/categories", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
-      }),
+      }).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       toast({
@@ -77,10 +80,13 @@ export default function ProductCategories() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: CategoryFormData }) =>
-      apiRequest(`/api/categories/${id}`, {
+      fetch(`/api/categories/${id}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
-      }),
+      }).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       toast({
@@ -164,36 +170,45 @@ export default function ProductCategories() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Категорії товарів та відділи</h1>
-        <p className="text-muted-foreground">
-          Управління категоріями товарів та їх прив'язкою до відділів виробництва
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-6 bg-white rounded-lg p-6 shadow-sm border">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Package className="h-6 w-6 text-blue-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800">Категорії товарів та відділи</h1>
+        </div>
+        <p className="text-gray-600">
+          Управління категоріями товарів та їх прив'язкою до відділів виробництва для спеціалізованого друку замовлень
         </p>
       </div>
 
       <Tabs defaultValue="categories" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="categories" className="flex items-center gap-2">
+        <TabsList className="bg-white border shadow-sm">
+          <TabsTrigger value="categories" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
             <Package className="h-4 w-4" />
             Категорії товарів
           </TabsTrigger>
-          <TabsTrigger value="departments" className="flex items-center gap-2">
+          <TabsTrigger value="departments" className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
             <Building2 className="h-4 w-4" />
             Зв'язки з відділами
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="categories" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Список категорій</h2>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Додати категорію
-                </Button>
-              </DialogTrigger>
+          <Card className="bg-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <Package className="h-5 w-5 text-blue-600" />
+                Список категорій товарів
+              </CardTitle>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Додати категорію
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
@@ -235,9 +250,7 @@ export default function ProductCategories() {
                 </form>
               </DialogContent>
             </Dialog>
-          </div>
-
-          <Card>
+            </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -251,18 +264,20 @@ export default function ProductCategories() {
                 <TableBody>
                   {categories.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Поки немає категорій товарів</p>
-                        <p className="text-sm">Додайте першу категорію для організації товарів</p>
+                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                        <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                          <Package className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <p className="text-lg font-medium mb-2">Поки немає категорій товарів</p>
+                        <p className="text-sm text-gray-400">Додайте першу категорію для організації товарів</p>
                       </TableCell>
                     </TableRow>
                   ) : (
                     categories.map((category) => (
-                      <TableRow key={category.id}>
-                        <TableCell className="font-medium">{category.id}</TableCell>
-                        <TableCell>{category.name}</TableCell>
-                        <TableCell className="text-muted-foreground">
+                      <TableRow key={category.id} className="hover:bg-gray-50 transition-colors">
+                        <TableCell className="font-medium text-blue-600">{category.id}</TableCell>
+                        <TableCell className="font-medium">{category.name}</TableCell>
+                        <TableCell className="text-gray-600">
                           {category.description || "—"}
                         </TableCell>
                         <TableCell className="text-right">
@@ -271,6 +286,7 @@ export default function ProductCategories() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(category)}
+                              className="hover:bg-blue-50 hover:border-blue-200"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -279,6 +295,7 @@ export default function ProductCategories() {
                               size="sm"
                               onClick={() => handleDelete(category.id)}
                               disabled={deleteMutation.isPending}
+                              className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -293,7 +310,7 @@ export default function ProductCategories() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="departments">
+        <TabsContent value="departments" className="space-y-4">
           <CategoryDepartments />
         </TabsContent>
       </Tabs>
