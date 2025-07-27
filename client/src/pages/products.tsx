@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle, Copy } from "lucide-react";
+import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle, Copy, Tags, Check } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ProductsXmlImport } from "@/components/ProductsXmlImport";
@@ -68,12 +68,22 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showOrderedProducts, setShowOrderedProducts] = useState(false);
   
+  // Стани для групової зміни категорії
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  const [showBulkCategoryDialog, setShowBulkCategoryDialog] = useState(false);
+  const [bulkCategoryId, setBulkCategoryId] = useState<string>("null");
+  
   const { data: products = [], isLoading, isError } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
 
   const { data: categories = [] } = useQuery<any[]>({
     queryKey: ['/api/categories'],
+  });
+
+  const { data: orderedProducts = [], isLoading: orderedLoading } = useQuery<any[]>({
+    queryKey: ['/api/products/ordered'],
+    enabled: showOrderedProducts,
   });
 
 
@@ -118,6 +128,39 @@ export default function ProductsPage() {
   const handleDelete = (product: Product) => {
     setProductToDelete(product);
     setShowDeleteAlert(true);
+  };
+
+  const handleBulkCategoryChange = () => {
+    if (selectedProducts.length === 0) {
+      toast({
+        title: "Помилка",
+        description: "Оберіть товари для зміни категорії",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const categoryIdValue = bulkCategoryId === "null" ? null : parseInt(bulkCategoryId);
+    bulkUpdateCategoryMutation.mutate({
+      productIds: selectedProducts,
+      categoryId: categoryIdValue,
+    });
+  };
+
+  const handleSelectProduct = (productId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedProducts([...selectedProducts, productId]);
+    } else {
+      setSelectedProducts(selectedProducts.filter(id => id !== productId));
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map(product => product.id));
+    }
   };
 
   // Mutation для видалення товару
@@ -209,6 +252,41 @@ export default function ProductsPage() {
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити товар",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Мутація для групової зміни категорії
+  const bulkUpdateCategoryMutation = useMutation({
+    mutationFn: async ({ productIds, categoryId }: { productIds: number[]; categoryId: number | null }) => {
+      const response = await fetch('/api/products/bulk-update-category', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productIds, categoryId }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update category');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setSelectedProducts([]);
+      setShowBulkCategoryDialog(false);
+      setBulkCategoryId("null");
+      toast({
+        title: "Категорії оновлено",
+        description: `Категорію змінено для ${data.updatedCount} товарів`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося оновити категорії",
         variant: "destructive",
       });
     },
@@ -426,6 +504,16 @@ export default function ProductsPage() {
                     <Printer className="w-4 h-4 mr-2" />
                     Друкувати етикетки
                   </Button>
+                  {selectedProducts.length > 0 && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowBulkCategoryDialog(true)}
+                      className="border-purple-200 text-purple-600 hover:bg-purple-50"
+                    >
+                      <Grid3X3 className="w-4 h-4 mr-2" />
+                      Змінити категорію ({selectedProducts.length})
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -528,6 +616,26 @@ export default function ProductsPage() {
           storageKey="products-table"
           columns={[
             {
+              key: 'select',
+              label: (
+                <input
+                  type="checkbox"
+                  checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                  onChange={handleSelectAll}
+                  className="rounded"
+                />
+              ),
+              width: 50,
+              render: (value, product) => (
+                <input
+                  type="checkbox"
+                  checked={selectedProducts.includes(product.id)}
+                  onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                  className="rounded"
+                />
+              )
+            },
+            {
               key: 'name',
               label: 'Назва',
               sortable: true,
@@ -545,6 +653,24 @@ export default function ProductsPage() {
               label: 'SKU',
               sortable: true,
               width: 150
+            },
+            {
+              key: 'categoryId',
+              label: 'Категорія',
+              sortable: true,
+              width: 150,
+              render: (value, row) => {
+                const category = categories.find((cat: any) => cat.id === value);
+                return category ? (
+                  <Badge variant="outline" className="text-xs">
+                    {category.name}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">
+                    Без категорії
+                  </Badge>
+                );
+              }
             },
             {
               key: 'costPrice',
@@ -791,6 +917,50 @@ export default function ProductsPage() {
                   setIsImportDialogOpen(false);
                 }}>
                   Імпортувати
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Діалог групової зміни категорії */}
+        <Dialog open={showBulkCategoryDialog} onOpenChange={setShowBulkCategoryDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Зміна категорії товарів</DialogTitle>
+              <DialogDescription>
+                Оберіть нову категорію для {selectedProducts.length} обраних товарів
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="bulkCategory">Нова категорія</Label>
+                <Select value={bulkCategoryId} onValueChange={setBulkCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Оберіть категорію" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="null">Без категорії</SelectItem>
+                    {categories.map((category: any) => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowBulkCategoryDialog(false)}
+                >
+                  Скасувати
+                </Button>
+                <Button 
+                  onClick={handleBulkCategoryChange}
+                  disabled={bulkUpdateCategoryMutation.isPending}
+                >
+                  {bulkUpdateCategoryMutation.isPending ? "Змінюємо..." : "Змінити категорію"}
                 </Button>
               </div>
             </div>

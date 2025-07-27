@@ -554,6 +554,19 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async bulkUpdateProductCategory(productIds: number[], categoryId: number | null): Promise<{ updatedCount: number }> {
+    try {
+      const result = await db.update(products)
+        .set({ categoryId })
+        .where(inArray(products.id, productIds));
+      
+      return { updatedCount: result.rowCount || 0 };
+    } catch (error) {
+      console.error('Error bulk updating product categories:', error);
+      throw error;
+    }
+  }
+
   // Inventory
   async getInventory(): Promise<(Inventory & { product: Product; warehouse: Warehouse })[]> {
     const result = await db.select({

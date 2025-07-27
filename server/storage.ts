@@ -141,6 +141,7 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
+  bulkUpdateProductCategory(productIds: number[], categoryId: number | null): Promise<{ updatedCount: number }>;
   
   // Product Import
   importProductsFromXml(xmlBuffer: Buffer): Promise<{ jobId: string }>;

@@ -786,6 +786,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Групова зміна категорії товарів
+  app.post("/api/products/bulk-update-category", async (req, res) => {
+    try {
+      const { productIds, categoryId } = req.body;
+
+      if (!Array.isArray(productIds) || productIds.length === 0) {
+        return res.status(400).json({ error: "Product IDs array is required" });
+      }
+
+      const result = await storage.bulkUpdateProductCategory(productIds, categoryId);
+      res.json({ 
+        success: true, 
+        updatedCount: result.updatedCount,
+        message: `Category updated for ${result.updatedCount} products`
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update product categories" });
+    }
+  });
+
   // Імпорт товарів з XML
   app.post('/api/products/import-xml', isSimpleAuthenticated, upload.single('file'), async (req, res) => {
     try {
