@@ -379,30 +379,30 @@ export default function Payments() {
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
           <div className="w-full px-8 py-3">
             <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="flex items-center space-x-4">
+                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                     <Euro className="w-6 h-6 text-white" />
-                  </div>
-                <div>
+                 </div>
+                 <div>
                   <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Платежі</h1>
                   <p className="text-gray-500 mt-1">
             Управління та відстеження платежів за замовленнями</p>
                 </div>                 
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     Автооновлення кожні 30с
                   </div>
-                </div>
-           </div>
+              </div>
+            </div>
           </div>
-        </div>
       </header> 
       
       {/* Статистика */}
       {stats && !statsLoading && (
       <div className="w-full px-8 pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-3">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -483,7 +483,7 @@ export default function Payments() {
       )}
       
       {/* Фільтри */}
-      <div className="w-full pb-3"> {/* відступ знизу та зверху */}
+      <div className="w-full px-8 pb-3"> {/* відступ знизу та зверху */}
       <Card>
         <CardHeader>
           <CardTitle>Фільтри та пошук</CardTitle>
@@ -539,7 +539,7 @@ export default function Payments() {
       </div>
 
       {/* Content */}
-      <div className="w-full space-y-6 flex-1 overflow-auto">
+      <div className="w-full space-y-6 flex-1 px-8 overflow-auto">
       {/* Таблиця платежів */}
       <Card>
         <CardHeader>
