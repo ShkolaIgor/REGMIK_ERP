@@ -166,10 +166,10 @@ export default function DepartmentsPage() {
                 <div>
                   <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Відділи</h1>
                   <p className="text-gray-500 mt-1">Управління організаційними відділами</p>
-        </div>
-                                   </div>
-                                <div className="flex items-center space-x-4">
                 </div>
+              </div>
+            <div className="flex items-center space-x-4">
+          </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>

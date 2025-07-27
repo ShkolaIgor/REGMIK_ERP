@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,10 +21,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Edit, Trash2, Building2, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Building2, Search, Package } from "lucide-react";
 import { CategoryDepartments } from "@/components/CategoryDepartments";
+import { Badge } from "@/components/ui/badge";
 
 interface Category {
   id: number;
@@ -51,6 +53,33 @@ export default function ProductCategories() {
   const { data: categories = [], isLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Фільтрація категорій
+  const filteredCategories = categories.filter((category: Category) => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      (category.name && category.name.toLowerCase().includes(searchLower)) ||
+      (category.description && category.description.toLowerCase().includes(searchLower))
+    );
+  });
+
+  // Пагінація
+  const total = filteredCategories.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentCategories = filteredCategories.slice(startIndex, endIndex);
+
+  // Скидаємо сторінку при зміні фільтру
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);   
+
 
   const createMutation = useMutation({
     mutationFn: (data: CategoryFormData) =>
@@ -171,14 +200,14 @@ export default function ProductCategories() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6 bg-white rounded-lg p-6 shadow-sm border">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Package className="h-6 w-6 text-blue-600" />
+      <div className="mb-3 bg-white rounded-lg p-6 shadow-sm border">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Package className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Категорії товарів та відділи</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Категорії товарів та відділи</h1>
         </div>
-        <p className="text-gray-600">
+        <p className="text-gray-500 mt-1">
           Управління категоріями товарів та їх прив'язкою до відділів виробництва для спеціалізованого друку замовлень
         </p>
       </div>
@@ -196,118 +225,231 @@ export default function ProductCategories() {
         </TabsList>
 
         <TabsContent value="categories" className="space-y-4">
-          <Card className="bg-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-600" />
-                Список категорій товарів
-              </CardTitle>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Додати категорію
+           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Додати категорію
+                </Button>
+              </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingCategory ? "Редагувати категорію" : "Додати нову категорію"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Назва</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Введіть назву категорії"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Опис</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Введіть опис категорії"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                    Скасувати
                   </Button>
-                </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingCategory ? "Редагувати категорію" : "Додати нову категорію"}
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Назва</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Введіть назву категорії"
-                      required
-                    />
+                  <Button 
+                    type="submit" 
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {editingCategory ? "Оновити" : "Створити"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+          
+          {/* Пошук */}
+            <div className="w-full pb-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Пошук категорій..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {currentCategories.map((category) => (
+                <Card key={category.id} className="relative">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{category.name}</CardTitle>
+                      <Badge variant="secondary">
+                        <Package className="mr-1 h-3 w-3" />
+                        ID: {category.id}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {category.description && (
+                        <p className="text-sm text-muted-foreground">
+                          {category.description}
+                        </p>
+                      )}
+
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(category)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(category.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Пагінація */}
+            {currentCategories.length > 0 && (
+              <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-muted-foreground">
+                    Показано {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, total)} з {total} категорій
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">На сторінці:</span>
+                    <Select value={pageSize.toString()} onValueChange={(value) => {
+                      setPageSize(Number(value));
+                      setCurrentPage(1);
+                    }}>
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                        <SelectItem value="1000">Всі</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div>
-                    <Label htmlFor="description">Опис</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Введіть опис категорії"
-                      rows={3}
-                    />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                  >
+                    ««
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Попередня
+                  </Button>
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="min-w-[32px] h-8"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
                   </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                      Скасувати
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={createMutation.isPending || updateMutation.isPending}
-                    >
-                      {editingCategory ? "Оновити" : "Створити"}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Назва</TableHead>
-                    <TableHead>Опис</TableHead>
-                    <TableHead className="text-right">Дії</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                        <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                          <Package className="h-8 w-8 text-gray-400" />
-                        </div>
-                        <p className="text-lg font-medium mb-2">Поки немає категорій товарів</p>
-                        <p className="text-sm text-gray-400">Додайте першу категорію для організації товарів</p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    categories.map((category) => (
-                      <TableRow key={category.id} className="hover:bg-gray-50 transition-colors">
-                        <TableCell className="font-medium text-blue-600">{category.id}</TableCell>
-                        <TableCell className="font-medium">{category.name}</TableCell>
-                        <TableCell className="text-gray-600">
-                          {category.description || "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(category)}
-                              className="hover:bg-blue-50 hover:border-blue-200"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDelete(category.id)}
-                              disabled={deleteMutation.isPending}
-                              className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Наступна
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    »»
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Повідомлення коли немає категорій */}
+            {currentCategories.length === 0 && searchQuery && (
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Категорії не знайдені</h3>
+                <p className="text-muted-foreground mb-4">
+                  Не знайдено категорій за запитом "{searchQuery}"
+                </p>
+              </div>
+            )}
+
+            {categories.length === 0 && (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Немає категорій</h3>
+                  <p className="text-muted-foreground text-center mb-4">
+                    Почніть з створення першої категорії товарів
+                  </p>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setEditingCategory(null)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Створити категорію
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                </CardContent>
+              </Card>
+            )}
+
         </TabsContent>
 
         <TabsContent value="departments" className="space-y-4">
