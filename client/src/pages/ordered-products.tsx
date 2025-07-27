@@ -26,9 +26,11 @@ export default function OrderedProductsPage() {
 
   // Статистичні дані для згрупованих товарів
   const uniqueProducts = (orderedProducts as any[])?.length || 0;
-  const totalOrders = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.ordersCount || 0), 0);
-  const totalQuantity = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.totalQuantityToShip || 0), 0);
-  const totalValue = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.totalValue || 0), 0);
+  const totalOrders = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + parseInt(item.ordersCount || 0), 0);
+  const totalQuantity = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + parseInt(item.totalQuantityToShip || 0), 0);
+  const totalValue = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + parseFloat(item.totalValue || 0), 0);
+
+
 
   // Фільтровані дані
   const filteredProducts = (orderedProducts as any[]).filter((item: any) => {
@@ -91,8 +93,8 @@ export default function OrderedProductsPage() {
 
       {/* Statistics Cards */}
       <div className="w-full px-8 pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+        <div className="flex flex-wrap gap-6 mb-8">
+          <Card className="flex-1 min-w-[250px] bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
@@ -101,7 +103,7 @@ export default function OrderedProductsPage() {
                     <ShoppingCart className="w-4 h-4 text-amber-600" />
                     <p className="text-sm text-amber-700 font-medium">Замовлень</p>
                   </div>
-                  <p className="text-3xl font-bold text-amber-900 mb-1">{totalOrders}</p>
+                  <p className="text-3xl font-bold text-amber-900 mb-1 leading-none">{totalOrders}</p>
                   <p className="text-xs text-amber-600">Містять товари</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
@@ -111,7 +113,7 @@ export default function OrderedProductsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <Card className="flex-1 min-w-[250px] bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-red-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
@@ -120,7 +122,7 @@ export default function OrderedProductsPage() {
                     <Package className="w-4 h-4 text-red-600" />
                     <p className="text-sm text-red-700 font-medium">Типів товарів</p>
                   </div>
-                  <p className="text-3xl font-bold text-red-900 mb-1">{uniqueProducts}</p>
+                  <p className="text-3xl font-bold text-red-900 mb-1 leading-none">{uniqueProducts}</p>
                   <p className="text-xs text-red-600">Для виробництва</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
@@ -130,7 +132,7 @@ export default function OrderedProductsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <Card className="flex-1 min-w-[250px] bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-gray-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
@@ -139,7 +141,7 @@ export default function OrderedProductsPage() {
                     <Target className="w-4 h-4 text-gray-600" />
                     <p className="text-sm text-gray-700 font-medium">Загальна кількість</p>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">{totalQuantity}</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-1 leading-none">{totalQuantity}</p>
                   <p className="text-xs text-gray-600">Одиниць замовлено</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-gray-500 to-gray-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
@@ -149,7 +151,7 @@ export default function OrderedProductsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <Card className="flex-1 min-w-[250px] bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
@@ -158,7 +160,7 @@ export default function OrderedProductsPage() {
                     <CheckCircle className="w-4 h-4 text-blue-600" />
                     <p className="text-sm text-blue-700 font-medium">Загальна вартість</p>
                   </div>
-                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalValue.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-blue-900 mb-1 leading-none">{totalValue.toFixed(2)}</p>
                   <p className="text-xs text-blue-600">Грн оплачено</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
