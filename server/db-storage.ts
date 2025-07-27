@@ -14138,9 +14138,50 @@ export class DatabaseStorage implements IStorage {
         
         console.log(`📦 Webhook: Збереження ${invoiceData.positions.length} позицій товарів для замовлення ${order.id}`);
         for (const position of invoiceData.positions) {
+          let productId = position.productId || null;
+          
+          // Якщо productId не передано, спробуємо знайти товар за назвою
+          if (!productId) {
+            const itemName = position.itemName || position.НаименованиеТовара || '';
+            
+            if (itemName) {
+              // 1. Точний пошук за назвою
+              let foundProducts = await db
+                .select()
+                .from(products)
+                .where(eq(products.name, itemName))
+                .limit(1);
+              
+              // 2. Якщо не знайдено, ILIKE пошук за назвою
+              if (foundProducts.length === 0) {
+                foundProducts = await db
+                  .select()  
+                  .from(products)
+                  .where(ilike(products.name, `%${itemName}%`))
+                  .limit(1);
+              }
+              
+              // 3. Якщо не знайдено, пошук за SKU
+              if (foundProducts.length === 0) {
+                foundProducts = await db
+                  .select()
+                  .from(products)
+                  .where(ilike(products.sku, `%${itemName}%`))
+                  .limit(1);
+              }
+              
+              if (foundProducts.length > 0) {
+                productId = foundProducts[0].id;
+                console.log(`✅ Webhook: Знайдено товар "${itemName}" з ID: ${productId}`);
+              } else {
+                console.log(`❌ Webhook: Товар "${itemName}" не знайдено в базі даних`);
+              }
+            }
+          }
+
           const itemRecord = {
             orderId: order.id,
-            productId: position.productId || null,
+            productId: productId,
             quantity: position.quantity || position.Количество || 0,
             unitPrice: position.unitPrice || position.Цена || 0,
             totalPrice: position.totalPrice || position.Сумма || 0,
@@ -14267,9 +14308,51 @@ export class DatabaseStorage implements IStorage {
         
         // Insert new order items
         for (const position of invoiceData.positions) {
+          let productId = position.productId || null;
+          
+          // Якщо productId не передано, спробуємо знайти товар за назвою
+          if (!productId) {
+            const itemName = position.itemName || position.НаименованиеТовара || '';
+            console.log(`🔍 Webhook: Оновлення - шукаємо товар за назвою "${itemName}"`);
+            
+            if (itemName) {
+              // 1. Точний пошук за назвою
+              let foundProducts = await db
+                .select()
+                .from(products)
+                .where(eq(products.name, itemName))
+                .limit(1);
+              
+              // 2. Якщо не знайдено, ILIKE пошук за назвою
+              if (foundProducts.length === 0) {
+                foundProducts = await db
+                  .select()  
+                  .from(products)
+                  .where(ilike(products.name, `%${itemName}%`))
+                  .limit(1);
+              }
+              
+              // 3. Якщо не знайдено, пошук за SKU
+              if (foundProducts.length === 0) {
+                foundProducts = await db
+                  .select()
+                  .from(products)
+                  .where(ilike(products.sku, `%${itemName}%`))
+                  .limit(1);
+              }
+              
+              if (foundProducts.length > 0) {
+                productId = foundProducts[0].id;
+                console.log(`✅ Webhook: Оновлення - знайдено товар "${itemName}" з ID: ${productId}`);
+              } else {
+                console.log(`❌ Webhook: Оновлення - товар "${itemName}" не знайдено в базі даних`);
+              }
+            }
+          }
+
           const itemRecord = {
             orderId: existingOrder.id,
-            productId: position.productId || null,
+            productId: productId,
             quantity: position.quantity || position.Количество || 0,
             unitPrice: position.unitPrice || position.Цена || 0,
             totalPrice: position.totalPrice || position.Сумма || 0,
