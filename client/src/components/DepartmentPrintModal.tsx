@@ -93,10 +93,10 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
     }
   };
 
-  const generateDepartmentPrintHTML = (department: Department): string => {
+  const generateConsolidatedPrintHTML = (): string => {
     if (!printData) return '';
 
-    const { order } = printData;
+    const { order, departments, itemsWithoutDepartment } = printData;
     const deliveryDate = order.dueDate ? new Date(order.dueDate).toLocaleDateString('uk-UA') : 'Не вказано';
 
     return `
@@ -104,7 +104,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Виробничий лист - ${department.departmentName}</title>
+        <title>Виробничий лист - Замовлення ${order.orderNumber}</title>
         <style>
           @page { 
             size: A4; 
@@ -112,8 +112,8 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           }
           body { 
             font-family: Arial, sans-serif; 
-            font-size: 12px; 
-            line-height: 1.4; 
+            font-size: 11px; 
+            line-height: 1.3; 
             margin: 0; 
             padding: 0;
           }
@@ -123,10 +123,10 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             border-bottom: 2px solid #333;
             padding-bottom: 10px;
           }
-          .department-name {
-            font-size: 18px;
+          .main-title {
+            font-size: 16px;
             font-weight: bold;
-            color: #2563eb;
+            color: #1f2937;
             margin-bottom: 5px;
           }
           .order-info {
@@ -134,31 +134,47 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             justify-content: space-between;
             margin-bottom: 15px;
             flex-wrap: wrap;
+            background-color: #f8fafc;
+            padding: 8px;
+            border-radius: 4px;
           }
           .info-group {
-            margin-bottom: 8px;
+            margin-bottom: 5px;
           }
           .label {
             font-weight: bold;
             color: #374151;
           }
+          .department-section {
+            margin-bottom: 20px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            overflow: hidden;
+          }
+          .department-header {
+            background-color: #2563eb;
+            color: white;
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 12px;
+          }
           .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
           }
           .items-table th,
           .items-table td {
-            border: 1px solid #d1d5db;
-            padding: 8px;
+            border: 1px solid #e5e7eb;
+            padding: 6px;
             text-align: left;
           }
           .items-table th {
-            background-color: #f3f4f6;
+            background-color: #f9fafb;
             font-weight: bold;
+            font-size: 10px;
           }
           .items-table tr:nth-child(even) {
-            background-color: #f9fafb;
+            background-color: #fefefe;
           }
           .quantity {
             text-align: center;
@@ -166,28 +182,41 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             color: #059669;
           }
           .notes-section {
-            margin-top: 20px;
-            padding: 10px;
+            margin-top: 15px;
+            padding: 8px;
             background-color: #fef3c7;
             border-left: 4px solid #f59e0b;
+            font-size: 10px;
           }
           .footer {
-            margin-top: 30px;
+            margin-top: 20px;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+          }
+          .without-department {
+            background-color: #fee2e2;
+            border-color: #fca5a5;
+          }
+          .without-department .department-header {
+            background-color: #dc2626;
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="department-name">🏭 ВІДДІЛ: ${department.departmentName.toUpperCase()}</div>
-          <div>Виробничий лист</div>
+          <div class="main-title">🏭 ВИРОБНИЧИЙ ЛИСТ</div>
+          <div>Всі відділи на одному аркуші</div>
         </div>
 
         <div class="order-info">
           <div class="info-group">
             <span class="label">📋 Замовлення:</span> ${order.orderNumber}
+          </div>
+          <div class="info-group">
+            <span class="label">📄 Рахунок:</span> ${order.invoiceNumber || 'Не вказано'}
           </div>
           <div class="info-group">
             <span class="label">📅 Дата відвантаження:</span> ${deliveryDate}
@@ -199,35 +228,79 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           ` : ''}
         </div>
 
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th style="width: 5%">№</th>
-              <th style="width: 45%">Найменування товару</th>
-              <th style="width: 15%">Артикул</th>
-              <th style="width: 10%">Кількість</th>
-              <th style="width: 25%">Примітки</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${department.items.map((item, index) => `
-              <tr>
-                <td style="text-align: center;">${index + 1}</td>
-                <td>
-                  <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                  ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
-                </td>
-                <td style="text-align: center; font-family: monospace;">
-                  ${item.productSku || '-'}
-                </td>
-                <td class="quantity">${item.quantity} шт.</td>
-                <td style="font-size: 11px;">
-                  ${item.notes || '-'}
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        ${departments.map(department => `
+          <div class="department-section">
+            <div class="department-header">
+              🏭 ${department.departmentName.toUpperCase()}
+            </div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 5%">№</th>
+                  <th style="width: 45%">Найменування товару</th>
+                  <th style="width: 15%">Артикул</th>
+                  <th style="width: 10%">Кількість</th>
+                  <th style="width: 25%">Примітки</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${department.items.map((item, index) => `
+                  <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td>
+                      <strong>${item.productName || item.itemName || 'Без назви'}</strong>
+                      ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
+                    </td>
+                    <td style="text-align: center; font-family: monospace;">
+                      ${item.productSku || '-'}
+                    </td>
+                    <td class="quantity">${item.quantity} шт.</td>
+                    <td style="font-size: 10px;">
+                      ${item.notes || '-'}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `).join('')}
+
+        ${itemsWithoutDepartment.length > 0 ? `
+          <div class="department-section without-department">
+            <div class="department-header">
+              ⚠️ ТОВАРИ БЕЗ ВІДДІЛУ
+            </div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 5%">№</th>
+                  <th style="width: 45%">Найменування товару</th>
+                  <th style="width: 15%">Артикул</th>
+                  <th style="width: 10%">Кількість</th>
+                  <th style="width: 25%">Примітки</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsWithoutDepartment.map((item, index) => `
+                  <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td>
+                      <strong>${item.productName || item.itemName || 'Без назви'}</strong>
+                      ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
+                    </td>
+                    <td style="text-align: center; font-family: monospace;">
+                      ${item.productSku || '-'}
+                    </td>
+                    <td class="quantity">${item.quantity} шт.</td>
+                    <td style="font-size: 10px;">
+                      ${item.notes || '-'}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : ''}
 
         ${order.notes ? `
           <div class="notes-section">
@@ -245,11 +318,11 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
     `;
   };
 
-  const handlePrintDepartment = async (department: Department) => {
+  const handlePrintAllDepartments = async () => {
     setIsPrinting(true);
     
     try {
-      const printHTML = generateDepartmentPrintHTML(department);
+      const printHTML = generateConsolidatedPrintHTML();
       const printWindow = window.open('', '_blank');
       
       if (printWindow) {
@@ -257,10 +330,30 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         printWindow.document.close();
         printWindow.print();
         
+        // Позначаємо замовлення як роздруковане
+        try {
+          const response = await fetch(`/api/orders/${orderId}/mark-printed`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            // Оновлюємо кеш замовлень
+            queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+          }
+        } catch (error) {
+          console.error('Помилка при позначенні як роздруковане:', error);
+        }
+        
         toast({
           title: "Успіх",
-          description: `Виробничий лист для відділу "${department.departmentName}" відправлено на друк`,
+          description: "Консолідований виробничий лист відправлено на друк",
         });
+        
+        // Закриваємо модаль після успішного друку
+        onClose();
       }
     } catch (error) {
       console.error('Помилка друку:', error);
@@ -274,53 +367,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
     }
   };
 
-  const handlePrintAllDepartments = async () => {
-    if (!printData?.departments.length) return;
-    
-    setIsPrinting(true);
-    
-    try {
-      for (const department of printData.departments) {
-        const printHTML = generateDepartmentPrintHTML(department);
-        const printWindow = window.open('', '_blank');
-        
-        if (printWindow) {
-          printWindow.document.write(printHTML);
-          printWindow.document.close();
-          printWindow.print();
-          
-          // Невелика пауза між відкриттям вікон
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-      
-      // Підтверджуємо друк на сервері
-      const response = await fetch(`/api/orders/${orderId}/confirm-print`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      
-      if (response.ok) {
-        toast({
-          title: "Успіх",
-          description: `Виробничі листи для всіх ${printData.departments.length} відділів відправлено на друк`,
-        });
-        
-        // Оновлюємо кеш замовлень
-        queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-        onClose();
-      }
-    } catch (error) {
-      console.error('Помилка друку:', error);
-      toast({
-        title: "Помилка",
-        description: "Не вдалося роздрукувати всі виробничі листи",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPrinting(false);
-    }
-  };
+
 
   if (isLoading) {
     return (
@@ -430,15 +477,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                           </Badge>
                         </CardTitle>
                         
-                        <Button
-                          size="sm"
-                          onClick={() => handlePrintDepartment(department)}
-                          disabled={isPrinting}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <Printer className="h-4 w-4 mr-1" />
-                          Друк
-                        </Button>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                          Включено в консолідований друк
+                        </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
