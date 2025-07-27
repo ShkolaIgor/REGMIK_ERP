@@ -14174,7 +14174,26 @@ export class DatabaseStorage implements IStorage {
                 productId = foundProducts[0].id;
                 console.log(`✅ Webhook: Знайдено товар "${itemName}" з ID: ${productId}`);
               } else {
-                console.log(`❌ Webhook: Товар "${itemName}" не знайдено в базі даних`);
+                // Автоматично створюємо товар, якщо його не знайдено
+                console.log(`🆕 Webhook: Створюємо новий товар "${itemName}"`);
+                try {
+                  const newProduct = await db.insert(products).values({
+                    name: itemName,
+                    sku: position.itemCode || position.КодТовара || `AUTO-${Date.now()}`,
+                    description: `Автоматично створено з 1С: ${itemName}`,
+                    costPrice: position.unitPrice || position.Цена || 0,
+                    retailPrice: position.unitPrice || position.Цена || 0,
+                    categoryId: null, // Буде потрібно налаштувати категорії пізніше
+                    isActive: true,
+                    createdAt: new Date()
+                  }).returning();
+                  
+                  productId = newProduct[0].id;
+                  console.log(`✅ Webhook: Створено новий товар "${itemName}" з ID: ${productId}`);
+                } catch (createError) {
+                  console.error(`❌ Webhook: Помилка створення товару "${itemName}":`, createError);
+                  productId = null;
+                }
               }
             }
           }
@@ -14345,7 +14364,26 @@ export class DatabaseStorage implements IStorage {
                 productId = foundProducts[0].id;
                 console.log(`✅ Webhook: Оновлення - знайдено товар "${itemName}" з ID: ${productId}`);
               } else {
-                console.log(`❌ Webhook: Оновлення - товар "${itemName}" не знайдено в базі даних`);
+                // Автоматично створюємо товар при оновленні, якщо його не знайдено
+                console.log(`🆕 Webhook: Оновлення - створюємо новий товар "${itemName}"`);
+                try {
+                  const newProduct = await db.insert(products).values({
+                    name: itemName,
+                    sku: position.itemCode || position.КодТовара || `AUTO-${Date.now()}`,
+                    description: `Автоматично створено з 1С: ${itemName}`,
+                    costPrice: position.unitPrice || position.Цена || 0,
+                    retailPrice: position.unitPrice || position.Цена || 0,
+                    categoryId: null, // Буде потрібно налаштувати категорії пізніше
+                    isActive: true,
+                    createdAt: new Date()
+                  }).returning();
+                  
+                  productId = newProduct[0].id;
+                  console.log(`✅ Webhook: Оновлення - створено новий товар "${itemName}" з ID: ${productId}`);
+                } catch (createError) {
+                  console.error(`❌ Webhook: Оновлення - помилка створення товару "${itemName}":`, createError);
+                  productId = null;
+                }
               }
             }
           }
