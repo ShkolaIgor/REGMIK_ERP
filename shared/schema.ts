@@ -161,7 +161,6 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  departmentId: integer("department_id").references(() => departments.id), // зв'язок з відділом
   // Налаштування серійних номерів для групи товарів
   hasSerialNumbers: boolean("has_serial_numbers").default(false), // чи має ця категорія серійні номери
   serialNumberTemplate: text("serial_number_template"), // шаблон серійного номера, наприклад: "{prefix}-{year}-{counter:4}"

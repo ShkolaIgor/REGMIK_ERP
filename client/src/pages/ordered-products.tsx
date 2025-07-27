@@ -1,11 +1,20 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Package, Factory, CheckCircle, ShoppingCart, Clock, Target } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2, ShoppingCart, Clock, Target } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { SearchFilters } from "@/components/SearchFilters";
 
 export default function OrderedProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: orderedProducts = [], isLoading } = useQuery({
     queryKey: ["/api/products/ordered"],
@@ -20,6 +29,8 @@ export default function OrderedProductsPage() {
   const totalOrders = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + parseInt(item.ordersCount || 0), 0);
   const totalQuantity = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + parseInt(item.totalQuantityToShip || 0), 0);
   const totalValue = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + parseFloat(item.totalValue || 0), 0);
+
+
 
   // Фільтровані дані
   const filteredProducts = (orderedProducts as any[]).filter((item: any) => {
@@ -48,6 +59,33 @@ export default function OrderedProductsPage() {
                     <p className="text-gray-500 mt-1">Моніторинг товарів у замовленнях та управління запасами</p>
                   </div>
                 </div>
+              <div className="flex items-center space-x-4">
+                <Button 
+                  onClick={async () => {
+                    setIsRefreshing(true);
+                    try {
+                      await queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
+                      await queryClient.refetchQueries({ queryKey: ["/api/products/ordered"] });
+                      toast({
+                        title: "Сканування завершено",
+                        description: "Список замовлених товарів оновлено. Включено всі оплачені товари.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Помилка сканування",
+                        description: "Не вдалося оновити список товарів",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setIsRefreshing(false);
+                    }
+                  }}
+                  disabled={isRefreshing}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50">
+                  <Package className="mr-2 h-4 w-4" />
+                  {isRefreshing ? "Сканування..." : "Повторне сканування замовлених товарів"}
+                </Button>
+              </div>
             </div>
           </div>
         </header>
@@ -55,7 +93,7 @@ export default function OrderedProductsPage() {
 
       {/* Statistics Cards */}
       <div className="w-full px-8 pt-6">
-        <div className="flex flex-wrap gap-6 mb-3">
+        <div className="flex flex-wrap gap-6 mb-8">
           <Card className="flex-1 min-w-[250px] bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -134,22 +172,14 @@ export default function OrderedProductsPage() {
         </div>
 
         {/* Search Filters */}
-        <div className="w-full pb-3"> {/* відступ знизу та зверху */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Фільтри та пошук</CardTitle>
-              <CardDescription>
-                Знайдіть потрібні товари за різними критеріями
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SearchFilters
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-              />
-            </CardContent>
-          </Card> 
-        </div>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <SearchFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+          </CardContent>
+        </Card>
 
         {/* Results */}
         <Card>
@@ -241,7 +271,7 @@ export default function OrderedProductsPage() {
                         <span className="font-medium text-gray-700">Деталі замовлень:</span>
                       </div>
                       
-                       {/*<div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                           <div>
                             <span className="font-medium text-gray-600">Замовлення: </span>
@@ -265,29 +295,28 @@ export default function OrderedProductsPage() {
                             <span className="text-gray-900">{item.earliestPaymentDate ? new Date(item.earliestPaymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
                           </div>
                         </div>
-                      </div>*/}
+                      </div>
                     </div>
 
                     {/* Деталізовані замовлення */}
                     {item.orderDetails && item.orderDetails.length > 0 && (
                       <div className="mt-4">
-                        {/*<details className="group">
+                        <details className="group">
                           <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-800">
                             <ArrowRight className="h-4 w-4 transition-transform group-open:rotate-90" />
                             Детальна розбивка по замовленнях ({item.orderDetails.length})
-                          </summary>*/}
-                          <div className="mt-3 space-y-1">
+                          </summary>
+                          <div className="mt-3 space-y-2">
                             {item.orderDetails.map((detail: any, idx: number) => (
-                              <div key={idx} className="bg-white p-3 rounded border text-xs grid grid-cols-2 md:grid-cols-5 gap-2">
+                              <div key={idx} className="bg-white p-3 rounded border text-xs grid grid-cols-2 md:grid-cols-4 gap-2">
                                 <div><strong>№:</strong> {detail.orderNumber}</div>
                                 <div><strong>Кількість:</strong> {detail.quantityToShip} шт</div>
-                                <div><strong>Оплата:</strong> {detail.paymentDate ? new Date(detail.paymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</div>
                                 <div><strong>Термін:</strong> {detail.dueDate ? new Date(detail.dueDate).toLocaleDateString('uk-UA') : "Не вказано"}</div>
                                 <div><strong>Статус:</strong> {detail.status}</div>
                               </div>
                             ))}
                           </div>
-                      {/*</details>*/}
+                        </details>
                       </div>
                     )}
                   </Card>
