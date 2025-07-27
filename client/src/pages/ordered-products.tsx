@@ -1,20 +1,11 @@
-import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2, ShoppingCart, Clock, Target } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { AlertTriangle, Package, Factory, CheckCircle, ShoppingCart, Clock, Target } from "lucide-react";
 import { SearchFilters } from "@/components/SearchFilters";
 
 export default function OrderedProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: orderedProducts = [], isLoading } = useQuery({
     queryKey: ["/api/products/ordered"],
@@ -57,33 +48,6 @@ export default function OrderedProductsPage() {
                     <p className="text-gray-500 mt-1">Моніторинг товарів у замовленнях та управління запасами</p>
                   </div>
                 </div>
-              <div className="flex items-center space-x-4">
-                <Button 
-                  onClick={async () => {
-                    setIsRefreshing(true);
-                    try {
-                      await queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
-                      await queryClient.refetchQueries({ queryKey: ["/api/products/ordered"] });
-                      toast({
-                        title: "Сканування завершено",
-                        description: "Список замовлених товарів оновлено. Включено всі оплачені товари.",
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Помилка сканування",
-                        description: "Не вдалося оновити список товарів",
-                        variant: "destructive",
-                      });
-                    } finally {
-                      setIsRefreshing(false);
-                    }
-                  }}
-                  disabled={isRefreshing}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50">
-                  <Package className="mr-2 h-4 w-4" />
-                  {isRefreshing ? "Сканування..." : "Повторне сканування замовлених товарів"}
-                </Button>
-              </div>
             </div>
           </div>
         </header>
