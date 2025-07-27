@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2, ShoppingCart, Clock, Target } from "lucide-react";
@@ -91,7 +91,7 @@ export default function OrderedProductsPage() {
 
       {/* Statistics Cards */}
       <div className="w-full px-8 pt-6">
-        <div className="flex flex-wrap gap-6 mb-8">
+        <div className="flex flex-wrap gap-6 mb-3">
           <Card className="flex-1 min-w-[250px] bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -170,14 +170,22 @@ export default function OrderedProductsPage() {
         </div>
 
         {/* Search Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <SearchFilters
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-            />
-          </CardContent>
-        </Card>
+        <div className="w-full pb-3"> {/* відступ знизу та зверху */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Фільтри та пошук</CardTitle>
+              <CardDescription>
+                Знайдіть потрібні товари за різними критеріями
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SearchFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+              />
+            </CardContent>
+          </Card> 
+        </div>
 
         {/* Results */}
         <Card>
@@ -304,7 +312,7 @@ export default function OrderedProductsPage() {
                             <ArrowRight className="h-4 w-4 transition-transform group-open:rotate-90" />
                             Детальна розбивка по замовленнях ({item.orderDetails.length})
                           </summary>*/}
-                          <div className="mt-3 space-y-2">
+                          <div className="mt-3 space-y-1">
                             {item.orderDetails.map((detail: any, idx: number) => (
                               <div key={idx} className="bg-white p-3 rounded border text-xs grid grid-cols-2 md:grid-cols-5 gap-2">
                                 <div><strong>№:</strong> {detail.orderNumber}</div>
