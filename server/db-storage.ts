@@ -7388,6 +7388,7 @@ export class DatabaseStorage implements IStorage {
       contractNumber?: string;
       productionApproved?: boolean;
       approvedBy?: string;
+      paymentDate?: string;
     }
   ): Promise<void> {
     try {
@@ -7410,9 +7411,12 @@ export class DatabaseStorage implements IStorage {
         paidAmount: paymentData.paidAmount || "0",
       };
 
+      // Встановлюємо дату оплати якщо була передана, інакше поточна дата
+      const paymentDate = paymentData.paymentDate ? new Date(paymentData.paymentDate) : now;
+
       // Для повної оплати встановлюємо дату оплати
       if (paymentData.paymentType === 'full') {
-        updateData.paymentDate = now;
+        updateData.paymentDate = paymentDate;
         updateData.productionApproved = true;
         updateData.productionApprovedBy = paymentData.approvedBy || 'system';
         updateData.productionApprovedAt = now;
@@ -7420,7 +7424,7 @@ export class DatabaseStorage implements IStorage {
 
       // Для часткової оплати
       if (paymentData.paymentType === 'partial') {
-        updateData.paymentDate = now;
+        updateData.paymentDate = paymentDate;
         // Дозвіл на виробництво треба надавати окремо
         if (paymentData.productionApproved) {
           updateData.productionApproved = true;
