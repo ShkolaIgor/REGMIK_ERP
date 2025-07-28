@@ -1337,6 +1337,57 @@ export class DatabaseStorage implements IStorage {
         .returning();
       console.log("🔧 DEBUG: Order updated, result paymentDate:", orderResult[0]?.paymentDate, "paidAmount:", orderResult[0]?.paidAmount);
 
+      // Створюємо запис оплати в order_payments якщо встановлена paymentDate і paidAmount > 0
+      if (orderResult[0]?.paymentDate && orderResult[0]?.paidAmount && parseFloat(orderResult[0].paidAmount) > 0) {
+        const paymentRecord = {
+          orderId: id,
+          paymentAmount: parseFloat(orderResult[0].paidAmount),
+          paymentDate: orderResult[0].paymentDate,
+          paymentType: 'manual',
+          paymentStatus: 'confirmed',
+          correspondent: 'Редагування замовлення',
+          notes: `Оплата встановлена через форму редагування замовлення`,
+          createdAt: new Date(),
+        };
+
+        // Перевіряємо чи не існує вже такий запис оплати
+        const existingPayment = await db
+          .select()
+          .from(orderPayments)
+          .where(
+            and(
+              eq(orderPayments.orderId, id),
+              eq(orderPayments.paymentAmount, paymentRecord.paymentAmount),
+              eq(orderPayments.paymentDate, paymentRecord.paymentDate)
+            )
+          )
+          .limit(1);
+
+        if (existingPayment.length === 0) {
+          await this.createOrderPayment(paymentRecord);
+          console.log(`✅ Створено запис оплати в order_payments через форму редагування для замовлення ${id}: ${paymentRecord.paymentAmount} грн`);
+        } else {
+          console.log(`⚠️ Запис оплати через форму редагування вже існує для замовлення ${id} з сумою ${paymentRecord.paymentAmount} грн`);
+        }
+      } else if ('paymentDate' in orderData && orderData.paymentDate === null) {
+        // Якщо дата оплати очищується, видаляємо ручні записи оплат
+        const deletedPayments = await db.delete(orderPayments)
+          .where(
+            and(
+              eq(orderPayments.orderId, id),
+              or(
+                eq(orderPayments.paymentType, 'manual'),
+                eq(orderPayments.paymentType, 'contract')
+              )
+            )
+          )
+          .returning();
+
+        if (deletedPayments.length > 0) {
+          console.log(`✅ Видалено ${deletedPayments.length} ручних записів оплати при очищенні дати для замовлення ${id}`);
+        }
+      }
+
       if (orderResult.length === 0) {
         return undefined;
       }
@@ -7469,6 +7520,40 @@ export class DatabaseStorage implements IStorage {
         .set(updateData)
         .where(eq(orders.id, orderId));
 
+      // Створюємо запис оплати в order_payments якщо тип оплати не 'none'
+      if (paymentData.paymentType !== 'none' && paymentData.paidAmount && parseFloat(paymentData.paidAmount) > 0) {
+        const paymentRecord = {
+          orderId: orderId,
+          paymentAmount: paymentData.paidAmount,
+          paymentDate: paymentDate,
+          paymentType: paymentData.paymentType === 'contract' ? 'contract' : 'manual',
+          paymentStatus: 'confirmed',
+          correspondent: paymentData.paymentType === 'contract' ? `Договір ${paymentData.contractNumber}` : 'Ручна оплата',
+          notes: `Оплата через ${paymentData.paymentType === 'full' ? 'повну оплату' : paymentData.paymentType === 'partial' ? 'часткову оплату' : 'договір'}`,
+          createdAt: new Date(),
+        };
+
+        // Перевіряємо чи не існує вже такий запис оплати для цього замовлення з тією ж сумою та датою
+        const existingPayment = await db
+          .select()
+          .from(orderPayments)
+          .where(
+            and(
+              eq(orderPayments.orderId, orderId),
+              eq(orderPayments.paymentAmount, paymentRecord.paymentAmount),
+              eq(orderPayments.paymentDate, paymentRecord.paymentDate)
+            )
+          )
+          .limit(1);
+
+        if (existingPayment.length === 0) {
+          await this.createOrderPayment(paymentRecord);
+          console.log(`✅ Створено запис оплати в order_payments для замовлення ${orderId}: ${paymentRecord.paymentAmount} грн`);
+        } else {
+          console.log(`⚠️ Запис оплати вже існує для замовлення ${orderId} з сумою ${paymentRecord.paymentAmount} грн`);
+        }
+      }
+
       // Якщо дозволено виробництво і не було раніше створено завдання - створюємо завдання
       if (updateData.productionApproved && !alreadyHasProduction) {
         await this.createManufacturingTasksForOrder(orderId);
@@ -7505,6 +7590,23 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         })
         .where(eq(orders.id, orderId));
+
+      // Видаляємо записи ручних оплат з order_payments (залишаємо тільки банківські)
+      const deletedPayments = await db.delete(orderPayments)
+        .where(
+          and(
+            eq(orderPayments.orderId, orderId),
+            or(
+              eq(orderPayments.paymentType, 'manual'),
+              eq(orderPayments.paymentType, 'contract')
+            )
+          )
+        )
+        .returning();
+
+      if (deletedPayments.length > 0) {
+        console.log(`✅ Видалено ${deletedPayments.length} ручних записів оплати для замовлення ${orderId}`);
+      }
 
       // Видаляємо або скасовуємо пов'язані виробничі завдання
       const updatedOrders = await db.update(manufacturingOrders)
