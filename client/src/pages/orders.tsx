@@ -389,8 +389,8 @@ export default function Orders() {
         const totalAmount = parseFloat(order.totalAmount);
         
         const getPaymentDisplay = () => {
-          // Якщо немає оплати (paidAmount = 0), показуємо кнопку оплати незалежно від типу оплати
-          if (paidAmount === 0) {
+          // Якщо немає оплати (paidAmount = 0) І немає дати платежу, показуємо кнопку оплати
+          if (paidAmount === 0 && !order.paymentDate) {
             return (
               <div onClick={(e) => e.stopPropagation()}>
                 <PaymentDialog
@@ -400,6 +400,32 @@ export default function Orders() {
                   currentPaymentType={order.paymentType || "none"}
                   currentPaidAmount={order.paidAmount || "0"}
                   isProductionApproved={order.productionApproved || false}
+                />
+              </div>
+            );
+          }
+          
+          // Якщо є дата платежу, але paidAmount = 0, показуємо як оплачене з дати orders.payment_date
+          if (paidAmount === 0 && order.paymentDate) {
+            return (
+              <div onClick={(e) => e.stopPropagation()}>
+                <PaymentDialog
+                  orderId={order.id}
+                  orderNumber={order.orderNumber}
+                  totalAmount={order.totalAmount}
+                  currentPaymentType={order.paymentType || "none"}
+                  currentPaidAmount={order.paidAmount || "0"}
+                  isProductionApproved={order.productionApproved || false}
+                  trigger={
+                    <div className="space-y-1 cursor-pointer hover:opacity-80">
+                      <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                        💳 Оплачено (записи)
+                      </Badge>
+                      <div className="text-xs text-blue-700 font-medium flex items-center gap-1">
+                        📅 <UkrainianDate date={order.paymentDate} format="short" />
+                      </div>
+                    </div>
+                  }
                 />
               </div>
             );
