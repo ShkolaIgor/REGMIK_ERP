@@ -1572,7 +1572,7 @@ export default function Orders() {
       
       // Очищаємо контакт при зміні клієнта
       form.setValue("clientContactsId", "");
-      setSelectedContactId("");
+      setSelectedContactId(undefined);
       
       console.log("Client selection completed");
     } else {
@@ -1753,7 +1753,14 @@ export default function Orders() {
                   {isEditMode ? "Внесіть зміни до існуючого замовлення та його товарів" : "Створіть нове замовлення від клієнта з товарами та датами"}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+                console.log("Form validation errors:", errors);
+                toast({
+                  title: "Помилка валідації",
+                  description: "Перевірте правильність заповнення всіх полів",
+                  variant: "destructive",
+                });
+              })} className="space-y-6">
                 {/* Поле компанії */}
                 <div>
                   <Label htmlFor="companyId">Компанія *</Label>
@@ -1988,7 +1995,7 @@ export default function Orders() {
                   <div>
                     <Label htmlFor="carrierId">Перевізник</Label>
                     <Select
-                      value={form.watch("carrierId") ? form.watch("carrierId").toString() : "none"}
+                      value={form.watch("carrierId") ? form.watch("carrierId")?.toString() : "none"}
                       onValueChange={(value) => form.setValue("carrierId", value === "none" ? null : parseInt(value))}
                     >
                       <SelectTrigger>
@@ -2007,7 +2014,7 @@ export default function Orders() {
                 </div>
 
                 {/* Nova Poshta Integration */}
-                {form.watch("carrierId") && carriers?.find((c: any) => c.id === parseInt(form.watch("carrierId")))?.name === "Нова Пошта" && (
+                {form.watch("carrierId") && carriers?.find((c: any) => c.id === parseInt((form.watch("carrierId") || "0").toString()))?.name === "Нова Пошта" && (
                   <div className="mt-6">
                     <NovaPoshtaIntegration
                       onAddressSelect={(address, cityRef, warehouseRef) => {
@@ -2709,7 +2716,7 @@ export default function Orders() {
                     <Droppable droppableId="table-headers" direction="horizontal">
                       {(provided) => (
                         <TableRow ref={provided.innerRef} {...provided.droppableProps}>
-                          {columnOrder.map((columnKey, index) => (
+                          {columnOrder.map((columnKey: string, index: number) => (
                             <Draggable key={columnKey} draggableId={columnKey} index={index}>
                               {(provided, snapshot) => (
                                 <TableHead
