@@ -208,7 +208,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
       <body>
         <div class="header">
           <div class="main-title">🏭 ВИРОБНИЧИЙ ЛИСТ</div>
-          <div>Всі відділи на одному аркуші</div>
+          <div>${new Date().toLocaleString('uk-UA')}</div>
         </div>
 
         <div class="order-info">
@@ -310,7 +310,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         ` : ''}
 
         <div class="footer">
-          Виробничий лист створено: ${new Date().toLocaleString('uk-UA')}<br>
           Система REGMIK ERP
         </div>
       </body>
@@ -460,7 +459,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <td style="text-align: center;">${index + 1}</td>
                 <td>
                   <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                  ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
+                  {/*${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}*}
                 </td>
                 <td style="text-align: center; font-family: monospace;">
                   ${item.productSku || '-'}
