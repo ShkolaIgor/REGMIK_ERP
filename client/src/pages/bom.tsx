@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Package, Component, Search, Layers, Settings } from "lucide-react";
+import { Plus, Trash2, Package, Component, Search, Layers, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
@@ -59,6 +59,9 @@ export default function BOMPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [productTypeFilter, setProductTypeFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [copySearchQuery, setCopySearchQuery] = useState("");
   const queryClient = useQueryClient();
   
   const form = useForm<ComponentFormData>({
@@ -214,6 +217,10 @@ export default function BOMPage() {
       sourceProductId: sourceProduct.id,
       targetProductId: targetProductForCopy.id
     });
+    
+    setIsCopyBOMDialogOpen(false);
+    setTargetProductForCopy(null);
+    setCopySearchQuery(""); // Очищаємо пошук після копіювання
   };
 
   if (isLoadingProducts) {
@@ -226,7 +233,7 @@ export default function BOMPage() {
     );
   }
 
-  const parentProducts = (products as Product[] || []).filter((p: Product) => {
+  const filteredProducts = (products as Product[] || []).filter((p: Product) => {
     const matchesSearch = searchQuery === "" || 
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -241,6 +248,25 @@ export default function BOMPage() {
     
     return isParentType && matchesSearch && matchesType;
   });
+
+  // Пагінація для продуктів
+  const totalProducts = filteredProducts.length;
+  const totalPages = Math.ceil(totalProducts / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Продукти для копіювання BOM з автокомплітом
+  const filteredProductsForCopy = (products as Product[] || []).filter((p: Product) => {
+    const matchesSearch = copySearchQuery === "" || 
+      p.name.toLowerCase().includes(copySearchQuery.toLowerCase()) ||
+      p.sku.toLowerCase().includes(copySearchQuery.toLowerCase());
+    
+    const isParentType = p.productType === "товар" || p.productType === "комплект" || p.productType === "product" ||
+                        p.productType === "полуфабрикат" || p.productType === "semi-finished";
+    
+    return isParentType && matchesSearch && p.id !== targetProductForCopy?.id;
+  }).slice(0, 10); // Обмежуємо до 10 результатів для автокомпліту
 
   const filteredComponents = (availableComponents as any[] || []);
 
@@ -315,13 +341,19 @@ export default function BOMPage() {
                   <Input
                     placeholder="Пошук продуктів..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1); // Скидаємо на першу сторінку при пошуку
+                    }}
                     className="pl-10"
                   />
                 </div>
 
                 {/* Product Type Filter */}
-                <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+                <Select value={productTypeFilter} onValueChange={(value) => {
+                  setProductTypeFilter(value);
+                  setCurrentPage(1); // Скидаємо на першу сторінку при фільтрації
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Тип продукту" />
                   </SelectTrigger>
@@ -335,7 +367,7 @@ export default function BOMPage() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[500px] overflow-y-auto">
-                  {parentProducts.map((product) => {
+                  {paginatedProducts.map((product) => {
                     const bomCount = allBOMData?.get(product.id) || 0;
                     return (
                       <div
@@ -394,7 +426,46 @@ export default function BOMPage() {
                       </div>
                     );
                   })}
+                  
+                  {paginatedProducts.length === 0 && (
+                    <div className="p-8 text-center text-gray-500">
+                      <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>Продуктів не знайдено</p>
+                    </div>
+                  )}
                 </div>
+                
+                {/* Пагінація */}
+                {totalPages > 1 && (
+                  <div className="border-t p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-500">
+                        Показано {startIndex + 1}-{Math.min(endIndex, totalProducts)} з {totalProducts} продуктів
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <span className="text-sm">
+                          Сторінка {currentPage} з {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -640,11 +711,23 @@ export default function BOMPage() {
               Оберіть товар, з якого потрібно скопіювати склад компонентів
             </DialogDescription>
           </DialogHeader>
+          
+          {/* Search for copying */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Пошук товарів для копіювання..."
+              value={copySearchQuery}
+              onChange={(e) => setCopySearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
           <div className="max-h-96 overflow-y-auto">
-            {parentProducts
+            {filteredProductsForCopy
               .filter(p => {
                 const bomCount = allBOMData?.get(p.id) || 0;
-                return bomCount > 0 && p.id !== targetProductForCopy?.id;
+                return bomCount > 0;
               })
               .map((product) => {
                 const bomCount = allBOMData?.get(product.id) || 0;
@@ -672,6 +755,17 @@ export default function BOMPage() {
                   </div>
                 );
               })}
+              
+            {filteredProductsForCopy.filter(p => {
+              const bomCount = allBOMData?.get(p.id) || 0;
+              return bomCount > 0;
+            }).length === 0 && (
+              <div className="p-8 text-center text-gray-500">
+                <Component className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p>Товарів з BOM не знайдено</p>
+                {copySearchQuery && <p className="text-sm">Спробуйте інший запит</p>}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button 
@@ -680,6 +774,7 @@ export default function BOMPage() {
               onClick={() => {
                 setIsCopyBOMDialogOpen(false);
                 setTargetProductForCopy(null);
+                setCopySearchQuery(""); // Очищаємо пошук при закритті
               }}
             >
               Скасувати
