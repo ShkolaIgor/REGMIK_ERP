@@ -1299,8 +1299,10 @@ export class DatabaseStorage implements IStorage {
       };
 
       // Конвертуємо дати з рядків у Date об'єкти
+      console.log("🔧 DEBUG: Before date conversion - paymentDate:", orderData.paymentDate, "type:", typeof orderData.paymentDate);
       if (orderData.paymentDate && typeof orderData.paymentDate === 'string') {
         orderData.paymentDate = new Date(orderData.paymentDate);
+        console.log("🔧 DEBUG: Converted paymentDate to:", orderData.paymentDate);
       }
       if (orderData.dueDate && typeof orderData.dueDate === 'string') {
         orderData.dueDate = new Date(orderData.dueDate);
@@ -1309,10 +1311,12 @@ export class DatabaseStorage implements IStorage {
         orderData.shippedDate = new Date(orderData.shippedDate);
       }
 
+      console.log("🔧 DEBUG: Final orderData being saved:", JSON.stringify(orderData, null, 2));
       const orderResult = await db.update(orders)
         .set(orderData)
         .where(eq(orders.id, id))
         .returning();
+      console.log("🔧 DEBUG: Order updated, result paymentDate:", orderResult[0]?.paymentDate);
 
       if (orderResult.length === 0) {
         return undefined;

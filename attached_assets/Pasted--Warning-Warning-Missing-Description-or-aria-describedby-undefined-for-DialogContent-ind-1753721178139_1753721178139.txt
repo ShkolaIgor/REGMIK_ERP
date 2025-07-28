@@ -1,0 +1,33 @@
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-c1Wrl7RH.js, line 777)
+[Log] Frontend: Making POST request to: /api/orders/51759/process-payment (index-c1Wrl7RH.js, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (index-c1Wrl7RH.js, line 48)
+[Log] Frontend: Request body: – "{\"paymentType\":\"full\",\"paidAmount\":\"55940.00\",\"contractNumber\":null,\"paymentDate\":\"2025-07-28T00:00:00.000Z\",\"productionApproved\":true}" (index-c1Wrl7RH.js, line 48)
+[Log] Frontend: Document cookies: (index-c1Wrl7RH.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Response status: 200 for POST /api/orders/51759/process-payment (index-c1Wrl7RH.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "144", content-type: "application/json; charset=utf-8", date: "Mon, 28 Jul 2025 16:45:47 GMT", …} (index-c1Wrl7RH.js, line 48)
+{content-length: "144", content-type: "application/json; charset=utf-8", date: "Mon, 28 Jul 2025 16:45:47 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-c1Wrl7RH.js, line 777)
+[Log] === FORM SUBMIT STARTED === (index-c1Wrl7RH.js, line 1568)
+[Log] Handle submit called with data: – {clientId: "7114", clientContactsId: undefined, companyId: "", …} (index-c1Wrl7RH.js, line 1568)
+{clientId: "7114", clientContactsId: undefined, companyId: "", orderNumber: "52747", totalAmount: "55940.00", …}Object
+[Log] Order items: – [Object, Object] (2) (index-c1Wrl7RH.js, line 1568)
+[Object, Object]Array (2)
+[Log] Is edit mode: – true (index-c1Wrl7RH.js, line 1568)
+[Log] Updating order with data: – {id: 51759, order: Object, items: Array} (index-c1Wrl7RH.js, line 1568)
+{id: 51759, order: Object, items: Array}Object
+[Log] Sending PUT request to: – "/api/orders/51759" (index-c1Wrl7RH.js, line 1568)
+[Log] Request data: – {id: 51759, order: Object, items: Array} (index-c1Wrl7RH.js, line 1568)
+{id: 51759, order: Object, items: Array}Object
+[Log] Frontend: Making PUT request to: /api/orders/51759 (index-c1Wrl7RH.js, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (index-c1Wrl7RH.js, line 48)
+[Log] Frontend: Request body: – "{\"id\":51759,\"order\":{\"orderNumber\":\"52747\",\"statusId\":1,\"totalAmount\":\"55940\",\"clientId\":7114,\"invoiceNumber\":\"РМ00-027804\",\"status\":\"pendin…" (index-c1Wrl7RH.js, line 48)
+"{\"id\":51759,\"order\":{\"orderNumber\":\"52747\",\"statusId\":1,\"totalAmount\":\"55940\",\"clientId\":7114,\"invoiceNumber\":\"РМ00-027804\",\"status\":\"pending\",\"paymentDate\":\"2025-07-27T21:00:00.000Z\"},\"items\":[{\"productId\":22022,\"itemName\":\"Витратомір-лічильник електромагнітний ЕРС-50-R-M-0,5\",\"quantity\":1,\"unitPrice\":\"43440\",\"totalPrice\":\"43440\",\"comment\":\"\"},{\"productId\":25984,\"itemName\":\"Виносний індикатор ЕРС-І\",\"quantity\":1,\"unitPrice\":\"12500\",\"totalPrice\":\"12500\",\"comment\":\"\"}]}"
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-c1Wrl7RH.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Response status: 200 for PUT /api/orders/51759 (index-c1Wrl7RH.js, line 48)
+[Log] Frontend: Response headers: – {content-encoding: "gzip", content-type: "application/json; charset=utf-8", date: "Mon, 28 Jul 2025 16:45:55 GMT", …} (index-c1Wrl7RH.js, line 48)
+{content-encoding: "gzip", content-type: "application/json; charset=utf-8", date: "Mon, 28 Jul 2025 16:45:55 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] Order update success: – {id: 51759, orderSequenceNumber: 51759, orderNumber: "52747", …} (index-c1Wrl7RH.js, line 1568)
+{id: 51759, orderSequenceNumber: 51759, orderNumber: "52747", clientId: 7114, clientContactsId: null, …}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-c1Wrl7RH.js, line 777)
