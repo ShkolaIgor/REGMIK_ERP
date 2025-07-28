@@ -1318,12 +1318,24 @@ export class DatabaseStorage implements IStorage {
         orderData.shippedDate = new Date(orderData.shippedDate);
       }
 
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: синхронізуємо paidAmount з paymentDate
+      if (orderData.paymentDate) {
+        console.log("🔧 DEBUG: paymentDate встановлено, синхронізуємо paidAmount з totalAmount:", orderData.totalAmount);
+        orderData.paidAmount = orderData.totalAmount;
+      } else if ('paymentDate' in orderData && orderData.paymentDate === null) {
+        // Якщо paymentDate явно очищується (встановлюється в null), очищуємо і paidAmount
+        console.log("🔧 DEBUG: paymentDate очищено, очищуємо paidAmount");
+        orderData.paidAmount = "0";
+      } else {
+        console.log("🔧 DEBUG: paymentDate не змінювався, залишаємо paidAmount без змін");
+      }
+
       console.log("🔧 DEBUG: Final orderData being saved:", JSON.stringify(orderData, null, 2));
       const orderResult = await db.update(orders)
         .set(orderData)
         .where(eq(orders.id, id))
         .returning();
-      console.log("🔧 DEBUG: Order updated, result paymentDate:", orderResult[0]?.paymentDate);
+      console.log("🔧 DEBUG: Order updated, result paymentDate:", orderResult[0]?.paymentDate, "paidAmount:", orderResult[0]?.paidAmount);
 
       if (orderResult.length === 0) {
         return undefined;
