@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   LayoutDashboard,
-  Package,
+  Package, Microchip, Cpu,
   Warehouse,
   ShoppingCart,
   Scan,
@@ -45,6 +45,7 @@ import {
   BarChart,
   Factory,
   File,
+  MoveHorizontal,
   Users,
   Box,
   Layers,
@@ -78,43 +79,40 @@ const navigationItems = [
     ]
   },
   {
-    title: "Модуль Продажі",
+    title: "Продажі",
     items: [
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
       { name: "Платежі", href: "/payments", icon: CreditCard },
+      { name: "Відвантаження", href: "/shipments", icon: Truck },
       { name: "Листування", href: "/client-mail", icon: Mail },
-      { name: "Відвантаження", href: "/shipments", icon: Truck }
+      { name: "Серійні номери", href: "/serial-numbers", icon: QrCode }
     ]
   },
   {
-    title: "Модуль Склад",
+    title: "Склад",
     items: [
-      { name: "Каталог товарів", href: "/inventory", icon: Package },
-      { name: "Запаси компонентів", href: "/component-stock", icon: Layers },
-      { name: "Замовлені товари", href: "/ordered-products", icon: Package },
+      { name: "Запаси товарів", href: "/inventory", icon: Package },
+      { name: "Запаси компонентів", href: "/component-stock", icon: Microchip },
+      { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle },
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Package },
       { name: "Приходи від постачальників", href: "/supplier-receipts", icon: PackageOpen },
-      { name: "Переміщення між складами", href: "/warehouse-transfers", icon: PackageOpen },
+      { name: "Переміщення між складами", href: "/warehouse-transfers", icon: MoveHorizontal },
       { name: "Інвентаризація", href: "/inventory-audits", icon: ClipboardList },
-      { name: "Серійні номери", href: "/serial-numbers", icon: QrCode },
-      { name: "Ремонти", href: "/repairs", icon: Wrench },
       { name: "Сканер штрих-кодів", href: "/scanner", icon: Scan }
     ]
   },
   {
-    title: "Модуль Виробництво",
+    title: "Виробництво",
     items: [
+      { name: "Замовлені товари", href: "/ordered-products", icon: Package },
       { name: "Виготовлення товарів", href: "/manufacturing", icon: Factory },
+      { name: "Ремонти", href: "/repairs", icon: Wrench },
+      { name: "Збірка та розбірка", href: "/assembly", icon: PackageOpen },
       { name: "Рецепти виробництва", href: "/recipes", icon: FileText },
       { name: "Технологічні карти", href: "/tech-cards", icon: File },
       { name: "Склад виробів (BOM)", href: "/bom", icon: Layers },
       { name: "Планування (Kanban)", href: "/production", icon: Cog },
-      { name: "Збірка та розбірка", href: "/assembly", icon: PackageOpen },
-      { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
-      { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle },
-      { name: "Прогнозування виробництва", href: "/production-forecasts", icon: TrendingUp },
-      { name: "Планування виробництва", href: "/production-planning", icon: Factory },
-      { name: "Аналіз завантаженості", href: "/production-analytics", icon: BarChart3 }
+      { name: "Калькуляція собівартості", href: "/costing", icon: Calculator }
     ]
   },
   {
@@ -122,7 +120,7 @@ const navigationItems = [
     items: [
       { name: "Клієнти", href: "/clients", icon: Users },
       { name: "Контакти клієнтів", href: "/client-contacts", icon: Users },
-      { name: "Компоненти", href: "/components", icon: Package },
+      { name: "Компоненти", href: "/components", icon: Cpu },
       { name: "Категорії компонентів", href: "/categories", icon: Layers },
       { name: "Категорії товарів", href: "/product-categories", icon: Box },
       { name: "Типи корпусів", href: "/package-types", icon: Box },
@@ -147,7 +145,10 @@ const navigationItems = [
       { name: "Рентабельність продуктів", href: "/product-profitability", icon: DollarSign },
       { name: "Прибутковість", href: "/reports", icon: BarChart },
       { name: "Розширені звіти", href: "/advanced-reports", icon: FileText },
-      { name: "Статистика виробництва", href: "/production-stats", icon: TrendingUp }
+      { name: "Статистика виробництва", href: "/production-stats", icon: TrendingUp },
+      { name: "Прогнозування виробництва", href: "/production-forecasts", icon: TrendingUp },
+      { name: "Планування виробництва", href: "/production-planning", icon: Factory },
+      { name: "Аналіз завантаженості", href: "/production-analytics", icon: BarChart3 }
     ]
   },
   {
