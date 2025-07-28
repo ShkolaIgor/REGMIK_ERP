@@ -607,7 +607,7 @@ export default function ProductsPage() {
                       render: (value) => value ? new Date(value).toLocaleDateString('uk-UA') : '-'
                     }
                   ]}
-                  rowClassName="hover:bg-green-50"
+                  className="hover:bg-green-50"
                   pageSize={25}
                 />
               )}
@@ -622,14 +622,7 @@ export default function ProductsPage() {
           columns={[
             {
               key: 'select',
-              label: (
-                <input
-                  type="checkbox"
-                  checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
-                  onChange={handleSelectAll}
-                  className="rounded"
-                />
-              ),
+              label: '',
               width: 50,
               render: (value, product) => (
                 <input
