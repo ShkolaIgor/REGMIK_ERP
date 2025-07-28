@@ -1055,6 +1055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { order, items } = req.body;
       
+      console.log("🔧 DEBUG: Updating order", id, "with data:", JSON.stringify(order, null, 2));
       
       const orderData = insertOrderSchemaForm.parse(order);
       
@@ -1069,8 +1070,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedOrder);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.log("🔧 DEBUG: Validation error:", JSON.stringify(error.errors, null, 2));
         res.status(400).json({ error: "Invalid order data", details: error.errors });
       } else {
+        console.log("🔧 DEBUG: Server error:", error);
         res.status(500).json({ error: "Failed to update order" });
       }
     }
@@ -1098,14 +1101,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { paymentDate } = req.body;
       
+      console.log("🔧 DEBUG: Updating payment date for order", id, "with date:", paymentDate);
       
       const order = await storage.updateOrderPaymentDate(id, paymentDate);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
       
+      console.log("🔧 DEBUG: Payment date updated successfully");
       res.json(order);
     } catch (error) {
+      console.log("🔧 DEBUG: Error updating payment date:", error);
       res.status(500).json({ error: "Failed to update payment date" });
     }
   });
@@ -8008,20 +8014,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orderId = parseInt(req.params.id);
       
+      console.log("🔧 DEBUG: Processing payment for order", orderId);
+      console.log("🔧 DEBUG: Raw request body:", JSON.stringify(req.body, null, 2));
+      
       let paymentData;
       if (typeof req.body === 'string') {
         try {
           paymentData = JSON.parse(req.body);
         } catch (parseError) {
+          console.log("🔧 DEBUG: JSON parse error:", parseError);
           return res.status(400).json({ error: "Неправильний формат JSON" });
         }
       } else {
         paymentData = req.body;
       }
       
+      console.log("🔧 DEBUG: Processed payment data:", JSON.stringify(paymentData, null, 2));
+      
       // Валідація вхідних даних
       const validPaymentTypes = ['full', 'partial', 'contract', 'none'];
       if (!validPaymentTypes.includes(paymentData.paymentType)) {
+        console.log("🔧 DEBUG: Invalid payment type:", paymentData.paymentType);
         return res.status(400).json({ error: "Недійсний тип оплати" });
       }
 
@@ -8039,8 +8052,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message += ", дозволено виробництво";
       }
       
+      console.log("🔧 DEBUG: Payment processed successfully:", message);
       res.json({ success: true, message });
     } catch (error) {
+      console.log("🔧 DEBUG: Error processing payment:", error);
       res.status(500).json({ error: "Failed to process order payment" });
     }
   });
