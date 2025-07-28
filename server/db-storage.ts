@@ -9459,7 +9459,24 @@ export class DatabaseStorage implements IStorage {
               });
             } else {
               // Створюємо нове замовлення
-              await db.insert(orders).values(orderData);
+              const [createdOrder] = await db.insert(orders).values(orderData).returning();
+              
+              // Створюємо запис оплати якщо замовлення має paymentDate
+              if (orderData.paymentDate && orderData.paidAmount && parseFloat(orderData.paidAmount) > 0) {
+                const paymentRecord = {
+                  orderId: createdOrder.id,
+                  paymentAmount: orderData.paidAmount,
+                  paymentDate: orderData.paymentDate,
+                  paymentType: 'xml_import',
+                  paymentStatus: 'confirmed',
+                  correspondent: 'XML Import',
+                  notes: `Оплата імпортована з XML файлу замовлень`,
+                  createdAt: new Date(),
+                };
+                
+                await this.createOrderPayment(paymentRecord);
+                console.log(`✅ XML Import: Створено запис оплати для замовлення ${createdOrder.id}: ${paymentRecord.paymentAmount} грн`);
+              }
             }
             
             result.success++;
@@ -9743,6 +9760,23 @@ export class DatabaseStorage implements IStorage {
             const [createdOrder] = await db.insert(orders)
               .values(orderData)
               .returning();
+              
+            // Створюємо запис оплати якщо замовлення має paymentDate
+            if (orderData.paymentDate && orderData.paidAmount && parseFloat(orderData.paidAmount) > 0) {
+              const paymentRecord = {
+                orderId: createdOrder.id,
+                paymentAmount: orderData.paidAmount,
+                paymentDate: orderData.paymentDate,
+                paymentType: 'xml_import',
+                paymentStatus: 'confirmed',
+                correspondent: 'XML Import',
+                notes: `Оплата імпортована з XML файлу замовлень (з прогресом)`,
+                createdAt: new Date(),
+              };
+              
+              await this.createOrderPayment(paymentRecord);
+              console.log(`✅ XML Import Progress: Створено запис оплати для замовлення ${createdOrder.id}: ${paymentRecord.paymentAmount} грн`);
+            }
           }
 
           result.success++;
@@ -12773,6 +12807,23 @@ export class DatabaseStorage implements IStorage {
     const [newOrder] = await db.insert(orders).values(orderData).returning();
     console.log(`🚀 СТВОРЕНО ЗАМОВЛЕННЯ: ID=${newOrder.id}, orderNumber="${newOrder.order_number}"`);
     
+    // Створюємо запис оплати якщо замовлення має оплату з рахунку 1С
+    if (invoice.paid && invoice.paidAmount && parseFloat(invoice.paidAmount) > 0) {
+      const paymentRecord = {
+        orderId: newOrder.id,
+        paymentAmount: invoice.paidAmount.toString(),
+        paymentDate: invoice.paymentDate ? new Date(invoice.paymentDate) : new Date(),
+        paymentType: 'xml_import',
+        paymentStatus: 'confirmed',
+        correspondent: '1C processOutgoingInvoice',
+        notes: `Оплата з рахунку 1С: ${invoice.number}`,
+        createdAt: new Date(),
+      };
+      
+      await this.createOrderPayment(paymentRecord);
+      console.log(`✅ 1C Invoice: Створено запис оплати для замовлення ${newOrder.id}: ${paymentRecord.paymentAmount} грн`);
+    }
+    
     // Обробляємо позиції рахунку - шукаємо у products І components
     for (const item of invoice.positions || []) {
       const itemName = item.productName || item.name;
@@ -14374,6 +14425,23 @@ export class DatabaseStorage implements IStorage {
         // Створюємо нове замовлення
         [order] = await db.insert(orders).values(orderRecord).returning();
         console.log(`✅ Webhook: Створено нове замовлення з номером рахунку ${orderRecord.invoiceNumber}`);
+        
+        // Створюємо запис оплати якщо замовлення має paymentDate
+        if (orderRecord.paymentDate && orderRecord.paidAmount && parseFloat(orderRecord.paidAmount) > 0) {
+          const paymentRecord = {
+            orderId: order.id,
+            paymentAmount: orderRecord.paidAmount,
+            paymentDate: orderRecord.paymentDate,
+            paymentType: 'xml_import',
+            paymentStatus: 'confirmed',
+            correspondent: '1C Webhook Import',
+            notes: `Оплата імпортована з 1C webhook`,
+            createdAt: new Date(),
+          };
+          
+          await this.createOrderPayment(paymentRecord);
+          console.log(`✅ 1C Webhook: Створено запис оплати для замовлення ${order.id}: ${paymentRecord.paymentAmount} грн`);
+        }
       }
       
       // Process invoice items if provided
@@ -14655,6 +14723,39 @@ export class DatabaseStorage implements IStorage {
         console.log(`✅ Webhook: Оновлено ${invoiceData.positions.length} позицій товарів`);
       } else {
         console.log('📦 Webhook: Позиції товарів не надано або не є масивом при оновленні');
+      }
+      
+      // Створюємо запис оплати якщо замовлення має оплату з 1С webhook
+      if (invoiceData.paid && invoiceData.paidAmount && parseFloat(invoiceData.paidAmount) > 0) {
+        // Перевіряємо чи вже існує запис оплати для цього замовлення
+        const existingPayment = await db
+          .select()
+          .from(orderPayments)
+          .where(
+            and(
+              eq(orderPayments.orderId, updatedOrder.id),
+              eq(orderPayments.paymentType, 'xml_import')
+            )
+          )
+          .limit(1);
+
+        if (existingPayment.length === 0) {
+          const paymentRecord = {
+            orderId: updatedOrder.id,
+            paymentAmount: invoiceData.paidAmount.toString(),
+            paymentDate: invoiceData.paymentDate ? new Date(invoiceData.paymentDate) : new Date(),
+            paymentType: 'xml_import',
+            paymentStatus: 'confirmed',
+            correspondent: '1C Webhook Update',
+            notes: `Оплата оновлена з 1C webhook: ${invoiceNumber}`,
+            createdAt: new Date(),
+          };
+          
+          await this.createOrderPayment(paymentRecord);
+          console.log(`✅ 1C Webhook Update: Створено запис оплати для замовлення ${updatedOrder.id}: ${paymentRecord.paymentAmount} грн`);
+        } else {
+          console.log(`ℹ️ 1C Webhook Update: Запис оплати для замовлення ${updatedOrder.id} вже існує`);
+        }
       }
       
       console.log('✅ Webhook: Замовлення оновлено:', updatedOrder.id);
