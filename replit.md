@@ -131,6 +131,11 @@ User has Russian-language 1C system and needs integration setup guidance.
 ## Recent Changes
 
 ### July 28, 2025
+- ✅ **PAYMENT DATE DISPLAY PRIORITY SYSTEM COMPLETED** - Fixed payment date display logic to prioritize order_payments table over orders.payment_date field
+- ✅ **DUAL PAYMENT DATA SOURCE INTEGRATION** - System now shows dates from bank-imported payments (order_payments) with fallback to manual orders.payment_date
+- ✅ **RESOLVED DATE VISIBILITY CONFLICT** - Users now see actual payment dates from bank notifications instead of empty null values from orders table
+- ✅ **API RESPONSE ENHANCEMENT** - Added lastPaymentDate field alongside paymentDate for comprehensive payment date tracking
+- ✅ **BANK PAYMENT PRIORITY LOGIC** - Implemented finalPaymentDate = lastPaymentDate || orderData.paymentDate for correct date precedence
 - ✅ **AUTO-FILL FUNCTIONALITY FOR ORDER FORM COMPLETED** - Implemented automatic company name filling (default company) and contact details (email/phone) when contact person is selected in order creation form
 - ✅ **DEFAULT COMPANY AUTO-SELECTION** - Added automatic selection of default company when creating new orders based on isDefault flag
 - ✅ **CONTACT DETAILS AUTO-POPULATION** - When selecting contact person in order form, email and phone fields are automatically filled from contact data

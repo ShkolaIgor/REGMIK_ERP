@@ -874,11 +874,15 @@ export class DatabaseStorage implements IStorage {
             lastPaymentDate = lastPayment[0].paymentDate;
           }
         } catch (error) {
-          console.error(`Error fetching last payment for order ${order.id}:`, error);
+          console.error(`Error fetching last payment for order ${orderData.id}:`, error);
         }
+
+        // Встановлюємо пріоритет дати платежу: order_payments > orders.payment_date
+        const finalPaymentDate = lastPaymentDate || orderData.paymentDate;
 
         return {
           ...orderData,
+          paymentDate: finalPaymentDate, // Перевизначаємо paymentDate з правильним пріоритетом
           items: filteredItems as (OrderItem & { product: Product })[],
           client: clientData,
           contact: contactData,
