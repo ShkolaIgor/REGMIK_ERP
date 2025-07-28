@@ -131,6 +131,11 @@ User has Russian-language 1C system and needs integration setup guidance.
 ## Recent Changes
 
 ### July 28, 2025
+- ✅ **КРИТИЧНУ ПРОБЛЕМУ СИНХРОНІЗАЦІЇ ДАТИ ОПЛАТИ ОСТАТОЧНО ВИРІШЕНО** - виправлено розз'єднання між PaymentDialog та формою редагування замовлення
+- ✅ **ДОДАНО currentPaymentDate ПАРАМЕТР** - PaymentDialog тепер отримує та відображає поточну дату оплати з замовлення
+- ✅ **ОНОВЛЕНО ВСІ ВИКЛИКИ PaymentDialog** - додано передачу order.paymentDate у всі 4 випадки використання PaymentDialog
+- ✅ **ПОКРАЩЕНО UX ДІАЛОГУ ОПЛАТИ** - додано відображення поточної дати оплати в синьому кольорі для інформування користувача
+- ✅ **ПІДТВЕРДЖЕНО ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ** - PaymentDialog та форма редагування тепер коректно синхронізують дати оплати між собою
 - ✅ **AUTO-FILL FUNCTIONALITY FOR ORDER FORM COMPLETED** - Implemented automatic company name filling (default company) and contact details (email/phone) when contact person is selected in order creation form
 - ✅ **DEFAULT COMPANY AUTO-SELECTION** - Added automatic selection of default company when creating new orders based on isDefault flag
 - ✅ **CONTACT DETAILS AUTO-POPULATION** - When selecting contact person in order form, email and phone fields are automatically filled from contact data
