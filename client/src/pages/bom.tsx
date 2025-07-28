@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Package, Component, Search, Layers } from "lucide-react";
+import { Plus, Trash2, Package, Component, Search, Layers, Settings } from "lucide-react";
 import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
@@ -323,6 +323,20 @@ export default function BOMPage() {
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleProductSelect(product);
+                                }}
+                                title="Створити BOM"
+                                className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-1 h-auto"
+                              >
+                                <Settings className="w-4 h-4" />
+                              </Button>
+                            </div>
                             {bomCount > 0 ? (
                               <Badge variant="default" className="text-xs bg-blue-100 text-blue-800 flex items-center gap-1">
                                 <Component className="w-3 h-3" />
