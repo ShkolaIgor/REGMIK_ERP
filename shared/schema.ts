@@ -386,6 +386,7 @@ export const orderItems = pgTable("order_items", {
   costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
   serialNumbers: text("serial_numbers"),
   notes: text("notes"),
+  comment: text("comment"), // коментар до позиції замовлення
   // Additional fields for 1C integration
   itemName: text("item_name"), // назва товару з 1С
   itemCode: text("item_code"), // код товару з 1С

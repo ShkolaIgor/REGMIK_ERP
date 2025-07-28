@@ -118,6 +118,7 @@ const orderItemSchema = z.object({
   itemName: z.string().optional().default(""),
   quantity: z.string().min(1, "Введіть кількість"),
   unitPrice: z.string().min(1, "Введіть ціну"),
+  comment: z.string().optional().default(""), // Поле коментар для позиції
 }).refine((data) => {
   // Товар валідний якщо є або productId, або itemName
   return data.productId > 0 || (data.itemName && data.itemName.trim().length > 0);
@@ -1456,6 +1457,7 @@ export default function Orders() {
       itemName: item.itemName || item.product?.name || "",
       quantity: String(item.quantity || 1),
       unitPrice: String(item.unitPrice || 0),
+      comment: item.comment || "",
     })) || [];
     setOrderItems(items);
     
@@ -1474,7 +1476,7 @@ export default function Orders() {
 
   // Функції для управління товарами в замовленні
   const addOrderItem = () => {
-    setOrderItems([...orderItems, { productId: 0, itemName: "", quantity: "", unitPrice: "" }]);
+    setOrderItems([...orderItems, { productId: 0, itemName: "", quantity: "", unitPrice: "", comment: "" }]);
   };
 
   const removeOrderItem = (index: number) => {
@@ -1672,6 +1674,7 @@ export default function Orders() {
         quantity: parseInt(item.quantity),
         unitPrice: parseFloat(item.unitPrice).toString(),
         totalPrice: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toString(),
+        comment: item.comment || "",
       })),
     };
     
@@ -2294,6 +2297,13 @@ export default function Orders() {
                               updateOrderItem(index, "unitPrice", e.target.value);
                             }}
                             className="w-24"
+                          />
+                          
+                          <Input
+                            placeholder="Коментар"
+                            value={item.comment || ""}
+                            onChange={(e) => updateOrderItem(index, "comment", e.target.value)}
+                            className="w-32"
                           />
                           
                           <div className="w-24 text-sm">
