@@ -6,20 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Package, Component, Calculator, Download, Upload, AlertTriangle, Search, Layers, FileText, Scan, Printer } from "lucide-react";
+import { Plus, Trash2, Package, Component, Search, Layers } from "lucide-react";
 import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
-import { DataTable } from "@/components/DataTable/DataTable";
-import { SearchFilters } from "@/components/SearchFilters";
 import { useAuth } from "@/hooks/useAuth";
 
 type Product = {
@@ -53,14 +50,13 @@ type ComponentFormData = z.infer<typeof componentFormSchema>;
 
 export default function BOMPage() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [productTypeFilter, setProductTypeFilter] = useState("all");
-  const [activeFilter, setActiveFilter] = useState("all");
   const queryClient = useQueryClient();
   
   const form = useForm<ComponentFormData>({
@@ -82,11 +78,10 @@ export default function BOMPage() {
   });
 
   // Fetch all components and semi-finished products for selection
-  const { data: availableComponents, isLoading: isLoadingAvailableComponents } = useQuery({
+  const { data: availableComponents } = useQuery({
     queryKey: ["/api/products"],
     enabled: true,
     select: (data: any[]) => {
-      // Фільтруємо тільки компоненти та полуфабрикати
       return data?.filter((item: any) => 
         item.productType === "компонент" || 
         item.productType === "полуфабрикат" ||
@@ -142,27 +137,6 @@ export default function BOMPage() {
     }
   });
 
-  const importBOMMutation = useMutation({
-    mutationFn: (formData: FormData) => 
-      apiRequest("/api/import-bom", "POST", formData),
-    onSuccess: (result: any) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/products/${selectedProductId}/components`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      setIsImportDialogOpen(false);
-      toast({
-        title: "Імпорт завершено",
-        description: `Успішно імпортовано ${result.imported} компонентів BOM`
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Помилка імпорту",
-        description: error.message || "Не вдалося імпортувати файл BOM",
-        variant: "destructive"
-      });
-    }
-  });
-
   const onSubmit = (data: ComponentFormData) => {
     if (!selectedProductId) return;
     
@@ -173,7 +147,6 @@ export default function BOMPage() {
   };
 
   const handleAddComponent = () => {
-    console.log("handleAddComponent called, selectedProductId:", selectedProductId);
     if (!selectedProductId) {
       toast({
         title: "Увага",
@@ -183,40 +156,7 @@ export default function BOMPage() {
       return;
     }
     form.setValue("parentProductId", selectedProductId);
-    console.log("Setting dialog open to true");
     setIsAddDialogOpen(true);
-  };
-
-  const handleImportBOM = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Перевіряємо автентифікацію
-    if (!isAuthenticated) {
-      toast({
-        title: "Потрібна авторизація",
-        description: "Для імпорту BOM потрібно увійти в систему. Логін: admin, пароль: admin123",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!file.name.toLowerCase().endsWith('.xml')) {
-      toast({
-        title: "Помилка",
-        description: "Будь ласка, оберіть XML файл",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('xmlFile', file);
-    
-    importBOMMutation.mutate(formData);
-    
-    // Очищаємо input для повторного вибору того ж файлу
-    event.target.value = '';
   };
 
   if (isLoadingProducts) {
@@ -238,18 +178,13 @@ export default function BOMPage() {
       (productTypeFilter === "product" && (p.productType === "товар" || p.productType === "product")) ||
       (productTypeFilter === "kit" && (p.productType === "комплект" || p.productType === "kit")) ||
       (productTypeFilter === "semi-finished" && (p.productType === "полуфабрикат" || p.productType === "semi-finished"));
-    
-    const matchesActive = activeFilter === "all" || 
-      (activeFilter === "active" && p.isActive) ||
-      (activeFilter === "inactive" && !p.isActive);
 
     const isParentType = p.productType === "товар" || p.productType === "комплект" || p.productType === "product" ||
                         p.productType === "полуфабрикат" || p.productType === "semi-finished";
     
-    return isParentType && matchesSearch && matchesType && matchesActive;
+    return isParentType && matchesSearch && matchesType;
   });
 
-  // Фільтруємо доступні компоненти
   const filteredComponents = (availableComponents as any[] || []);
 
   // Розрахунок загальної вартості BOM
@@ -264,351 +199,254 @@ export default function BOMPage() {
   };
 
   const totalCost = calculateTotalCost();
-  const selectedProduct = selectedProductId ? 
-    (products as Product[] || []).find((p: Product) => p.id === selectedProductId) : null;
+
+  const handleProductSelect = (product: Product) => {
+    setSelectedProductId(product.id);
+    setSelectedProduct(product);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header Section  sticky top-0 z-40*/}
+      {/* Header Section */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
-        <div className="w-full px-8 py-3">
+        <div className="w-full px-8 py-6">
           <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Layers className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                    Склад продуктів (BOM)
-                  </h1>
-                  <p className="text-gray-500 mt-1">Управління складом компонентів та рецептур виробництва</p>
-                </div>
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Layers className="w-6 h-6 text-white" />
               </div>
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsImportDialogOpen(true)}
-              className={`border-purple-200 text-purple-600 hover:bg-purple-50 ${!isAuthenticated ? 'opacity-50' : ''}`}
-              disabled={!isAuthenticated}
-              title={!isAuthenticated ? "Потрібна авторизація для імпорту BOM" : ""}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Імпорт BOM
-              {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
-            </Button>
-            <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
-              <Download className="h-4 w-4 mr-2" />
-              Експорт
-            </Button>
-            {selectedProductId && (
-              <Button 
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-                onClick={handleAddComponent}>
-                <Plus className="mr-2 h-4 w-4" />
-                Додати компонент
-              </Button>
-            )}
-          </div>
-        </div>  
-      </div>
-    </header>
-
-    {/* Statistics Cards */}
-      <div className="w-full px-8 pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-            <CardContent className="p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="flex items-center justify-between relative z-10">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Package className="w-4 h-4 text-blue-600" />
-                    <p className="text-sm text-blue-700 font-medium">Всього товарів</p>
-                  </div>
-                  <p className="text-3xl font-bold text-blue-900 mb-1">{parentProducts.length}</p>
-                  <p className="text-xs text-blue-600">Товарів з компонентами</p>
-                </div>
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                  <Package className="w-8 h-8 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-            <CardContent className="p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="flex items-center justify-between relative z-10">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Layers className="w-4 h-4 text-emerald-600" />
-                    <p className="text-sm text-emerald-700 font-medium">Компонентів</p>
-                  </div>
-                  <p className="text-3xl font-bold text-emerald-900 mb-1">{(components as any[] || []).length}</p>
-                  <p className="text-xs text-emerald-600">Всього у складі</p>
-                </div>
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                  <Layers className="w-8 h-8 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-            <CardContent className="p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="flex items-center justify-between relative z-10">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calculator className="w-4 h-4 text-purple-600" />
-                    <p className="text-sm text-purple-700 font-medium">Загальна вартість</p>
-                  </div>
-                  <p className="text-3xl font-bold text-purple-900 mb-1">{totalCost.toFixed(2)} ₴</p>
-                  <p className="text-xs text-purple-600">Обраного товару</p>
-                </div>
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                  <Calculator className="w-8 h-8 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-            <CardContent className="p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="flex items-center justify-between relative z-10">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <FileText className="w-4 h-4 text-orange-600" />
-                    <p className="text-sm text-orange-700 font-medium">Активні компоненти</p>
-                  </div>
-                  <p className="text-3xl font-bold text-orange-900 mb-1">{selectedProduct ? (components as any[] || []).filter((c: any) => c.parentProductId === selectedProductId).length : 0}</p>
-                  <p className="text-xs text-orange-600">У обраному товарі</p>
-                </div>
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                  <FileText className="w-8 h-8 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-      {/* Filters and Actions */}
-      <div className="w-full pb-3">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <SearchFilters
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                searchPlaceholder="Пошук товарів за назвою або SKU..."
-                filters={[
-                  {
-                    key: "productType",
-                    label: "Тип товару",
-                    value: productTypeFilter,
-                    onChange: setProductTypeFilter,
-                    options: [
-                      { value: "all", label: "Всі типи" },
-                      { value: "product", label: "Товари" },
-                      { value: "kit", label: "Комплекти" },
-                      { value: "semi-finished", label: "Полуфабрикати" }
-                    ]
-                  },
-                  {
-                    key: "active",
-                    label: "Статус",
-                    value: activeFilter,
-                    onChange: setActiveFilter,
-                    options: [
-                      { value: "all", label: "Всі статуси" },
-                      { value: "active", label: "Активні" },
-                      { value: "inactive", label: "Неактивні" }
-                    ]
-                  }
-                ]}
-              />
-
-              <div className="flex items-center space-x-3">
-                <Button variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Експорт
-                </Button>
-                <Button variant="outline" disabled>
-                  <Scan className="w-4 h-4 mr-2" />
-                  Сканер штрих-кодів
-                </Button>
-                <Button variant="outline">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Друкувати етикетки
-                </Button>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  Склад продуктів (BOM)
+                </h1>
+                <p className="text-gray-500 mt-1">Управління складом компонентів та рецептур виробництва</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-        
-      {/* Content */}
-      <div className="w-full space-y-6 flex-1 overflow-auto">
-        {/* Product Selection */}
-      
-          <DataTable 
-            data={parentProducts} 
-            title="Список продуктів"
-            description="Оберіть продукт для перегляду та редагування його складу"
-            storageKey="bom-product-selection"
-            columns={[
-              { 
-                key: 'name', 
-                label: 'Назва продукту', 
-                sortable: true
-              },
-              { 
-                key: 'sku', 
-                label: 'SKU', 
-                sortable: true
-              },
-              { 
-                key: 'productType', 
-                label: 'Тип продукту', 
-                sortable: true 
-              }
-            ]}
-            onRowClick={(product: Product) => {
-              console.log("Setting selectedProductId to:", product.id);
-              setSelectedProductId(product.id);
-            }}
-            cardTemplate={(product: Product) => (
-              <div className="space-y-2">
-                <h4 className="font-medium">{product.name}</h4>
-                <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
-                <Badge variant="outline">{product.productType}</Badge>
-              </div>
-            )}
-          />
-
-
-      {/* Components Management */}
-      {selectedProductId && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Component className="h-5 w-5" />
-                  Склад продукту: {selectedProduct?.name}
-                </CardTitle>
-                <CardDescription>
-                  Компоненти та матеріали, що входять до складу продукту
-                </CardDescription>
-                {components && Array.isArray(components) && components.length > 0 ? (
-                  <div className="mt-2 flex items-center gap-4">
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Calculator className="h-3 w-3" />
-                      Загальна вартість: {totalCost.toFixed(2)} грн
-                    </Badge>
-                    <Badge variant="secondary">
-                      Компонентів: {components.length}
-                    </Badge>
-                  </div>
-                ) : null}
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Експорт
-                </Button>
-                <Button onClick={handleAddComponent}>
-                  <Plus className="h-4 w-4 mr-2" />
+            <div className="flex items-center space-x-4">
+              {selectedProductId && (
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={handleAddComponent}>
+                  <Plus className="mr-2 h-4 w-4" />
                   Додати компонент
                 </Button>
-              </div>
+              )}
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoadingComponents ? (
-              <div>Завантаження компонентів...</div>
-            ) : (components as ProductComponent[] || []).length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Компонент</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Кількість</TableHead>
-                    <TableHead>Одиниця</TableHead>
-                    <TableHead>Ціна за од.</TableHead>
-                    <TableHead>Загальна вартість</TableHead>
-                    <TableHead>Тип</TableHead>
-                    <TableHead>Опціональний</TableHead>
-                    <TableHead>Примітки</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(components as ProductComponent[] || [])
-                    .filter(component => component.component)
-                    .map((component: ProductComponent) => {
-                    const unitPrice = parseFloat(component.component?.costPrice || "0");
-                    const quantity = parseFloat(component.quantity || "0");
-                    const totalPrice = unitPrice * quantity;
-                    
-                    return (
-                      <TableRow key={component.id}>
-                        <TableCell className="font-medium">
-                          {component.component?.name || 'Невідомий компонент'}
-                        </TableCell>
-                        <TableCell>{component.component?.sku || '-'}</TableCell>
-                        <TableCell>{component.quantity}</TableCell>
-                        <TableCell>{component.unit}</TableCell>
-                        <TableCell>{unitPrice.toFixed(2)} грн</TableCell>
-                        <TableCell className="font-medium">{totalPrice.toFixed(2)} грн</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {component.component?.productType || 'невідомо'}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content - Two Column Layout */}
+      <div className="w-full px-8 py-6">
+        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-200px)]">
+          
+          {/* Left Column - Products List */}
+          <div className="col-span-4">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Список продуктів
+                </CardTitle>
+                <CardDescription>
+                  Оберіть продукт для перегляду його складу
+                </CardDescription>
+                
+                {/* Search Input */}
+                <div className="relative mt-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Пошук продуктів..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {/* Product Type Filter */}
+                <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Тип продукту" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Всі типи</SelectItem>
+                    <SelectItem value="product">Товари</SelectItem>
+                    <SelectItem value="kit">Комплекти</SelectItem>
+                    <SelectItem value="semi-finished">Полуфабрикати</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="max-h-[500px] overflow-y-auto">
+                  {parentProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
+                        selectedProductId === product.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                      }`}
+                      onClick={() => handleProductSelect(product)}
+                    >
+                      <div className="font-medium text-gray-900">{product.name}</div>
+                      <div className="text-sm text-gray-500">{product.sku}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {product.productType}
+                        </Badge>
+                        {product.isActive ? (
+                          <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                            Активний
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {component.isOptional ? (
-                            <Badge variant="secondary">Опціональний</Badge>
-                          ) : (
-                            <Badge variant="default">Обов'язковий</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{component.notes || "-"}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteComponentMutation.mutate(component.id)}
-                            disabled={deleteComponentMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            Неактивний
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Product BOM */}
+          <div className="col-span-8">
+            {selectedProduct ? (
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Component className="w-5 h-5" />
+                    Склад продукту: {selectedProduct.name}
+                  </CardTitle>
+                  <CardDescription>
+                    Артикул: {selectedProduct.sku} | Ціна: {selectedProduct.costPrice} грн
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingComponents ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="text-lg">Завантаження складу...</div>
+                    </div>
+                  ) : components && components.length > 0 ? (
+                    <div className="space-y-4">
+                      {/* BOM Summary */}
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Загальна вартість BOM:</span>
+                          <span className="text-xl font-bold text-blue-600">
+                            {totalCost.toFixed(2)} грн
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          Компонентів: {components.length}
+                        </div>
+                      </div>
+
+                      {/* Components Table */}
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Компонент</TableHead>
+                            <TableHead>Артикул</TableHead>
+                            <TableHead>Кількість</TableHead>
+                            <TableHead>Ціна за од.</TableHead>
+                            <TableHead>Загальна вартість</TableHead>
+                            <TableHead>Дії</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {(components as ProductComponent[]).map((component) => (
+                            <TableRow key={component.id}>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">
+                                    {component.component?.name || 'Невідомий компонент'}
+                                  </div>
+                                  {component.notes && (
+                                    <div className="text-sm text-gray-500">{component.notes}</div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="font-mono text-sm">
+                                {component.component?.sku || '-'}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {component.quantity} {component.unit}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {component.component?.costPrice ? 
+                                  `${parseFloat(component.component.costPrice).toFixed(2)} грн` : 
+                                  '-'
+                                }
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {component.component?.costPrice ? 
+                                  `${(parseFloat(component.component.costPrice) * parseFloat(component.quantity)).toFixed(2)} грн` : 
+                                  '-'
+                                }
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteComponentMutation.mutate(component.id)}
+                                  disabled={deleteComponentMutation.isPending}
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-500" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Component className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Склад продукту порожній
+                      </h3>
+                      <p className="text-gray-500 mb-4">
+                        Цей продукт ще не має компонентів. Додайте перший компонент для створення BOM.
+                      </p>
+                      <Button onClick={handleAddComponent}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Додати перший компонент
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Компоненти не знайдено. Додайте перший компонент до складу продукту.
-              </div>
+              <Card className="h-full">
+                <CardContent className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Layers className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-medium text-gray-900 mb-2">
+                      Оберіть продукт
+                    </h3>
+                    <p className="text-gray-500">
+                      Виберіть продукт зі списку зліва для перегляду його складу
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </div>
+      </div>
 
       {/* Add Component Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Додати компонент</DialogTitle>
             <DialogDescription>
-              Додайте новий компонент до складу продукту
+              Додати новий компонент до складу продукту {selectedProduct?.name}
             </DialogDescription>
           </DialogHeader>
-
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -617,10 +455,7 @@ export default function BOMPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Компонент</FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(parseInt(value))}
-                      value={field.value?.toString() || ""}
-                    >
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Оберіть компонент" />
@@ -638,70 +473,46 @@ export default function BOMPage() {
                   </FormItem>
                 )}
               />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Кількість</FormLabel>
-                      <FormControl>
-                        <Input placeholder="1.0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Одиниця виміру</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="шт">шт</SelectItem>
-                          <SelectItem value="кг">кг</SelectItem>
-                          <SelectItem value="л">л</SelectItem>
-                          <SelectItem value="м">м</SelectItem>
-                          <SelectItem value="м²">м²</SelectItem>
-                          <SelectItem value="м³">м³</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <FormField
                 control={form.control}
-                name="isOptional"
+                name="quantity"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem>
+                    <FormLabel>Кількість</FormLabel>
                     <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Input placeholder="1" {...field} />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Опціональний компонент</FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Компонент не є обов'язковим для виробництва
-                      </p>
-                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-
+              <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Одиниця виміру</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Оберіть одиницю" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="шт">шт</SelectItem>
+                        <SelectItem value="кг">кг</SelectItem>
+                        <SelectItem value="г">г</SelectItem>
+                        <SelectItem value="л">л</SelectItem>
+                        <SelectItem value="мл">мл</SelectItem>
+                        <SelectItem value="м">м</SelectItem>
+                        <SelectItem value="см">см</SelectItem>
+                        <SelectItem value="мм">мм</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="notes"
@@ -709,83 +520,24 @@ export default function BOMPage() {
                   <FormItem>
                     <FormLabel>Примітки</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Додаткові примітки про компонент..."
-                        {...field}
-                        value={field.value || ""}
-                      />
+                      <Textarea placeholder="Додаткова інформація про компонент" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsAddDialogOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Скасувати
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={addMutation.isPending}
-                >
-                  {addMutation.isPending ? "Додавання..." : "Додати компонент"}
+                <Button type="submit" disabled={addMutation.isPending}>
+                  {addMutation.isPending ? "Додавання..." : "Додати"}
                 </Button>
               </DialogFooter>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-
-      {/* Import BOM Dialog */}
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Імпорт BOM з XML</DialogTitle>
-            <DialogDescription>
-              Оберіть XML файл для імпорту компонентів складу продукту (BOM)
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <Label htmlFor="xml-file" className="cursor-pointer">
-                <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                  Клікніть для вибору файлу
-                </span>
-                <span className="text-sm text-gray-500 block mt-1">
-                  або перетягніть XML файл сюди
-                </span>
-              </Label>
-              <Input
-                id="xml-file"
-                type="file"
-                accept=".xml"
-                onChange={handleImportBOM}
-                className="hidden"
-              />
-            </div>
-            <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded">
-              <strong>Формат XML:</strong> Файл повинен містити структуру з полями INDEX_LISTARTICLE, INDEX_DETAIL, COUNT_DET для кожного компонента.
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsImportDialogOpen(false)}
-              disabled={importBOMMutation.isPending}
-            >
-              Скасувати
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      </div>
-    </div>
     </div>
   );
 }
