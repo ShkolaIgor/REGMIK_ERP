@@ -29,7 +29,6 @@ interface PaymentDialogProps {
   totalAmount: string;
   currentPaymentType?: string;
   currentPaidAmount?: string;
-  currentPaymentDate?: string;
   isProductionApproved?: boolean;
   trigger?: React.ReactNode;
 }
@@ -40,7 +39,6 @@ export function PaymentDialog({
   totalAmount,
   currentPaymentType = "none",
   currentPaidAmount = "0",
-  currentPaymentDate,
   isProductionApproved = false,
   trigger
 }: PaymentDialogProps) {
@@ -48,11 +46,7 @@ export function PaymentDialog({
   const [paymentType, setPaymentType] = useState<'full' | 'partial' | 'contract' | 'none'>(currentPaymentType as any);
   const [paidAmount, setPaidAmount] = useState(currentPaidAmount);
   const [contractNumber, setContractNumber] = useState("");
-  const [paymentDate, setPaymentDate] = useState(
-    currentPaymentDate 
-      ? new Date(currentPaymentDate).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0]
-  );
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [productionApproved, setProductionApproved] = useState(isProductionApproved);
 
 
@@ -180,11 +174,6 @@ export function PaymentDialog({
             <Label className="text-sm font-medium text-gray-700">
               Загальна сума: <span className="font-bold">{totalAmount} грн</span>
             </Label>
-            {currentPaymentDate && (
-              <p className="text-sm text-blue-600 mt-1">
-                Поточна дата оплати: {new Date(currentPaymentDate).toLocaleDateString('uk-UA')}
-              </p>
-            )}
           </div>
 
           <div className="space-y-2">

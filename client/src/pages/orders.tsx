@@ -399,7 +399,6 @@ export default function Orders() {
                   totalAmount={order.totalAmount}
                   currentPaymentType={order.paymentType || "none"}
                   currentPaidAmount={order.paidAmount || "0"}
-                  currentPaymentDate={order.paymentDate}
                   isProductionApproved={order.productionApproved || false}
                 />
               </div>
@@ -424,7 +423,6 @@ export default function Orders() {
                     totalAmount={order.totalAmount}
                     currentPaymentType={order.paymentType || "none"}
                     currentPaidAmount={order.paidAmount || "0"}
-                    currentPaymentDate={order.paymentDate}
                     isProductionApproved={order.productionApproved || false}
                     trigger={
                       <div className="space-y-1 cursor-pointer hover:opacity-80">
@@ -449,7 +447,6 @@ export default function Orders() {
                     totalAmount={order.totalAmount}
                     currentPaymentType={order.paymentType || "none"}
                     currentPaidAmount={order.paidAmount || "0"}
-                    currentPaymentDate={order.paymentDate}
                     isProductionApproved={order.productionApproved || false}
                     trigger={
                       <div className="space-y-1 cursor-pointer hover:opacity-80">
@@ -476,7 +473,6 @@ export default function Orders() {
                     totalAmount={order.totalAmount}
                     currentPaymentType={order.paymentType || "none"}
                     currentPaidAmount={order.paidAmount || "0"}
-                    currentPaymentDate={order.paymentDate}
                     isProductionApproved={order.productionApproved || false}
                     trigger={
                       <div className="space-y-1 cursor-pointer hover:opacity-80">
@@ -503,7 +499,6 @@ export default function Orders() {
                     totalAmount={order.totalAmount}
                     currentPaymentType={order.paymentType || "none"}
                     currentPaidAmount={order.paidAmount || "0"}
-                    currentPaymentDate={order.paymentDate}
                     isProductionApproved={order.productionApproved || false}
                     trigger={
                       <div className="space-y-1 cursor-pointer hover:opacity-80">

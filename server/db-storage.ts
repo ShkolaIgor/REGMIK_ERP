@@ -1318,75 +1318,12 @@ export class DatabaseStorage implements IStorage {
         orderData.shippedDate = new Date(orderData.shippedDate);
       }
 
-      // КРИТИЧНЕ ВИПРАВЛЕННЯ: синхронізуємо paidAmount з paymentDate
-      if (orderData.paymentDate) {
-        console.log("🔧 DEBUG: paymentDate встановлено, синхронізуємо paidAmount з totalAmount:", orderData.totalAmount);
-        orderData.paidAmount = orderData.totalAmount;
-      } else if ('paymentDate' in orderData && orderData.paymentDate === null) {
-        // Якщо paymentDate явно очищується (встановлюється в null), очищуємо і paidAmount
-        console.log("🔧 DEBUG: paymentDate очищено, очищуємо paidAmount");
-        orderData.paidAmount = "0";
-      } else {
-        console.log("🔧 DEBUG: paymentDate не змінювався, залишаємо paidAmount без змін");
-      }
-
       console.log("🔧 DEBUG: Final orderData being saved:", JSON.stringify(orderData, null, 2));
       const orderResult = await db.update(orders)
         .set(orderData)
         .where(eq(orders.id, id))
         .returning();
-      console.log("🔧 DEBUG: Order updated, result paymentDate:", orderResult[0]?.paymentDate, "paidAmount:", orderResult[0]?.paidAmount);
-
-      // Створюємо запис оплати в order_payments якщо встановлена paymentDate і paidAmount > 0
-      if (orderResult[0]?.paymentDate && orderResult[0]?.paidAmount && parseFloat(orderResult[0].paidAmount) > 0) {
-        const paymentRecord = {
-          orderId: id,
-          paymentAmount: orderResult[0].paidAmount,
-          paymentDate: orderResult[0].paymentDate,
-          paymentType: 'manual',
-          paymentStatus: 'confirmed',
-          correspondent: 'Редагування замовлення',
-          notes: `Оплата встановлена через форму редагування замовлення`,
-          createdAt: new Date(),
-        };
-
-        // Перевіряємо чи не існує вже такий запис оплати
-        const existingPayment = await db
-          .select()
-          .from(orderPayments)
-          .where(
-            and(
-              eq(orderPayments.orderId, id),
-              eq(orderPayments.paymentAmount, paymentRecord.paymentAmount),
-              eq(orderPayments.paymentDate, paymentRecord.paymentDate)
-            )
-          )
-          .limit(1);
-
-        if (existingPayment.length === 0) {
-          await this.createOrderPayment(paymentRecord);
-          console.log(`✅ Створено запис оплати в order_payments через форму редагування для замовлення ${id}: ${paymentRecord.paymentAmount} грн`);
-        } else {
-          console.log(`⚠️ Запис оплати через форму редагування вже існує для замовлення ${id} з сумою ${paymentRecord.paymentAmount} грн`);
-        }
-      } else if ('paymentDate' in orderData && orderData.paymentDate === null) {
-        // Якщо дата оплати очищується, видаляємо ручні записи оплат
-        const deletedPayments = await db.delete(orderPayments)
-          .where(
-            and(
-              eq(orderPayments.orderId, id),
-              or(
-                eq(orderPayments.paymentType, 'manual'),
-                eq(orderPayments.paymentType, 'contract')
-              )
-            )
-          )
-          .returning();
-
-        if (deletedPayments.length > 0) {
-          console.log(`✅ Видалено ${deletedPayments.length} ручних записів оплати при очищенні дати для замовлення ${id}`);
-        }
-      }
+      console.log("🔧 DEBUG: Order updated, result paymentDate:", orderResult[0]?.paymentDate);
 
       if (orderResult.length === 0) {
         return undefined;
@@ -7520,40 +7457,6 @@ export class DatabaseStorage implements IStorage {
         .set(updateData)
         .where(eq(orders.id, orderId));
 
-      // Створюємо запис оплати в order_payments якщо тип оплати не 'none'
-      if (paymentData.paymentType !== 'none' && paymentData.paidAmount && parseFloat(paymentData.paidAmount) > 0) {
-        const paymentRecord = {
-          orderId: orderId,
-          paymentAmount: paymentData.paidAmount,
-          paymentDate: paymentDate,
-          paymentType: paymentData.paymentType === 'contract' ? 'contract' : 'manual',
-          paymentStatus: 'confirmed',
-          correspondent: paymentData.paymentType === 'contract' ? `Договір ${paymentData.contractNumber}` : 'Ручна оплата',
-          notes: `Оплата через ${paymentData.paymentType === 'full' ? 'повну оплату' : paymentData.paymentType === 'partial' ? 'часткову оплату' : 'договір'}`,
-          createdAt: new Date(),
-        };
-
-        // Перевіряємо чи не існує вже такий запис оплати для цього замовлення з тією ж сумою та датою
-        const existingPayment = await db
-          .select()
-          .from(orderPayments)
-          .where(
-            and(
-              eq(orderPayments.orderId, orderId),
-              eq(orderPayments.paymentAmount, paymentRecord.paymentAmount),
-              eq(orderPayments.paymentDate, paymentRecord.paymentDate)
-            )
-          )
-          .limit(1);
-
-        if (existingPayment.length === 0) {
-          await this.createOrderPayment(paymentRecord);
-          console.log(`✅ Створено запис оплати в order_payments для замовлення ${orderId}: ${paymentRecord.paymentAmount} грн`);
-        } else {
-          console.log(`⚠️ Запис оплати вже існує для замовлення ${orderId} з сумою ${paymentRecord.paymentAmount} грн`);
-        }
-      }
-
       // Якщо дозволено виробництво і не було раніше створено завдання - створюємо завдання
       if (updateData.productionApproved && !alreadyHasProduction) {
         await this.createManufacturingTasksForOrder(orderId);
@@ -7590,23 +7493,6 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         })
         .where(eq(orders.id, orderId));
-
-      // Видаляємо записи ручних оплат з order_payments (залишаємо тільки банківські)
-      const deletedPayments = await db.delete(orderPayments)
-        .where(
-          and(
-            eq(orderPayments.orderId, orderId),
-            or(
-              eq(orderPayments.paymentType, 'manual'),
-              eq(orderPayments.paymentType, 'contract')
-            )
-          )
-        )
-        .returning();
-
-      if (deletedPayments.length > 0) {
-        console.log(`✅ Видалено ${deletedPayments.length} ручних записів оплати для замовлення ${orderId}`);
-      }
 
       // Видаляємо або скасовуємо пов'язані виробничі завдання
       const updatedOrders = await db.update(manufacturingOrders)
@@ -9459,24 +9345,7 @@ export class DatabaseStorage implements IStorage {
               });
             } else {
               // Створюємо нове замовлення
-              const [createdOrder] = await db.insert(orders).values(orderData).returning();
-              
-              // Створюємо запис оплати якщо замовлення має paymentDate
-              if (orderData.paymentDate && orderData.paidAmount && parseFloat(orderData.paidAmount) > 0) {
-                const paymentRecord = {
-                  orderId: createdOrder.id,
-                  paymentAmount: orderData.paidAmount,
-                  paymentDate: orderData.paymentDate,
-                  paymentType: 'xml_import',
-                  paymentStatus: 'confirmed',
-                  correspondent: 'XML Import',
-                  notes: `Оплата імпортована з XML файлу замовлень`,
-                  createdAt: new Date(),
-                };
-                
-                await this.createOrderPayment(paymentRecord);
-                console.log(`✅ XML Import: Створено запис оплати для замовлення ${createdOrder.id}: ${paymentRecord.paymentAmount} грн`);
-              }
+              await db.insert(orders).values(orderData);
             }
             
             result.success++;
@@ -9760,23 +9629,6 @@ export class DatabaseStorage implements IStorage {
             const [createdOrder] = await db.insert(orders)
               .values(orderData)
               .returning();
-              
-            // Створюємо запис оплати якщо замовлення має paymentDate
-            if (orderData.paymentDate && orderData.paidAmount && parseFloat(orderData.paidAmount) > 0) {
-              const paymentRecord = {
-                orderId: createdOrder.id,
-                paymentAmount: orderData.paidAmount,
-                paymentDate: orderData.paymentDate,
-                paymentType: 'xml_import',
-                paymentStatus: 'confirmed',
-                correspondent: 'XML Import',
-                notes: `Оплата імпортована з XML файлу замовлень (з прогресом)`,
-                createdAt: new Date(),
-              };
-              
-              await this.createOrderPayment(paymentRecord);
-              console.log(`✅ XML Import Progress: Створено запис оплати для замовлення ${createdOrder.id}: ${paymentRecord.paymentAmount} грн`);
-            }
           }
 
           result.success++;
@@ -12807,23 +12659,6 @@ export class DatabaseStorage implements IStorage {
     const [newOrder] = await db.insert(orders).values(orderData).returning();
     console.log(`🚀 СТВОРЕНО ЗАМОВЛЕННЯ: ID=${newOrder.id}, orderNumber="${newOrder.order_number}"`);
     
-    // Створюємо запис оплати якщо замовлення має оплату з рахунку 1С
-    if (invoice.paid && invoice.paidAmount && parseFloat(invoice.paidAmount) > 0) {
-      const paymentRecord = {
-        orderId: newOrder.id,
-        paymentAmount: invoice.paidAmount.toString(),
-        paymentDate: invoice.paymentDate ? new Date(invoice.paymentDate) : new Date(),
-        paymentType: 'xml_import',
-        paymentStatus: 'confirmed',
-        correspondent: '1C processOutgoingInvoice',
-        notes: `Оплата з рахунку 1С: ${invoice.number}`,
-        createdAt: new Date(),
-      };
-      
-      await this.createOrderPayment(paymentRecord);
-      console.log(`✅ 1C Invoice: Створено запис оплати для замовлення ${newOrder.id}: ${paymentRecord.paymentAmount} грн`);
-    }
-    
     // Обробляємо позиції рахунку - шукаємо у products І components
     for (const item of invoice.positions || []) {
       const itemName = item.productName || item.name;
@@ -14425,23 +14260,6 @@ export class DatabaseStorage implements IStorage {
         // Створюємо нове замовлення
         [order] = await db.insert(orders).values(orderRecord).returning();
         console.log(`✅ Webhook: Створено нове замовлення з номером рахунку ${orderRecord.invoiceNumber}`);
-        
-        // Створюємо запис оплати якщо замовлення має paymentDate
-        if (orderRecord.paymentDate && orderRecord.paidAmount && parseFloat(orderRecord.paidAmount) > 0) {
-          const paymentRecord = {
-            orderId: order.id,
-            paymentAmount: orderRecord.paidAmount,
-            paymentDate: orderRecord.paymentDate,
-            paymentType: 'xml_import',
-            paymentStatus: 'confirmed',
-            correspondent: '1C Webhook Import',
-            notes: `Оплата імпортована з 1C webhook`,
-            createdAt: new Date(),
-          };
-          
-          await this.createOrderPayment(paymentRecord);
-          console.log(`✅ 1C Webhook: Створено запис оплати для замовлення ${order.id}: ${paymentRecord.paymentAmount} грн`);
-        }
       }
       
       // Process invoice items if provided
@@ -14723,39 +14541,6 @@ export class DatabaseStorage implements IStorage {
         console.log(`✅ Webhook: Оновлено ${invoiceData.positions.length} позицій товарів`);
       } else {
         console.log('📦 Webhook: Позиції товарів не надано або не є масивом при оновленні');
-      }
-      
-      // Створюємо запис оплати якщо замовлення має оплату з 1С webhook
-      if (invoiceData.paid && invoiceData.paidAmount && parseFloat(invoiceData.paidAmount) > 0) {
-        // Перевіряємо чи вже існує запис оплати для цього замовлення
-        const existingPayment = await db
-          .select()
-          .from(orderPayments)
-          .where(
-            and(
-              eq(orderPayments.orderId, updatedOrder.id),
-              eq(orderPayments.paymentType, 'xml_import')
-            )
-          )
-          .limit(1);
-
-        if (existingPayment.length === 0) {
-          const paymentRecord = {
-            orderId: updatedOrder.id,
-            paymentAmount: invoiceData.paidAmount.toString(),
-            paymentDate: invoiceData.paymentDate ? new Date(invoiceData.paymentDate) : new Date(),
-            paymentType: 'xml_import',
-            paymentStatus: 'confirmed',
-            correspondent: '1C Webhook Update',
-            notes: `Оплата оновлена з 1C webhook: ${invoiceNumber}`,
-            createdAt: new Date(),
-          };
-          
-          await this.createOrderPayment(paymentRecord);
-          console.log(`✅ 1C Webhook Update: Створено запис оплати для замовлення ${updatedOrder.id}: ${paymentRecord.paymentAmount} грн`);
-        } else {
-          console.log(`ℹ️ 1C Webhook Update: Запис оплати для замовлення ${updatedOrder.id} вже існує`);
-        }
       }
       
       console.log('✅ Webhook: Замовлення оновлено:', updatedOrder.id);
