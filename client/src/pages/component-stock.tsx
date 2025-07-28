@@ -50,6 +50,7 @@ export default function ComponentStockPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [warehouseFilter, setWarehouseFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all"); // all, low, normal, out
+  const [categoryFilter, setCategoryFilter] = useState("all"); // all or category ID
 
   // Fetch components with stock data
   const { data: componentStocks = [], isLoading: isLoadingStocks, refetch } = useQuery<ComponentStock[]>({
@@ -60,6 +61,12 @@ export default function ComponentStockPage() {
   // Fetch warehouses for filter
   const { data: warehouses = [] } = useQuery<any[]>({
     queryKey: ["/api/warehouses"],
+    enabled: isAuthenticated
+  });
+
+  // Fetch component categories for filter
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ["/api/component-categories"],
     enabled: isAuthenticated
   });
 
@@ -97,7 +104,10 @@ export default function ComponentStockPage() {
       (stockFilter === "low" && stock.quantity > 0 && stock.quantity <= stock.minStock) ||
       (stockFilter === "normal" && stock.quantity > stock.minStock);
 
-    return matchesSearch && matchesWarehouse && matchesStockFilter;
+    const matchesCategory = categoryFilter === "all" || 
+      stock.component.categoryId?.toString() === categoryFilter;
+
+    return matchesSearch && matchesWarehouse && matchesStockFilter && matchesCategory;
   });
 
   // Calculate statistics
@@ -262,7 +272,7 @@ export default function ComponentStockPage() {
             <CardTitle>Фільтри</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -272,6 +282,28 @@ export default function ComponentStockPage() {
                   className="pl-10"
                 />
               </div>
+              
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Всі категорії" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі категорії</SelectItem>
+                  {categories.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        {category.color && (
+                          <div 
+                            className="w-3 h-3 rounded-full border border-gray-300"
+                            style={{ backgroundColor: category.color }}
+                          />
+                        )}
+                        {category.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               
               <Select value={warehouseFilter} onValueChange={setWarehouseFilter}>
                 <SelectTrigger>
@@ -326,6 +358,28 @@ export default function ComponentStockPage() {
               render: (value: any, stock: ComponentStock) => (
                 <span className="font-mono text-sm">{stock.component.sku}</span>
               )
+            },
+            {
+              key: "category",
+              label: "Категорія",
+              sortable: true,
+              render: (value: any, stock: ComponentStock) => {
+                // Знайти категорію за categoryId з завантажених категорій
+                const category = categories.find((cat: any) => cat.id === stock.component.categoryId);
+                if (!category) return <span className="text-gray-400 text-sm">Не вказано</span>;
+                
+                return (
+                  <div className="flex items-center gap-2">
+                    {category.color && (
+                      <div 
+                        className="w-3 h-3 rounded-full border border-gray-300"
+                        style={{ backgroundColor: category.color }}
+                      />
+                    )}
+                    <span className="text-sm">{category.name}</span>
+                  </div>
+                );
+              }
             },
             {
               key: "warehouseName",
