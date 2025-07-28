@@ -646,7 +646,7 @@ export default function Orders() {
             >
               <Truck className="w-4 h-4" />
             </Button>
-            <Button
+            {/*<Button
               variant={order.printedAt ? "default" : "outline"}
               size="sm"
               onClick={() => handlePrintOrder(order)}
@@ -654,7 +654,7 @@ export default function Orders() {
               className={order.printedAt ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
             >
               <Printer className="w-4 h-4" />
-            </Button>
+            </Button>*/}
             <Button
               variant="outline"
               size="sm"
@@ -662,9 +662,8 @@ export default function Orders() {
               title="Друк по відділах виробництва"
               className="bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700"
             >
-              <Building2 className="w-4 h-4" />
+              <Printer className="w-4 h-4" />
             </Button>
-
           </div>
         );
       
