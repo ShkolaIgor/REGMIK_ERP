@@ -1341,7 +1341,7 @@ export class DatabaseStorage implements IStorage {
       if (orderResult[0]?.paymentDate && orderResult[0]?.paidAmount && parseFloat(orderResult[0].paidAmount) > 0) {
         const paymentRecord = {
           orderId: id,
-          paymentAmount: parseFloat(orderResult[0].paidAmount),
+          paymentAmount: orderResult[0].paidAmount,
           paymentDate: orderResult[0].paymentDate,
           paymentType: 'manual',
           paymentStatus: 'confirmed',
