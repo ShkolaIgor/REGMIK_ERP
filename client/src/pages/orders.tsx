@@ -885,7 +885,9 @@ export default function Orders() {
   useEffect(() => {
     const contactId = form.watch("clientContactsId");
     if (contactId && clientContactsForOrder.length > 0) {
-      const selectedContact = clientContactsForOrder.find(contact => contact.id === contactId);
+      // Перетворюємо contactId на число для порівняння
+      const contactIdNum = typeof contactId === 'string' ? parseInt(contactId) : contactId;
+      const selectedContact = clientContactsForOrder.find(contact => contact.id === contactIdNum);
       if (selectedContact) {
         form.setValue("customerEmail", selectedContact.email || "");
         form.setValue("customerPhone", selectedContact.phone || "");
@@ -893,15 +895,16 @@ export default function Orders() {
     }
   }, [form.watch("clientContactsId"), clientContactsForOrder]);
 
-  // Автозаповнення компанії при завантаженні компаній
+  // Автозаповнення компанії при відкритті нової форми
   useEffect(() => {
-    if (companies.length > 0 && !form.watch("companyId")) {
+    if (companies.length > 0 && isDialogOpen && !isEditMode && !form.watch("companyId")) {
       const defaultCompany = companies.find(company => company.isDefault);
       if (defaultCompany) {
-        form.setValue("companyId", defaultCompany.id);
+        form.setValue("companyId", defaultCompany.id.toString());
+        setSelectedCompanyId(defaultCompany.id.toString());
       }
     }
-  }, [companies, form]);
+  }, [companies, isDialogOpen, isEditMode, form]);
   
   const clientsList = clientSearchData?.clients || [];
 
@@ -1306,6 +1309,56 @@ export default function Orders() {
     }
   };
 
+  // Функція для відкриття діалогу створення нового замовлення
+  const handleOpenNewOrderDialog = () => {
+    setIsDialogOpen(true);
+    setIsEditMode(false);
+    setEditingOrder(null);
+    setOrderItems([]);
+    setClientSearchValue("");
+    setClientComboboxOpen(false);
+    setSelectedClientId("");
+    setSelectedContactId(undefined);
+    setClientContactsForOrder([]);
+    setProductSearchTerm("");
+    
+    // Встановлюємо компанію за замовчуванням
+    const defaultCompany = companies && companies.length > 0 
+      ? companies.find((c: Company) => c.isDefault === true) || companies[0] 
+      : null;
+    
+    if (defaultCompany) {
+      setSelectedCompanyId(defaultCompany.id.toString());
+    } else {
+      setSelectedCompanyId("");
+    }
+    
+    // Очищуємо форму і встановлюємо базові значення
+    form.reset({
+      clientId: "",
+      clientContactsId: "",
+      companyId: defaultCompany ? defaultCompany.id.toString() : "",
+      customerEmail: "",
+      customerPhone: "",
+      status: "Нове",
+      notes: "",
+      orderNumber: "",
+      totalAmount: "",
+      paymentDate: "",
+      dueDate: "",
+      shippedDate: "",
+      trackingNumber: "",
+      invoiceNumber: "",
+      carrierId: null,
+      statusId: undefined,
+      paymentType: "full",
+      paidAmount: "0",
+      productionApproved: false,
+      productionApprovedBy: "",
+      productionApprovedAt: "",
+    });
+  };
+
   // Функція для закриття діалогу та очищення форми
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
@@ -1314,14 +1367,21 @@ export default function Orders() {
     setOrderItems([]);
     setClientSearchValue("");
     setClientComboboxOpen(false);
+    setSelectedClientId("");
     setSelectedCompanyId("");
+    setSelectedContactId(undefined);
+    setClientContactsForOrder([]);
     setProductSearchTerm(""); // Очищаємо пошук товарів
     form.reset({
       clientId: "",
+      clientContactsId: "",
+      companyId: "",
       customerEmail: "",
       customerPhone: "",
       status: "Нове",
       notes: "",
+      orderNumber: "",
+      totalAmount: "",
     });
   };
 
@@ -1679,52 +1739,7 @@ export default function Orders() {
                 <DialogTrigger asChild>
                   <Button 
                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-                    onClick={() => {
-                  setIsEditMode(false);
-                  setEditingOrder(null);
-                  setSelectedClientId("");
-                  setClientSearchValue("");
-                  setClientComboboxOpen(false);
-                  setSelectedContactId("");
-                  setSelectedCompanyId("");
-                  setOrderItems([]);
-                  
-                  // Встановлюємо компанію за замовчуванням (is_default = TRUE)
-                  const defaultCompany = companies && companies.length > 0 
-                    ? companies.find((c: Company) => c.isDefault === true) || companies[0] 
-                    : null;
-                  if (defaultCompany) {
-                    setSelectedCompanyId(defaultCompany.id.toString());
-                  }
-                  
-                  form.reset({
-                    companyId: defaultCompany ? defaultCompany.id.toString() : "",
-                    clientId: "",
-                    clientContactsId: "",
-                    status: "Нове",
-                    notes: "",
-                    paymentDate: "",
-                    dueDate: "",
-                    shippedDate: "",
-                    trackingNumber: "",
-                    invoiceNumber: "",
-                    carrierId: null,
-                    statusId: undefined,
-                    totalAmount: "",
-                    orderNumber: "",
-                    paymentType: "full",
-                    paidAmount: "0",
-                    productionApproved: false,
-                    productionApprovedBy: "",
-                    productionApprovedAt: "",
-                  });
-                  
-                  // Скидаємо стан компонентів
-                  setSelectedClientId("");
-                  setClientSearchValue("");
-                  setClientComboboxOpen(false);
-                  setIsDialogOpen(true);
-                }}>
+                    onClick={handleOpenNewOrderDialog}>
                     <Plus className="w-4 h-4 mr-2" />
                     Нове замовлення
                   </Button>
