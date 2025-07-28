@@ -51,7 +51,7 @@ INSERT INTO order_payments (
 )
 SELECT 
     o.id,
-    o.paid_amount::text,  -- Конвертуємо в текст оскільки payment_amount це text поле
+    CAST(o.paid_amount AS NUMERIC),  -- Конвертуємо в numeric тип
     o.payment_date,
     'xml_import',
     'confirmed',
@@ -90,7 +90,7 @@ SELECT
     'СТАТИСТИКА ОПЛАТ' as info,
     payment_type,
     COUNT(*) as count,
-    SUM(payment_amount::numeric) as total_amount
+    SUM(payment_amount) as total_amount
 FROM order_payments 
 GROUP BY payment_type 
 ORDER BY count DESC;
