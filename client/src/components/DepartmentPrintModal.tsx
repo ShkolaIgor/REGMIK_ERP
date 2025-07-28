@@ -459,6 +459,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <td style="text-align: center;">${index + 1}</td>
                 <td>
                   <strong>${item.productName || item.itemName || 'Без назви'}</strong>
+                  ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
                 <td style="text-align: center; font-family: monospace;">
                   ${item.productSku || '-'}
                 </td>
@@ -487,8 +488,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
     `;
   };
 
-  // ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
-  
   const handlePrintDepartment = async (department: Department) => {
     setIsPrinting(true);
     
