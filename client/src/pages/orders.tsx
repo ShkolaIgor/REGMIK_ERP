@@ -130,8 +130,8 @@ const orderSchema = z.object({
   clientId: z.string().min(1, "Оберіть клієнта"),
   clientContactsId: z.string().optional(),
   companyId: z.string().optional(),
-  orderNumber: z.string().min(1, "Номер замовлення обов'язковий"),
-  totalAmount: z.string().min(1, "Сума замовлення обов'язкова"),
+  orderNumber: z.string().optional(), // Автоматично генерується
+  totalAmount: z.string().optional(), // Автоматично розраховується
   invoiceNumber: z.string().optional(),
   carrierId: z.number().optional().nullable(),
   status: z.string().default("pending"),
