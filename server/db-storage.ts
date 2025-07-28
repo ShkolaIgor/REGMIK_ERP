@@ -68,12 +68,10 @@ import {
   type Position, type InsertPosition,
   type Department, type InsertDepartment,
   type SolderingType, type InsertSolderingType,
-  type ComponentAlternative, type InsertComponentAlternative,
   type EmailSettings, type InsertEmailSettings,
   type BankPaymentNotification, type InsertBankPaymentNotification,
   type OrderPayment, type InsertOrderPayment,
   type ClientContact, type InsertClientContact,
-  type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
   type ClientNovaPoshtaApiSettings, type InsertClientNovaPoshtaApiSettings,
   type UserSortPreference, type InsertUserSortPreference,
   type SystemLog, type InsertSystemLog,
@@ -91,6 +89,13 @@ import {
   type ClientSyncHistory, type InsertClientSyncHistory,
   type Client1CData, type ClientSyncWebhookData, type ClientSyncResponse,
   type UserActionLog, type InsertUserActionLog,
+  type UpsertUser,
+  users, roles, systemModules,
+  type LocalUser as User,
+  type Role,
+  type SystemModule,
+  type InsertRole,
+  type InsertSystemModule,
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {

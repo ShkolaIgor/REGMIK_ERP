@@ -2336,6 +2336,12 @@ export type UpsertUser = {
 export type LocalUser = typeof localUsers.$inferSelect;
 export type InsertLocalUser = z.infer<typeof insertLocalUserSchema>;
 
+// Export missing types for compatibility
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+export type SystemModule = typeof systemModules.$inferSelect;
+export type InsertSystemModule = z.infer<typeof insertSystemModuleSchema>;
+
 // Additional schemas and types for orders and order statuses
 export type OrderWithDetails = typeof orders.$inferSelect;
 export type OrderStatusWithDetails = typeof orderStatuses.$inferSelect;
