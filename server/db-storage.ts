@@ -2179,6 +2179,39 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0 ? result[0] : undefined;
   }
 
+  async copyProductComponents(sourceProductId: number, targetProductId: number): Promise<{ copiedCount: number }> {
+    try {
+      // Отримуємо всі компоненти з продукту-донора
+      const sourceComponents = await db.select()
+        .from(productComponents)
+        .where(eq(productComponents.parentProductId, sourceProductId));
+
+      if (sourceComponents.length === 0) {
+        return { copiedCount: 0 };
+      }
+
+      // Створюємо нові компоненти для цільового продукту
+      const componentsToInsert = sourceComponents.map(component => ({
+        parentProductId: targetProductId,
+        componentProductId: component.componentProductId,
+        quantity: component.quantity,
+        unit: component.unit,
+        isOptional: component.isOptional,
+        notes: component.notes ? `Скопійовано з ${sourceProductId}: ${component.notes}` : `Скопійовано з продукту ID: ${sourceProductId}`
+      }));
+
+      // Вставляємо всі компоненти одним запитом
+      const insertedComponents = await db.insert(productComponents)
+        .values(componentsToInsert)
+        .returning();
+
+      return { copiedCount: insertedComponents.length };
+    } catch (error) {
+      console.error('Error copying product components:', error);
+      throw error;
+    }
+  }
+
   // Cost Calculations
   async getCostCalculations(): Promise<(CostCalculation & { product: Product })[]> {
     const result = await db.select({

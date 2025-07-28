@@ -2144,6 +2144,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/product-components/copy", async (req, res) => {
+    try {
+      const { sourceProductId, targetProductId } = req.body;
+      
+      if (!sourceProductId || !targetProductId) {
+        return res.status(400).json({ error: "sourceProductId and targetProductId are required" });
+      }
+
+      if (sourceProductId === targetProductId) {
+        return res.status(400).json({ error: "Source and target products cannot be the same" });
+      }
+
+      const result = await storage.copyProductComponents(sourceProductId, targetProductId);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to copy BOM components" });
+    }
+  });
+
   // Cost Calculations
   app.get("/api/cost-calculations", async (req, res) => {
     try {

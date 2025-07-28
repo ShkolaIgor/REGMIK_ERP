@@ -259,9 +259,11 @@ export interface IStorage {
 
   // Product Components (BOM)
   getProductComponents(productId: number): Promise<(ProductComponent & { component: Product })[]>;
+  getAllProductComponents(): Promise<ProductComponent[]>;
   addProductComponent(component: InsertProductComponent): Promise<ProductComponent>;
   removeProductComponent(id: number): Promise<boolean>;
   updateProductComponent(id: number, component: Partial<InsertProductComponent>): Promise<ProductComponent | undefined>;
+  copyProductComponents(sourceProductId: number, targetProductId: number): Promise<{ copiedCount: number }>;
 
   // Cost Calculations
   getCostCalculations(): Promise<(CostCalculation & { product: Product })[]>;

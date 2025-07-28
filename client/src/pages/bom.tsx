@@ -52,6 +52,8 @@ export default function BOMPage() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isCopyBOMDialogOpen, setIsCopyBOMDialogOpen] = useState(false);
+  const [targetProductForCopy, setTargetProductForCopy] = useState<Product | null>(null);
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -152,6 +154,32 @@ export default function BOMPage() {
     }
   });
 
+  const copyBOMMutation = useMutation({
+    mutationFn: async ({ sourceProductId, targetProductId }: { sourceProductId: number, targetProductId: number }) => {
+      return apiRequest(`/api/product-components/copy`, { 
+        method: "POST", 
+        body: { sourceProductId, targetProductId } 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${targetProductForCopy?.id}/components`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/product-components/all"] });
+      setIsCopyBOMDialogOpen(false);
+      setTargetProductForCopy(null);
+      toast({
+        title: "Успішно",
+        description: "BOM успішно скопійовано"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося скопіювати BOM",
+        variant: "destructive"
+      });
+    }
+  });
+
   const onSubmit = (data: ComponentFormData) => {
     if (!selectedProductId) return;
     
@@ -172,6 +200,20 @@ export default function BOMPage() {
     }
     form.setValue("parentProductId", selectedProductId);
     setIsAddDialogOpen(true);
+  };
+
+  const handleCopyBOM = (targetProduct: Product) => {
+    setTargetProductForCopy(targetProduct);
+    setIsCopyBOMDialogOpen(true);
+  };
+
+  const handleCopyBOMConfirm = (sourceProduct: Product) => {
+    if (!targetProductForCopy) return;
+    
+    copyBOMMutation.mutate({
+      sourceProductId: sourceProduct.id,
+      targetProductId: targetProductForCopy.id
+    });
   };
 
   if (isLoadingProducts) {
@@ -329,11 +371,9 @@ export default function BOMPage() {
                                 variant="ghost"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setSelectedProductId(product.id);
-                                  setSelectedProduct(product);
-                                  handleAddComponent();
+                                  handleCopyBOM(product);
                                 }}
-                                title="Створити BOM"
+                                title="Скопіювати BOM"
                                 className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-1 h-auto"
                               >
                                 <Settings className="w-4 h-4" />
@@ -586,6 +626,65 @@ export default function BOMPage() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy BOM Dialog */}
+      <Dialog open={isCopyBOMDialogOpen} onOpenChange={setIsCopyBOMDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Скопіювати BOM в товар: {targetProductForCopy?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Оберіть товар, з якого потрібно скопіювати склад компонентів
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto">
+            {parentProducts
+              .filter(p => {
+                const bomCount = allBOMData?.get(p.id) || 0;
+                return bomCount > 0 && p.id !== targetProductForCopy?.id;
+              })
+              .map((product) => {
+                const bomCount = allBOMData?.get(product.id) || 0;
+                return (
+                  <div
+                    key={product.id}
+                    className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors mb-2"
+                    onClick={() => handleCopyBOMConfirm(product)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">{product.name}</div>
+                        <div className="text-sm text-gray-500">{product.sku}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {product.productType}
+                          </Badge>
+                          <Badge variant="default" className="text-xs bg-blue-100 text-blue-800 flex items-center gap-1">
+                            <Component className="w-3 h-3" />
+                            {bomCount} комп.
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                setIsCopyBOMDialogOpen(false);
+                setTargetProductForCopy(null);
+              }}
+            >
+              Скасувати
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
