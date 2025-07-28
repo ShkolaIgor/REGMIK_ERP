@@ -525,7 +525,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
     setIsPrinting(true);
     
     try {
-      const printHTML = generateAllDepartmentsPrintHTML();
+      const printHTML = generateConsolidatedPrintHTML();
       const printWindow = window.open('', '_blank');
       
       if (printWindow) {
