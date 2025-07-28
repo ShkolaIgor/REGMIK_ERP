@@ -1,0 +1,101 @@
+9:42:34 PM [express] Банківський email моніторинг ініціалізовано
+2025-07-28T21:42:36.650519+03:00 ERP regmik-erp[86021]: 9:42:36 PM [express] GET /api/payments/stats 200 in 28ms :: {"totalPayments":79,"totalAmount":727560…
+2025-07-28T21:42:36.651704+03:00 ERP regmik-erp[86021]: 9:42:36 PM [express] GET /api/payments 200 in 27ms :: [{"id":81,"orderId":51719,"orderNumber":"52707…
+2025-07-28T21:42:42.312381+03:00 ERP regmik-erp[86021]: 9:42:42 PM [express] GET /api/auth/user 200 in 6ms :: {"id":1,"username":"ShkolaIhor","email":"ihor@…
+2025-07-28T21:42:42.360379+03:00 ERP regmik-erp[86021]: 9:42:42 PM [express] GET /api/user-sort-preferences/orders 200 in 5ms
+2025-07-28T21:42:42.429123+03:00 ERP regmik-erp[86021]: 9:42:42 PM [express] GET /api/orders 200 in 73ms :: {"orders":[{"id":51759,"orderSequenceNumber":517…
+2025-07-28T21:42:48.624430+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: Processing payment for order 51759
+2025-07-28T21:42:48.624543+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: Raw request body: {
+2025-07-28T21:42:48.624558+03:00 ERP regmik-erp[86021]:   "paymentType": "full",
+2025-07-28T21:42:48.624571+03:00 ERP regmik-erp[86021]:   "paidAmount": "55940.00",
+2025-07-28T21:42:48.624585+03:00 ERP regmik-erp[86021]:   "contractNumber": null,
+2025-07-28T21:42:48.624596+03:00 ERP regmik-erp[86021]:   "paymentDate": "2025-07-28T00:00:00.000Z",
+2025-07-28T21:42:48.624609+03:00 ERP regmik-erp[86021]:   "productionApproved": true
+2025-07-28T21:42:48.624620+03:00 ERP regmik-erp[86021]: }
+2025-07-28T21:42:48.624633+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: Processed payment data: {
+2025-07-28T21:42:48.624645+03:00 ERP regmik-erp[86021]:   "paymentType": "full",
+2025-07-28T21:42:48.624655+03:00 ERP regmik-erp[86021]:   "paidAmount": "55940.00",
+2025-07-28T21:42:48.624666+03:00 ERP regmik-erp[86021]:   "contractNumber": null,
+2025-07-28T21:42:48.624676+03:00 ERP regmik-erp[86021]:   "paymentDate": "2025-07-28T00:00:00.000Z",
+2025-07-28T21:42:48.624686+03:00 ERP regmik-erp[86021]:   "productionApproved": true
+2025-07-28T21:42:48.624697+03:00 ERP regmik-erp[86021]: }
+2025-07-28T21:42:48.624715+03:00 ERP regmik-erp[86021]: Getting order with ID: 51759
+2025-07-28T21:42:48.627091+03:00 ERP regmik-erp[86021]: Order found: 52747 for client: Сидорко Ю. Д., ФОП
+2025-07-28T21:42:48.636158+03:00 ERP regmik-erp[86021]: Завдання на виробництво для замовлення 51759 вже існують, пропускаємо створення
+2025-07-28T21:42:48.636213+03:00 ERP regmik-erp[86021]: Оброблено платіж для замовлення 51759: тип full, виробництво дозволено
+2025-07-28T21:42:48.636227+03:00 ERP regmik-erp[86021]: Getting order with ID: 51759
+2025-07-28T21:42:48.637378+03:00 ERP regmik-erp[86021]: Order found: 52747 for client: Сидорко Ю. Д., ФОП
+2025-07-28T21:42:48.643962+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: Payment processed successfully: Оплату замовлення оброблено, створено завдання на виробництво
+2025-07-28T21:42:48.645991+03:00 ERP regmik-erp[86021]: 9:42:48 PM [express] POST /api/orders/51759/process-payment 200 in 23ms :: {"success":true,"message"…
+2025-07-28T21:42:48.733142+03:00 ERP regmik-erp[86021]: 9:42:48 PM [express] GET /api/orders 200 in 69ms :: {"orders":[{"id":51759,"orderSequenceNumber":517…
+2025-07-28T21:42:51.396107+03:00 ERP regmik-erp[86021]: 9:42:51 PM [express] GET /api/order-statuses 200 in 8ms :: [{"id":10,"name":"Виконано","textColor":"…
+2025-07-28T21:42:51.396783+03:00 ERP regmik-erp[86021]: 9:42:51 PM [express] GET /api/carriers 200 in 8ms :: [{"id":2,"name":"Автолюкс","alternativeNames":n…
+2025-07-28T21:42:51.411586+03:00 ERP regmik-erp[86021]: 9:42:51 PM [express] GET /api/clients/search 200 in 20ms :: {"clients":[{"id":7432,"taxCode":null,"n…
+2025-07-28T21:42:51.432923+03:00 ERP regmik-erp[86021]: 9:42:51 PM [express] GET /api/client-contacts 200 in 38ms :: [{"id":7104,"clientId":7114,"fullName":…
+2025-07-28T21:42:51.440555+03:00 ERP regmik-erp[86021]: 9:42:51 PM [express] GET /api/companies 200 in 43ms :: [{"id":4,"name":"---","fullName":"Школа Ігор …
+2025-07-28T21:42:51.446016+03:00 ERP regmik-erp[86021]: 9:42:51 PM [express] GET /api/client-contacts 200 in 4ms :: [{"id":7104,"clientId":7114,"fullName":"…
+2025-07-28T21:42:51.653542+03:00 ERP regmik-erp[86021]: 9:42:51 PM [express] GET /api/clients/search 200 in 46ms :: {"clients":[{"id":7114,"taxCode":null,"n…
+2025-07-28T21:42:58.652129+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: Updating order 51759 with data: {
+2025-07-28T21:42:58.652229+03:00 ERP regmik-erp[86021]:   "orderNumber": "52747",
+2025-07-28T21:42:58.652244+03:00 ERP regmik-erp[86021]:   "statusId": 1,
+2025-07-28T21:42:58.652255+03:00 ERP regmik-erp[86021]:   "totalAmount": "55940",
+2025-07-28T21:42:58.652266+03:00 ERP regmik-erp[86021]:   "clientId": 7114,
+2025-07-28T21:42:58.652277+03:00 ERP regmik-erp[86021]:   "invoiceNumber": "РМ00-027804",
+2025-07-28T21:42:58.652291+03:00 ERP regmik-erp[86021]:   "status": "pending",
+2025-07-28T21:42:58.652302+03:00 ERP regmik-erp[86021]:   "paymentDate": "2025-07-27T21:00:00.000Z"
+2025-07-28T21:42:58.652315+03:00 ERP regmik-erp[86021]: }
+2025-07-28T21:42:58.653462+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: updateOrderWithItems called for order 51759
+2025-07-28T21:42:58.653498+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: insertOrder received: {
+2025-07-28T21:42:58.653511+03:00 ERP regmik-erp[86021]:   "orderNumber": "52747",
+2025-07-28T21:42:58.653521+03:00 ERP regmik-erp[86021]:   "clientId": 7114,
+2025-07-28T21:42:58.653531+03:00 ERP regmik-erp[86021]:   "status": "pending",
+2025-07-28T21:42:58.653541+03:00 ERP regmik-erp[86021]:   "statusId": 1,
+2025-07-28T21:42:58.653552+03:00 ERP regmik-erp[86021]:   "totalAmount": "55940",
+2025-07-28T21:42:58.653563+03:00 ERP regmik-erp[86021]:   "paymentDate": "2025-07-27T21:00:00.000Z",
+2025-07-28T21:42:58.653576+03:00 ERP regmik-erp[86021]:   "invoiceNumber": "РМ00-027804",
+2025-07-28T21:42:58.653586+03:00 ERP regmik-erp[86021]:   "dueDate": null,
+2025-07-28T21:42:58.653603+03:00 ERP regmik-erp[86021]:   "shippedDate": null,
+2025-07-28T21:42:58.653613+03:00 ERP regmik-erp[86021]:   "productionApprovedAt": null,
+2025-07-28T21:42:58.653624+03:00 ERP regmik-erp[86021]:   "estimatedDelivery": null
+2025-07-28T21:42:58.653634+03:00 ERP regmik-erp[86021]: }
+2025-07-28T21:42:58.654048+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: Before date conversion - paymentDate: 2025-07-27T21:00:00.000Z type: object
+2025-07-28T21:42:58.654084+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: paymentDate встановлено, синхронізуємо paidAmount з totalAmount: 55940
+2025-07-28T21:42:58.654119+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: Final orderData being saved: {
+2025-07-28T21:42:58.654131+03:00 ERP regmik-erp[86021]:   "orderNumber": "52747",
+2025-07-28T21:42:58.654141+03:00 ERP regmik-erp[86021]:   "clientId": 7114,
+2025-07-28T21:42:58.654151+03:00 ERP regmik-erp[86021]:   "status": "pending",
+2025-07-28T21:42:58.654162+03:00 ERP regmik-erp[86021]:   "statusId": 1,
+2025-07-28T21:42:58.654172+03:00 ERP regmik-erp[86021]:   "totalAmount": "55940",
+2025-07-28T21:42:58.654182+03:00 ERP regmik-erp[86021]:   "paymentDate": "2025-07-27T21:00:00.000Z",
+2025-07-28T21:42:58.654192+03:00 ERP regmik-erp[86021]:   "invoiceNumber": "РМ00-027804",
+2025-07-28T21:42:58.654202+03:00 ERP regmik-erp[86021]:   "dueDate": null,
+2025-07-28T21:42:58.654214+03:00 ERP regmik-erp[86021]:   "shippedDate": null,
+2025-07-28T21:42:58.654224+03:00 ERP regmik-erp[86021]:   "productionApprovedAt": null,
+2025-07-28T21:42:58.654234+03:00 ERP regmik-erp[86021]:   "estimatedDelivery": null,
+2025-07-28T21:42:58.654248+03:00 ERP regmik-erp[86021]:   "paidAmount": "55940"
+2025-07-28T21:42:58.654259+03:00 ERP regmik-erp[86021]: }
+2025-07-28T21:42:58.656881+03:00 ERP regmik-erp[86021]: 🔧 DEBUG: Order updated, result paymentDate: 2025-07-27T21:00:00.000Z paidAmount: 55940.00
+2025-07-28T21:42:58.667492+03:00 ERP regmik-erp[86021]: Updating order items with calculated prices: [
+2025-07-28T21:42:58.667540+03:00 ERP regmik-erp[86021]:   {
+2025-07-28T21:42:58.667554+03:00 ERP regmik-erp[86021]:     productId: 22022,
+2025-07-28T21:42:58.667566+03:00 ERP regmik-erp[86021]:     itemName: 'Витратомір-лічильник електромагнітний ЕРС-50-R-M-0,5',
+2025-07-28T21:42:58.667577+03:00 ERP regmik-erp[86021]:     quantity: 1,
+2025-07-28T21:42:58.667591+03:00 ERP regmik-erp[86021]:     unitPrice: '43440',
+2025-07-28T21:42:58.667602+03:00 ERP regmik-erp[86021]:     totalPrice: '43440',
+2025-07-28T21:42:58.667612+03:00 ERP regmik-erp[86021]:     comment: '',
+2025-07-28T21:42:58.667623+03:00 ERP regmik-erp[86021]:     orderId: 51759
+2025-07-28T21:42:58.667633+03:00 ERP regmik-erp[86021]:   },
+2025-07-28T21:42:58.667647+03:00 ERP regmik-erp[86021]:   {
+2025-07-28T21:42:58.667657+03:00 ERP regmik-erp[86021]:     productId: 25984,
+2025-07-28T21:42:58.667668+03:00 ERP regmik-erp[86021]:     itemName: 'Виносний індикатор ЕРС-І',
+2025-07-28T21:42:58.667679+03:00 ERP regmik-erp[86021]:     quantity: 1,
+2025-07-28T21:42:58.667689+03:00 ERP regmik-erp[86021]:     unitPrice: '12500',
+2025-07-28T21:42:58.667699+03:00 ERP regmik-erp[86021]:     totalPrice: '12500',
+2025-07-28T21:42:58.667711+03:00 ERP regmik-erp[86021]:     comment: '',
+2025-07-28T21:42:58.667722+03:00 ERP regmik-erp[86021]:     orderId: 51759
+2025-07-28T21:42:58.667732+03:00 ERP regmik-erp[86021]:   }
+2025-07-28T21:42:58.667745+03:00 ERP regmik-erp[86021]: ]
+2025-07-28T21:42:58.669749+03:00 ERP regmik-erp[86021]: Getting order with ID: 51759
+2025-07-28T21:42:58.670918+03:00 ERP regmik-erp[86021]: Order found: 52747 for client: Сидорко Ю. Д., ФОП
+2025-07-28T21:42:58.678879+03:00 ERP regmik-erp[86021]: 9:42:58 PM [express] PUT /api/orders/51759 200 in 28ms :: {"id":51759,"orderSequenceNumber":51759,"o…
+2025-07-28T21:42:58.762269+03:00 ERP regmik-erp[86021]: 9:42:58 PM [express] GET /api/orders 200 in 64ms :: {"orders":[{"id":51759,"orderSequenceNumber":517…
