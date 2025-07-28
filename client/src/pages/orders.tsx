@@ -232,6 +232,7 @@ export default function Orders() {
       'orderNumber', 
       'clientName',
       'paymentDate',
+      'paymentStatus',
       'dueDate',
       'totalAmount',
       'shippedDate',
@@ -303,6 +304,7 @@ export default function Orders() {
     orderNumber: 'Рахунок',
     clientName: 'Клієнт',
     paymentDate: 'Дата оплати',
+    paymentStatus: 'Статус оплати',
     dueDate: 'Термін виконання',
     totalAmount: 'Сума',
     shippedDate: 'Відвантаження',
@@ -388,9 +390,39 @@ export default function Orders() {
         const paidAmount = parseFloat(order.paidAmount || '0');
         const totalAmount = parseFloat(order.totalAmount);
         
-        const getPaymentDisplay = () => {
+        // Показуємо дату оплати як текст
+        if (order.paymentDate) {
+          return (
+            <div className="text-sm">
+              <UkrainianDate date={order.paymentDate} format="short" />
+            </div>
+          );
+        }
+        
+        // Якщо є дата з таблиці платежів
+        if (order.lastPaymentDate) {
+          return (
+            <div className="text-sm text-blue-600">
+              <UkrainianDate date={order.lastPaymentDate} format="short" />
+            </div>
+          );
+        }
+        
+        // Якщо немає дати оплати
+        return (
+          <div className="text-xs text-gray-400">
+            Не оплачено
+          </div>
+        );
+      
+      case 'paymentStatus':
+        const statusPaymentType = order.paymentType || 'none';
+        const statusPaidAmount = parseFloat(order.paidAmount || '0');
+        const statusTotalAmount = parseFloat(order.totalAmount);
+        
+        const getPaymentStatusDisplay = () => {
           // Якщо немає оплати (paidAmount = 0), показуємо кнопку оплати незалежно від типу оплати
-          if (paidAmount === 0) {
+          if (statusPaidAmount === 0) {
             return (
               <div onClick={(e) => e.stopPropagation()}>
                 <PaymentDialog
@@ -401,6 +433,13 @@ export default function Orders() {
                   currentPaidAmount={order.paidAmount || "0"}
                   currentPaymentDate={order.paymentDate}
                   isProductionApproved={order.productionApproved || false}
+                  trigger={
+                    <div className="space-y-1 cursor-pointer hover:opacity-80">
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-300">
+                        💰 Не оплачено
+                      </Badge>
+                    </div>
+                  }
                 />
               </div>
             );
@@ -408,9 +447,9 @@ export default function Orders() {
 
           // Визначаємо актуальний статус оплати на основі paidAmount та totalAmount
           const actualPaymentStatus = (() => {
-            if (paidAmount === 0) return 'none';
-            if (paidAmount >= totalAmount) return 'full';
-            if (paymentType === 'contract') return 'contract'; // Зберігаємо тип "по договору"
+            if (statusPaidAmount === 0) return 'none';
+            if (statusPaidAmount >= statusTotalAmount) return 'full';
+            if (statusPaymentType === 'contract') return 'contract'; // Зберігаємо тип "по договору"
             return 'partial';
           })();
 
@@ -431,16 +470,13 @@ export default function Orders() {
                         <Badge className="bg-green-100 text-green-800 border-green-300">
                           ✅ Повна оплата
                         </Badge>
-                        <div className="text-xs text-green-700 font-medium flex items-center gap-1">
-                          📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
-                        </div>
                       </div>
                     }
                   />
                 </div>
               );
             case 'partial':
-              const percentage = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
+              const percentage = statusTotalAmount > 0 ? Math.round((statusPaidAmount / statusTotalAmount) * 100) : 0;
               return (
                 <div onClick={(e) => e.stopPropagation()}>
                   <PaymentDialog
@@ -457,10 +493,7 @@ export default function Orders() {
                           🔸 Часткова ({percentage}%)
                         </Badge>
                         <div className="text-xs text-red-600 font-medium">
-                          Борг: {formatCurrency(totalAmount - paidAmount)}
-                        </div>
-                        <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
-                          📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
+                          Борг: {formatCurrency(statusTotalAmount - statusPaidAmount)}
                         </div>
                       </div>
                     }
@@ -485,7 +518,7 @@ export default function Orders() {
                         </Badge>
                         {order.contractNumber && (
                           <div className="text-xs text-blue-700 font-medium">
-                            📝 №{order.contractNumber}
+                            📄 {order.contractNumber}
                           </div>
                         )}
                       </div>
@@ -520,7 +553,7 @@ export default function Orders() {
 
         return (
           <div className="flex flex-col items-start">
-            {getPaymentDisplay()}
+            {getPaymentStatusDisplay()}
           </div>
         );
       
