@@ -821,7 +821,10 @@ export class DatabaseStorage implements IStorage {
           notes: order.notes,
           external1cId: order.external_1c_id,
           trackingNumber: order.tracking_number,
-          isActive: order.is_active
+          isActive: order.is_active,
+          paymentDate: order.payment_date, // Додано поле payment_date з таблиці orders
+          paymentType: order.payment_type,
+          shippedDate: order.shipped_date
         };
 
         // Завантаження інформації про клієнта з таблиці clients

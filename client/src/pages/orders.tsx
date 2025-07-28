@@ -430,7 +430,7 @@ export default function Orders() {
                           ✅ Повна оплата
                         </Badge>
                         <div className="text-xs text-green-700 font-medium flex items-center gap-1">
-                          📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
+                          📅 <UkrainianDate date={order.paymentDate || order.lastPaymentDate} format="short" />
                         </div>
                       </div>
                     }
@@ -457,7 +457,7 @@ export default function Orders() {
                           Борг: {formatCurrency(totalAmount - paidAmount)}
                         </div>
                         <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
-                          📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
+                          📅 <UkrainianDate date={order.paymentDate || order.lastPaymentDate} format="short" />
                         </div>
                       </div>
                     }
