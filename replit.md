@@ -131,6 +131,10 @@ User has Russian-language 1C system and needs integration setup guidance.
 ## Recent Changes
 
 ### July 28, 2025
+- ✅ **PRODUCTION XML PAYMENT MIGRATION ЗАВЕРШЕНО** - перевірено що всі 292 записи оплат правильно відображаються в інтерфейсі (291 bank_transfer + 1 xml_import)
+- ✅ **ОНОВЛЕНО ВСІ XML IMPORT МЕТОДИ** - importOrdersFromXml, importOrdersFromXmlWithProgress та всі 1C webhook методи тепер створюють order_payments записи
+- ✅ **UNIFIED PAYMENT SYSTEM ЗАВЕРШЕНО** - всі способи додавання оплат (ручний, банківський, XML, webhook) тепер створюють записи в order_payments таблиці
+- ✅ **ВИПРАВЛЕНО СИНХРОНІЗАЦІЮ ДЛЯ МАЙБУТНІХ XML ІМПОРТІВ** - нові XML імпорти автоматично створюватимуть payment записи з типом 'xml_import'
 - ✅ **КРИТИЧНУ ПРОБЛЕМУ СИНХРОНІЗАЦІЇ ДАТИ ОПЛАТИ ОСТАТОЧНО ВИРІШЕНО** - виправлено розз'єднання між PaymentDialog та формою редагування замовлення
 - ✅ **ДОДАНО currentPaymentDate ПАРАМЕТР** - PaymentDialog тепер отримує та відображає поточну дату оплати з замовлення
 - ✅ **ОНОВЛЕНО ВСІ ВИКЛИКИ PaymentDialog** - додано передачу order.paymentDate у всі 4 випадки використання PaymentDialog
