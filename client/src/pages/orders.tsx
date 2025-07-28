@@ -822,6 +822,12 @@ export default function Orders() {
     enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
   });
 
+  // ОПТИМІЗАЦІЯ: Компанії завантажуються тільки при відкритті форми
+  const { data: companies = [], isLoading: companiesLoading } = useQuery({
+    queryKey: ["/api/companies"],
+    enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
+  }) as { data: Company[]; isLoading: boolean };
+
   // Запит для завантаження контактів вибраного клієнта
   const { data: clientContactsData } = useQuery({
     queryKey: ["/api/client-contacts", selectedClientId],
@@ -835,15 +841,12 @@ export default function Orders() {
     enabled: !!selectedClientId,
   });
 
-  // Отримуємо default компанію для автозаповнення
-  const defaultCompany = companies.find(company => company.isDefault);
-
   // Форма для замовлення
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
     defaultValues: {
       clientId: "",
-      companyId: defaultCompany?.id,
+      companyId: "",
       customerEmail: "",
       customerPhone: "",
       status: "Нове",
@@ -892,20 +895,17 @@ export default function Orders() {
 
   // Автозаповнення компанії при завантаженні компаній
   useEffect(() => {
-    if (defaultCompany && !form.watch("companyId")) {
-      form.setValue("companyId", defaultCompany.id);
+    if (companies.length > 0 && !form.watch("companyId")) {
+      const defaultCompany = companies.find(company => company.isDefault);
+      if (defaultCompany) {
+        form.setValue("companyId", defaultCompany.id);
+      }
     }
-  }, [defaultCompany]);
+  }, [companies, form]);
   
   const clientsList = clientSearchData?.clients || [];
 
   // ВИДАЛЕНО ДУБЛІКАТИ: orderStatusList вже є в orderStatuses
-
-  // ОПТИМІЗАЦІЯ: Компанії завантажуються тільки при відкритті форми
-  const { data: companies = [], isLoading: companiesLoading } = useQuery({
-    queryKey: ["/api/companies"],
-    enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
-  }) as { data: Company[]; isLoading: boolean };
 
   // ВИДАЛЕНО ПРОБЛЕМНИЙ useEffect - встановлюємо компанію при створенні нового замовлення
 
