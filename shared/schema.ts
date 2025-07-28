@@ -617,15 +617,32 @@ export const insertUnitSchema = createInsertSchema(units).omit({ id: true, creat
 export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, updatedAt: true });
-export const insertOrderSchema = createInsertSchema(orders).omit({ 
+// Базова схема без transform для можливості extend
+const insertOrderSchemaBase = createInsertSchema(orders).omit({ 
   id: true, 
   orderSequenceNumber: true,
   createdAt: true
 }).extend({
   orderNumber: z.string().optional(), // дозволяємо автоматичну генерацію
+  // Дозволяємо рядки для дат (будуть перетворені на Date в transform)
+  paymentDate: z.union([z.string(), z.date()]).optional().nullable(),
+  dueDate: z.union([z.string(), z.date()]).optional().nullable(),
+  shippedDate: z.union([z.string(), z.date()]).optional().nullable(),
+  productionApprovedAt: z.union([z.string(), z.date()]).optional().nullable(),
 });
 
-export const insertOrderSchemaForm = insertOrderSchema.extend({
+// Схема з transform для API endpoints
+export const insertOrderSchema = insertOrderSchemaBase.transform((data) => ({
+  ...data,
+  // Перетворюємо рядки дат у Date об'єкти або null
+  paymentDate: data.paymentDate ? (typeof data.paymentDate === 'string' ? new Date(data.paymentDate) : data.paymentDate) : null,
+  dueDate: data.dueDate ? (typeof data.dueDate === 'string' ? new Date(data.dueDate) : data.dueDate) : null,
+  shippedDate: data.shippedDate ? (typeof data.shippedDate === 'string' ? new Date(data.shippedDate) : data.shippedDate) : null,
+  productionApprovedAt: data.productionApprovedAt ? (typeof data.productionApprovedAt === 'string' ? new Date(data.productionApprovedAt) : data.productionApprovedAt) : null,
+}));
+
+// Схема для форм з додатковими полями
+export const insertOrderSchemaForm = insertOrderSchemaBase.extend({
   statusId: z.number().int().positive("Статус обов'язковий"),
   clientContactsId: z.number().int().positive().optional(),
   orderNumber: z.string().optional(), // дозволяємо автоматичну генерацію
@@ -635,7 +652,7 @@ export const insertOrderSchemaForm = insertOrderSchema.extend({
   recipientWarehouseRef: z.string().optional(),
   recipientWarehouseAddress: z.string().optional(),
   shippingCost: z.string().optional(),
-  estimatedDelivery: z.string().optional()
+  estimatedDelivery: z.union([z.string(), z.date()]).optional().nullable(),
 }).transform((data) => ({
   ...data,
   // Перетворюємо рядки дат у Date об'єкти або null
@@ -643,7 +660,7 @@ export const insertOrderSchemaForm = insertOrderSchema.extend({
   dueDate: data.dueDate ? (typeof data.dueDate === 'string' ? new Date(data.dueDate) : data.dueDate) : null,
   shippedDate: data.shippedDate ? (typeof data.shippedDate === 'string' ? new Date(data.shippedDate) : data.shippedDate) : null,
   productionApprovedAt: data.productionApprovedAt ? (typeof data.productionApprovedAt === 'string' ? new Date(data.productionApprovedAt) : data.productionApprovedAt) : null,
-  estimatedDelivery: data.estimatedDelivery ? (typeof data.estimatedDelivery === 'string' ? new Date(data.estimatedDelivery) : data.estimatedDelivery) : null
+  estimatedDelivery: data.estimatedDelivery ? (typeof data.estimatedDelivery === 'string' ? new Date(data.estimatedDelivery) : data.estimatedDelivery) : null,
 }));
 
 export type Order = typeof orders.$inferSelect;
