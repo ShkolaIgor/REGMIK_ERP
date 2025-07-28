@@ -4,10 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Package, AlertTriangle, CheckCircle, Clock, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { DataTable } from "@/components/DataTable";
 
 interface Component {
   id: number;
@@ -52,13 +52,13 @@ export default function ComponentStockPage() {
   const [stockFilter, setStockFilter] = useState("all"); // all, low, normal, out
 
   // Fetch components with stock data
-  const { data: componentStocks = [], isLoading: isLoadingStocks, refetch } = useQuery({
+  const { data: componentStocks = [], isLoading: isLoadingStocks, refetch } = useQuery<ComponentStock[]>({
     queryKey: ["/api/component-stocks"],
     enabled: isAuthenticated
   });
 
   // Fetch warehouses for filter
-  const { data: warehouses = [] } = useQuery({
+  const { data: warehouses = [] } = useQuery<any[]>({
     queryKey: ["/api/warehouses"],
     enabled: isAuthenticated
   });
@@ -277,73 +277,75 @@ export default function ComponentStockPage() {
         </Card>
 
         {/* Components Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Список компонентів</CardTitle>
-            <CardDescription>
-              Показано {filteredStocks.length} з {totalComponents} компонентів
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingStocks ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-lg">Завантаження запасів...</div>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Компонент</TableHead>
-                    <TableHead>Артикул</TableHead>
-                    <TableHead>Склад</TableHead>
-                    <TableHead>Кількість</TableHead>
-                    <TableHead>Мін. запас</TableHead>
-                    <TableHead>Статус</TableHead>
-                    <TableHead>Ціна</TableHead>
-                    <TableHead>Вартість запасу</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredStocks.map((stock: ComponentStock) => {
-                    const totalValue = (parseFloat(stock.component.costPrice) * stock.quantity).toFixed(2);
-                    
-                    return (
-                      <TableRow key={`${stock.componentId}-${stock.warehouseId}`}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{stock.component.name}</div>
-                            {stock.component.description && (
-                              <div className="text-sm text-gray-500">{stock.component.description}</div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">{stock.component.sku}</TableCell>
-                        <TableCell>{stock.warehouse.name}</TableCell>
-                        <TableCell className="font-medium">{stock.quantity}</TableCell>
-                        <TableCell>{stock.minStock}</TableCell>
-                        <TableCell>
-                          {getStockBadge(stock.quantity, stock.minStock)}
-                        </TableCell>
-                        <TableCell>{parseFloat(stock.component.costPrice).toFixed(2)} грн</TableCell>
-                        <TableCell className="font-medium">{totalValue} грн</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  
-                  {filteredStocks.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                        <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                        <p>Компонентів не знайдено</p>
-                        {searchQuery && <p className="text-sm">Спробуйте інший запит</p>}
-                      </TableCell>
-                    </TableRow>
+        <DataTable
+          data={filteredStocks}
+          columns={[
+            {
+              key: "componentName",
+              label: "Компонент",
+              sortable: true,
+              render: (value: any, stock: ComponentStock) => (
+                <div>
+                  <div className="font-medium">{stock.component.name}</div>
+                  {stock.component.description && (
+                    <div className="text-sm text-gray-500">{stock.component.description}</div>
                   )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              )
+            },
+            {
+              key: "sku",
+              label: "Артикул",
+              sortable: true,
+              render: (value: any, stock: ComponentStock) => (
+                <span className="font-mono text-sm">{stock.component.sku}</span>
+              )
+            },
+            {
+              key: "warehouseName",
+              label: "Склад",
+              sortable: true,
+              render: (value: any, stock: ComponentStock) => stock.warehouse.name
+            },
+            {
+              key: "quantity",
+              label: "Кількість",
+              sortable: true,
+              render: (value: number) => <span className="font-medium">{value}</span>
+            },
+            {
+              key: "minStock",
+              label: "Мін. запас",
+              sortable: true,
+              render: (value: number) => value
+            },
+            {
+              key: "status",
+              label: "Статус",
+              sortable: false,
+              render: (value: any, stock: ComponentStock) => getStockBadge(stock.quantity, stock.minStock)
+            },
+            {
+              key: "costPrice",
+              label: "Ціна",
+              sortable: true,
+              render: (value: any, stock: ComponentStock) => `${parseFloat(stock.component.costPrice).toFixed(2)} грн`
+            },
+            {
+              key: "totalValue",
+              label: "Вартість запасу",
+              sortable: true,
+              render: (value: any, stock: ComponentStock) => {
+                const totalValue = (parseFloat(stock.component.costPrice) * stock.quantity).toFixed(2);
+                return <span className="font-medium">{totalValue} грн</span>;
+              }
+            }
+          ]}
+          loading={isLoadingStocks}
+          title="Список компонентів"
+          description={`Показано ${filteredStocks.length} з ${totalComponents} компонентів`}
+          storageKey="component-stock"
+        />
       </div>
     </div>
   );
