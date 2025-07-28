@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
-import { Search, Edit, Eye, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt, PlusCircle, MinusCircle } from "lucide-react";
+import { Search, Edit, Eye, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt, PlusCircle, MinusCircle, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScannerButton } from "@/components/BarcodeScanner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -115,6 +115,11 @@ export default function Inventory() {
   const handleViewProduct = (product: any) => {
     setEditingProduct(product);
     setIsViewMode(true);
+  };
+
+  const handleCreateBOM = (product: any) => {
+    // Перенаправляємо на сторінку BOM з ID товару
+    window.location.href = `/bom?productId=${product.id}`;
   };
 
   // Filter products based on search and filters
@@ -449,6 +454,15 @@ export default function Inventory() {
                               title="Переглянути товар"
                             >
                               <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleCreateBOM(product)}
+                              title="Створити BOM"
+                              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                            >
+                              <Settings className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
