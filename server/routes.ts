@@ -2080,6 +2080,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Product Components (BOM) routes
+  app.get("/api/product-components/all", async (req, res) => {
+    try {
+      const components = await storage.getAllProductComponents();
+      res.json(components);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch all product components" });
+    }
+  });
+
   app.get("/api/products/:id/components", async (req, res) => {
     try {
       const productId = parseInt(req.params.id);

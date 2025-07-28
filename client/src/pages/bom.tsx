@@ -97,6 +97,21 @@ export default function BOMPage() {
     enabled: selectedProductId !== null
   });
 
+  // Fetch BOM data for all products to show component indicators
+  const { data: allBOMData } = useQuery({
+    queryKey: ["/api/product-components/all"],
+    enabled: true,
+    select: (data: ProductComponent[]) => {
+      // Group components by parent product ID
+      const bomMap = new Map<number, number>();
+      data?.forEach((component) => {
+        const count = bomMap.get(component.parentProductId) || 0;
+        bomMap.set(component.parentProductId, count + 1);
+      });
+      return bomMap;
+    }
+  });
+
   const addMutation = useMutation({
     mutationFn: (data: ComponentFormData) => 
       apiRequest("/api/product-components", { method: "POST", body: data }),
@@ -278,32 +293,51 @@ export default function BOMPage() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[500px] overflow-y-auto">
-                  {parentProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
-                        selectedProductId === product.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                      }`}
-                      onClick={() => handleProductSelect(product)}
-                    >
-                      <div className="font-medium text-gray-900">{product.name}</div>
-                      <div className="text-sm text-gray-500">{product.sku}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {product.productType}
-                        </Badge>
-                        {product.isActive ? (
-                          <Badge variant="default" className="text-xs bg-green-100 text-green-800">
-                            Активний
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            Неактивний
-                          </Badge>
-                        )}
+                  {parentProducts.map((product) => {
+                    const bomCount = allBOMData?.get(product.id) || 0;
+                    return (
+                      <div
+                        key={product.id}
+                        className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
+                          selectedProductId === product.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                        }`}
+                        onClick={() => handleProductSelect(product)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">{product.name}</div>
+                            <div className="text-sm text-gray-500">{product.sku}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {product.productType}
+                              </Badge>
+                              {product.isActive ? (
+                                <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                                  Активний
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  Неактивний
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            {bomCount > 0 ? (
+                              <Badge variant="default" className="text-xs bg-blue-100 text-blue-800 flex items-center gap-1">
+                                <Component className="w-3 h-3" />
+                                {bomCount} комп.
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs text-gray-400">
+                                Без BOM
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

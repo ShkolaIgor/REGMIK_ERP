@@ -2116,6 +2116,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Product Components (BOM)
+  async getAllProductComponents(): Promise<ProductComponent[]> {
+    const allComponents = await db.select()
+      .from(productComponents);
+    return allComponents;
+  }
+
   async getProductComponents(productId: number): Promise<(ProductComponent & { component: any })[]> {
     // Спочатку отримуємо всі product_components для даного продукту
     const productComponentsData = await db.select()

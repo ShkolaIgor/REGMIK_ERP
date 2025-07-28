@@ -835,11 +835,15 @@ export default function Orders() {
     enabled: !!selectedClientId,
   });
 
+  // Отримуємо default компанію для автозаповнення
+  const defaultCompany = companies.find(company => company.isDefault);
+
   // Форма для замовлення
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
     defaultValues: {
       clientId: "",
+      companyId: defaultCompany?.id,
       customerEmail: "",
       customerPhone: "",
       status: "Нове",
@@ -863,12 +867,35 @@ export default function Orders() {
       setSelectedClientId(clientId);
       // Скидаємо обрану контактну особу при зміні клієнта
       form.setValue("clientContactsId", undefined);
+      form.setValue("customerEmail", "");
+      form.setValue("customerPhone", "");
     } else {
       setSelectedClientId("");
       setClientContactsForOrder([]);
       form.setValue("clientContactsId", undefined);
+      form.setValue("customerEmail", "");
+      form.setValue("customerPhone", "");
     }
   }, [form.watch("clientId")]);
+
+  // Автозаповнення контактних даних при виборі контактної особи
+  useEffect(() => {
+    const contactId = form.watch("clientContactsId");
+    if (contactId && clientContactsForOrder.length > 0) {
+      const selectedContact = clientContactsForOrder.find(contact => contact.id === contactId);
+      if (selectedContact) {
+        form.setValue("customerEmail", selectedContact.email || "");
+        form.setValue("customerPhone", selectedContact.phone || "");
+      }
+    }
+  }, [form.watch("clientContactsId"), clientContactsForOrder]);
+
+  // Автозаповнення компанії при завантаженні компаній
+  useEffect(() => {
+    if (defaultCompany && !form.watch("companyId")) {
+      form.setValue("companyId", defaultCompany.id);
+    }
+  }, [defaultCompany]);
   
   const clientsList = clientSearchData?.clients || [];
 

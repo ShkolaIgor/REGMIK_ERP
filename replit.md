@@ -130,6 +130,14 @@ User has Russian-language 1C system and needs integration setup guidance.
 
 ## Recent Changes
 
+### July 28, 2025
+- ✅ **AUTO-FILL FUNCTIONALITY FOR ORDER FORM COMPLETED** - Implemented automatic company name filling (default company) and contact details (email/phone) when contact person is selected in order creation form
+- ✅ **DEFAULT COMPANY AUTO-SELECTION** - Added automatic selection of default company when creating new orders based on isDefault flag
+- ✅ **CONTACT DETAILS AUTO-POPULATION** - When selecting contact person in order form, email and phone fields are automatically filled from contact data
+- ✅ **BOM API ENHANCEMENT COMPLETED** - Added getAllProductComponents endpoint to server for comprehensive BOM data retrieval across all products
+- ✅ **SMART FORM RESET LOGIC** - Enhanced form state management to clear contact details when changing clients and auto-fill when selecting contacts
+- ✅ **FORM VALIDATION IMPROVEMENTS** - Integrated auto-fill functionality with existing form validation and state management systems
+
 ### July 27, 2025
 - ✅ **РЕВОЛЮЦІЙНЕ ВИПРАВЛЕННЯ: АВТОМАТИЧНЕ СТВОРЕННЯ ТОВАРІВ З 1С ПОВНІСТЮ РЕАЛІЗОВАНО** - система тепер автоматично створює товари в базі даних при import з 1С webhook
 - ✅ **ТРИСТАДІЙНИЙ ПОШУК З АВТОСТВОРЕННЯМ** - спочатку точний пошук, потім ILIKE пошук, потім автоматичне створення товару якщо не знайдено
