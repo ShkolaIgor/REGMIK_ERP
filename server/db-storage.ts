@@ -1270,6 +1270,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOrderWithItems(id: number, insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined> {
+    console.log("🔧 DEBUG: updateOrderWithItems called for order", id);
+    console.log("🔧 DEBUG: insertOrder received:", JSON.stringify(insertOrder, null, 2));
     try {
       // Отримуємо ціни товарів з бази даних та розраховуємо загальну суму
       let totalAmount = 0;
