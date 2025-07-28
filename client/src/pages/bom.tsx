@@ -329,7 +329,9 @@ export default function BOMPage() {
                                 variant="ghost"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleProductSelect(product);
+                                  setSelectedProductId(product.id);
+                                  setSelectedProduct(product);
+                                  handleAddComponent();
                                 }}
                                 title="Створити BOM"
                                 className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-1 h-auto"
