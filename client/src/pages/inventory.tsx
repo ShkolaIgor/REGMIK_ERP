@@ -196,7 +196,7 @@ export default function Inventory() {
                   </div>
                   <div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                      Товарний каталог
+                      Запаси товарів
                     </h1>
                     <p className="text-gray-500 mt-1">Управління товарами на складах</p>
                   </div>

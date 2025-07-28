@@ -179,52 +179,78 @@ export default function ComponentStockPage() {
       </header>
 
       {/* Statistics Cards */}
-      <div className="w-full px-8 py-6">
+      <div className="w-full px-8 py-3">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Всього компонентів</p>
-                  <div className="text-2xl font-bold">{totalComponents}</div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Package className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього компонентів</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalComponents}</p>
+
                 </div>
-                <Package className="w-8 h-8 text-blue-600" />
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Package className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Відсутні</p>
-                  <div className="text-2xl font-bold text-red-600">{outOfStock}</div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertTriangle className="w-4 h-4 text-red-600" />
+                    <p className="text-sm text-red-700 font-medium">Відсутні</p>
+                  </div>
+                  <p className="text-3xl font-bold text-red-900 mb-1">{outOfStock}</p>
                 </div>
-                <AlertTriangle className="w-8 h-8 text-red-600" />
+                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <AlertTriangle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <p className="text-sm text-yellow-700 font-medium">Низький запас</p>
+                  </div>
+                  <p className="text-3xl font-bold text-yellow-900 mb-1">{lowStock}</p>
+                  <p className="text-xs text-yellow-600">Потрібна увага</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Низький запас</p>
-                  <div className="text-2xl font-bold text-yellow-600">{lowStock}</div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-emerald-700 font-medium">Нормальний запас</p>
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">{normalStock}</p>
                 </div>
-                <Clock className="w-8 h-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Нормальний запас</p>
-                  <div className="text-2xl font-bold text-green-600">{normalStock}</div>
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <CheckCircle className="w-8 h-8 text-white" />
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
