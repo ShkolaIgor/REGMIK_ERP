@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle, Copy, Tags, Check } from "lucide-react";
+import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle, Copy, Tags, Check, Settings } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ProductsXmlImport } from "@/components/ProductsXmlImport";
@@ -123,6 +123,11 @@ export default function ProductsPage() {
       barcode: null, // Очищуємо штрих-код для копії
     };
     setEditingProduct(copiedProduct);
+  };
+
+  const handleCreateBOM = (product: Product) => {
+    // Переходимо на сторінку BOM з параметром productId
+    window.location.href = `/bom?productId=${product.id}`;
   };
 
   const handleDelete = (product: Product) => {
@@ -768,6 +773,15 @@ export default function ProductsPage() {
                   <Button 
                     variant="outline" 
                     size="sm" 
+                    onClick={() => handleCreateBOM(product)}
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    title="Створити BOM"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
                     onClick={() => handleCopy(product)}
                     className="text-green-600 hover:text-green-700 hover:bg-green-50"
                   >
@@ -798,6 +812,18 @@ export default function ProductsPage() {
                 title="Редагувати товар"
               >
                 <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCreateBOM(product);
+                }}
+                className="h-8 w-8 p-0 hover:bg-purple-50 hover:scale-110 transition-all duration-200 text-purple-600 hover:text-purple-700"
+                title="Створити BOM"
+              >
+                <Settings className="h-4 w-4" />
               </Button>
               <Button 
                 variant="ghost" 

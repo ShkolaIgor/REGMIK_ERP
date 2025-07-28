@@ -135,6 +135,8 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **DEFAULT COMPANY AUTO-SELECTION** - Added automatic selection of default company when creating new orders based on isDefault flag
 - ✅ **CONTACT DETAILS AUTO-POPULATION** - When selecting contact person in order form, email and phone fields are automatically filled from contact data
 - ✅ **BOM API ENHANCEMENT COMPLETED** - Added getAllProductComponents endpoint to server for comprehensive BOM data retrieval across all products
+- ✅ **BOM CREATION BUTTON IN PRODUCT LIST COMPLETED** - Added "Create BOM" button to product actions in both card view and table view for streamlined workflow
+- ✅ **PRODUCT LIST WORKFLOW ENHANCEMENT** - Direct BOM creation from product list without navigation to separate pages, improving user experience
 - ✅ **SMART FORM RESET LOGIC** - Enhanced form state management to clear contact details when changing clients and auto-fill when selecting contacts
 - ✅ **FORM VALIDATION IMPROVEMENTS** - Integrated auto-fill functionality with existing form validation and state management systems
 
