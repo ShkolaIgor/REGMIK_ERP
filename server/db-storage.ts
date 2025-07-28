@@ -1833,7 +1833,74 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(components);
   }
 
+  // Метод для отримання запасів компонентів на складі
+  async getComponentStocks(): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          c.id as component_id,
+          c.name as component_name,
+          c.sku,
+          c.description,
+          c.cost_price,
+          c.supplier,
+          c.category_id,
+          c.is_active,
+          COALESCE(sri.total_received, 0) as quantity,
+          COALESCE(c.min_stock, 0) as min_stock,
+          COALESCE(c.max_stock, 100) as max_stock,
+          1 as warehouse_id,
+          'Основний склад' as warehouse_name,
+          cc.id as category_id,
+          cc.name as category_name,
+          cc.color as category_color
+        FROM components c
+        LEFT JOIN component_categories cc ON c.category_id = cc.id
+        LEFT JOIN (
+          SELECT 
+            component_id,
+            SUM(quantity) as total_received
+          FROM supplier_receipt_items 
+          WHERE component_id IS NOT NULL
+          GROUP BY component_id
+        ) sri ON c.id = sri.component_id
+        WHERE c.is_active = true
+        ORDER BY c.name
+      `;
 
+      const result = await pool.query(query);
+      
+      return result.rows.map(row => ({
+        componentId: row.component_id,
+        warehouseId: row.warehouse_id,
+        quantity: parseInt(row.quantity) || 0,
+        minStock: parseInt(row.min_stock) || 0,
+        maxStock: parseInt(row.max_stock) || 100,
+        component: {
+          id: row.component_id,
+          name: row.component_name,
+          sku: row.sku,
+          description: row.description,
+          costPrice: row.cost_price || "0",
+          supplier: row.supplier,
+          categoryId: row.category_id,
+          isActive: row.is_active,
+          category: row.category_id ? {
+            id: row.category_id,
+            name: row.category_name,
+            color: row.category_color
+          } : null
+        },
+        warehouse: {
+          id: row.warehouse_id,
+          name: row.warehouse_name
+        }
+      }));
+    } catch (error) {
+      console.error('Error getting component stocks:', error);
+      return [];
+    }
+  }
 
   async getComponent(id: number): Promise<Component | undefined> {
     const result = await db.select().from(components).where(eq(components.id, id));

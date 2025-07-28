@@ -41,6 +41,7 @@ import WarehouseTransfers from "@/pages/warehouse-transfers";
 import Positions from "@/pages/positions";
 import Departments from "@/pages/departments";
 import Components from "@/pages/components";
+import ComponentStock from "@/pages/component-stock";
 import PackageTypes from "@/pages/package-types";
 import SolderingTypes from "@/pages/soldering-types";
 import Units from "@/pages/units";
@@ -196,6 +197,7 @@ function Router() {
         )} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/inventory" component={Inventory} />
+        <Route path="/component-stock" component={ComponentStock} />
         <Route path="/production" component={Production} />
         <Route path="/orders" component={Orders} />
         <Route path="/clients" component={Clients} />

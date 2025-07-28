@@ -1763,6 +1763,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Component stocks route
+  app.get("/api/component-stocks", async (req, res) => {
+    try {
+      const componentStocks = await storage.getComponentStocks();
+      res.json(componentStocks);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch component stocks", details: error.message });
+    }
+  });
+
   // Units routes
   app.get("/api/units", async (req, res) => {
     try {

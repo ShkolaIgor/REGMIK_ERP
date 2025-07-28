@@ -224,6 +224,7 @@ export interface IStorage {
 
   // Components
   getComponents(): Promise<Component[]>;
+  getComponentStocks(): Promise<any[]>;
   getComponent(id: number): Promise<Component | undefined>;
   createComponent(insertComponent: InsertComponent): Promise<Component>;
   updateComponent(id: number, componentData: Partial<InsertComponent>): Promise<Component | undefined>;
@@ -1436,6 +1437,11 @@ export class MemStorage implements IStorage {
   // Components
   async getComponents(): Promise<Component[]> {
     return [...this.components.values()];
+  }
+
+  async getComponentStocks(): Promise<any[]> {
+    // Заглушка для MemStorage - повертає порожній масив
+    return [];
   }
 
   async getComponent(id: number): Promise<Component | undefined> {
