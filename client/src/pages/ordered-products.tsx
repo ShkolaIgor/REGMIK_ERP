@@ -154,7 +154,7 @@ export default function OrderedProductsPage() {
         {/* Results */}
         <Card>
           <CardHeader>
-            <CardTitle>Замовлені товари ({filteredProducts.length})</CardTitle>
+            <CardTitle>Замовлені товари</CardTitle>
           </CardHeader>
           <CardContent>
             {filteredProducts.length === 0 ? (
