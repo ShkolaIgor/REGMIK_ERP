@@ -519,6 +519,37 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
     }
   };
 
+  const handlePrintAllDepartments = async () => {
+    if (!printData) return;
+    
+    setIsPrinting(true);
+    
+    try {
+      const printHTML = generateAllDepartmentsPrintHTML();
+      const printWindow = window.open('', '_blank');
+      
+      if (printWindow) {
+        printWindow.document.write(printHTML);
+        printWindow.document.close();
+        printWindow.print();
+        
+        toast({
+          title: "Успіх",
+          description: "Виробничий лист для всіх відділів відправлено на друк",
+        });
+      }
+    } catch (error) {
+      console.error('Помилка друку:', error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося роздрукувати виробничий лист",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
 
 
   if (isLoading) {
@@ -591,10 +622,30 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           {/* Відділи виробництва */}
           {departments.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Відділи виробництва ({departments.length})
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Відділи виробництва ({departments.length})
+                </h3>
+                
+                <Button 
+                  onClick={handlePrintAllDepartments}
+                  disabled={isPrinting}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isPrinting ? (
+                    <>
+                      <div className="h-4 w-4 mr-2 animate-spin rounded-full border border-white border-t-transparent" />
+                      Друк...
+                    </>
+                  ) : (
+                    <>
+                      <Printer className="h-4 w-4 mr-2" />
+                      Друкувати всі відділи
+                    </>
+                  )}
+                </Button>
+              </div>
 
               <div className="grid gap-4">
                 {departments.map((department) => (
