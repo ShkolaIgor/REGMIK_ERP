@@ -6208,6 +6208,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`PATCH /api/clients/${id} - Request body:`, JSON.stringify(req.body, null, 2));
       console.log(`PATCH /api/clients/${id} - Update data:`, JSON.stringify(updateData, null, 2));
+      console.log(`PATCH /api/clients/${id} - Contact fields:`, {
+        contactPerson: updateData.contactPerson,
+        contactPersonId: updateData.contactPersonId,
+        phone: updateData.phone,
+        email: updateData.email,
+        website: updateData.website
+      });
       
       const client = await storage.updateClient(id, updateData);
       if (!client) {
