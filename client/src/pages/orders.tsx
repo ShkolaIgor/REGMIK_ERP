@@ -1716,7 +1716,7 @@ export default function Orders() {
         statusId,
         totalAmount,
         ...(data.clientId && data.clientId !== '' && { clientId: parseInt(data.clientId) }),
-        ...(data.clientContactsId && data.clientContactsId !== '' && { clientContactsId: data.clientContactsId }),
+        ...(data.clientContactsId && data.clientContactsId !== '' && { clientContactsId: parseInt(data.clientContactsId) }),
         ...(data.companyId && data.companyId !== '' && { companyId: parseInt(data.companyId) }),
         ...(data.invoiceNumber && data.invoiceNumber !== '' && { invoiceNumber: data.invoiceNumber }),
         ...(data.carrierId && data.carrierId !== '' && { carrierId: parseInt(data.carrierId) }),

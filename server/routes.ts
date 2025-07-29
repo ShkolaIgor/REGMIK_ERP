@@ -1062,7 +1062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyId: order.companyId && order.companyId !== '' ? parseInt(order.companyId) : undefined,
         clientId: order.clientId && order.clientId !== '' ? parseInt(order.clientId) : undefined,
         carrierId: order.carrierId && order.carrierId !== '' ? parseInt(order.carrierId) : undefined,
-        clientContactsId: order.clientContactsId && order.clientContactsId !== '' ? order.clientContactsId : undefined,
+        clientContactsId: order.clientContactsId && order.clientContactsId !== '' ? parseInt(order.clientContactsId) : undefined,
       };
       
       console.log("🔧 DEBUG: Cleaned order data:", JSON.stringify(cleanedOrder, null, 2));
