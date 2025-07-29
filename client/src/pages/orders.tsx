@@ -2058,7 +2058,7 @@ export default function Orders() {
                       clientId={form.watch("clientId") ? parseInt(form.watch("clientId")) : undefined}
                       value={isEditMode ? (editingOrder?.contact?.fullName || editingOrder?.contactName || "") : ""}
                       onChange={async (contactId, contactName) => {
-                        console.log("ContactPersonAutocomplete onChange:", { contactId, contactName });
+                        //console.log("ContactPersonAutocomplete onChange:", { contactId, contactName });
                         form.setValue("clientContactsId", contactId ? contactId.toString() : "");
                         
                         // Автозаповнення email та телефону з контактної особи
@@ -2071,17 +2071,17 @@ export default function Orders() {
                               if (response.ok) {
                                 const contactsData = await response.json();
                                 const selectedContact = contactsData?.find((c: any) => c.id === contactId);
-                                console.log("Found selected contact:", selectedContact);
+                                //console.log("Found selected contact:", selectedContact);
                                 if (selectedContact) {
                                   if (selectedContact.email) {
-                                    console.log("Setting email:", selectedContact.email);
+                                    //console.log("Setting email:", selectedContact.email);
                                     form.setValue("customerEmail", selectedContact.email);
                                   }
                                   if (selectedContact.primaryPhone) {
-                                    console.log("Setting phone:", selectedContact.primaryPhone);
+                                    //console.log("Setting phone:", selectedContact.primaryPhone);
                                     form.setValue("customerPhone", selectedContact.primaryPhone);
                                   } else if (selectedContact.phone) {
-                                    console.log("Setting phone (fallback):", selectedContact.phone);
+                                    //console.log("Setting phone (fallback):", selectedContact.phone);
                                     form.setValue("customerPhone", selectedContact.phone);
                                   }
                                 }
@@ -2092,7 +2092,7 @@ export default function Orders() {
                           }
                         }
                       }}
-                      placeholder={!form.watch("clientId") ? "Спочатку оберіть клієнта" : "Почніть вводити ім'я контакта..."}
+                      //placeholder={!form.watch("clientId") ? "Спочатку оберіть клієнта" : "Почніть вводити ім'я контакта..."}
                       disabled={!form.watch("clientId")}
                     />
                   </div>
