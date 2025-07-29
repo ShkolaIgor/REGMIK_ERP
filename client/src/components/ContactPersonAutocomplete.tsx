@@ -38,13 +38,10 @@ export function ContactPersonAutocomplete({
   placeholder = "Введіть ім'я контактної особи...",
   disabled = false 
 }: ContactPersonAutocompleteProps) {
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState(value || "");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<number | undefined>();
-  const [isUserTyping, setIsUserTyping] = useState(false);
-  const previousValueRef = useRef<string>("");
-  const isInitializedRef = useRef(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -140,7 +137,6 @@ export function ContactPersonAutocomplete({
   // Обробка зміни тексту в полі пошуку
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    setIsUserTyping(true);
     setSearchValue(newValue);
     
     if (newValue.length >= 1) {
@@ -154,9 +150,6 @@ export function ContactPersonAutocomplete({
       setSelectedContactId(undefined);
       onChange(undefined, undefined);
     }
-    
-    // Скидаємо флаг користувацького введення через секунду
-    setTimeout(() => setIsUserTyping(false), 1000);
   };
 
   // Обробка фокусу на полі
@@ -174,6 +167,9 @@ export function ContactPersonAutocomplete({
     }, 200);
   };
 
+  // Просто показуємо дані з БД без зайвих useEffect
+  const displayValue = searchValue || value || "";
+  
   // Очищення при зміні клієнта
   useEffect(() => {
     setSearchValue("");
@@ -181,35 +177,7 @@ export function ContactPersonAutocomplete({
     setIsDropdownOpen(false);
   }, [clientId]);
 
-  // Ініціалізація значення тільки при реальній зміні value prop
-  useEffect(() => {
-    if (value && value !== previousValueRef.current && contactsData.length > 0 && !isUserTyping) {
-      const contact = contactsData.find((c: any) => c.fullName === value);
-      if (contact) {
-        setSelectedContactId(contact.id);
-        setSearchValue(contact.fullName);
-      } else {
-        setSearchValue(value);
-      }
-      previousValueRef.current = value;
-      isInitializedRef.current = true;
-    } else if (!value && previousValueRef.current && !isUserTyping) {
-      setSearchValue("");
-      setSelectedContactId(undefined);
-      previousValueRef.current = "";
-    }
-  }, [value, contactsData, isUserTyping]);
 
-  // Оновлення після створення нового контакту
-  useEffect(() => {
-    if (contactsData.length > 0 && !selectedContactId && searchValue) {
-      const contact = contactsData.find((c: any) => c.fullName === searchValue);
-      if (contact) {
-        setSelectedContactId(contact.id);
-        onChange(contact.id, contact.fullName);
-      }
-    }
-  }, [contactsData, selectedContactId, searchValue, onChange]);
 
   // Обробка створення нового контакту
   const handleCreateContact = (data: ContactFormData) => {
@@ -238,7 +206,7 @@ export function ContactPersonAutocomplete({
   return (
     <div className="relative">
       <Input
-        value={searchValue}
+        value={displayValue}
         onChange={handleSearchChange}
         onFocus={handleFocus}
         onBlur={() => setTimeout(() => setIsDropdownOpen(false), 300)}
