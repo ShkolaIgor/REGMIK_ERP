@@ -271,13 +271,9 @@ export default function Orders() {
         
         const showGreenDot = isRecentlyUpdated || hasRecentPayment;
         
-        // Debug: логуємо прострочені замовлення
+        // Check for overdue orders (logging removed for production)
         if (isOverdue) {
-            id: order.id,
-            orderNumber: order.orderNumber,
-            dueDate: order.dueDate,
-            isOverdue
-          });
+          // Order is overdue - visual indicators will show this
         }
         
         return (
@@ -1620,13 +1616,7 @@ export default function Orders() {
       
       // Debug: перевіряємо логіку прострочених замовлень
       if (isOverdue) {
-          id: order.id,
-          orderNumber: order.orderNumber,
-          dueDate: order.dueDate,
-          paidAmount,
-          totalAmount,
-          isPastDue: today > dueDate
-        });
+        // Order is overdue, will be shown with visual indicators
       }
       
       return isOverdue;
@@ -1762,10 +1752,10 @@ export default function Orders() {
         statusId,
         totalAmount,
         ...(data.clientId && data.clientId !== '' && { clientId: parseInt(data.clientId) }),
-        ...(data.clientContactsId && data.clientContactsId !== '' && { clientContactsId: parseInt(data.clientContactsId) }),
+        ...(data.clientContactsId && String(data.clientContactsId) !== '' && { clientContactsId: typeof data.clientContactsId === 'string' ? parseInt(data.clientContactsId) : data.clientContactsId }),
         ...(data.companyId && data.companyId !== '' && { companyId: parseInt(data.companyId) }),
         ...(data.invoiceNumber && data.invoiceNumber !== '' && { invoiceNumber: data.invoiceNumber }),
-        ...(data.carrierId && data.carrierId !== '' && { carrierId: parseInt(data.carrierId) }),
+        ...(data.carrierId && data.carrierId !== '' && data.carrierId !== null && { carrierId: parseInt(data.carrierId) }),
         ...(data.notes && data.notes !== '' && { notes: data.notes }),
         ...(data.paymentDate && data.paymentDate !== '' && { paymentDate: parseDateForServer(data.paymentDate) }),
         ...(data.dueDate && data.dueDate !== '' && { dueDate: parseDateForServer(data.dueDate) }),
@@ -1786,9 +1776,6 @@ export default function Orders() {
     
     if (isEditMode && editingOrder) {
       // Редагування існуючого замовлення
-        id: editingOrder.id,
-        ...orderData,
-      });
       updateOrderMutation.mutate({
         id: editingOrder.id,
         ...orderData,
