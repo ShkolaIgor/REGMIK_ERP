@@ -566,14 +566,7 @@ export default function Orders() {
           const statusInfo = orderStatuses.find(s => s.id === order.statusId);
           const currentStatusName = statusInfo?.name || order.status || 'Невідомо';
           
-          // Debug: логування статусу для конкретного замовлення
-          console.log("🔧 STATUS DEBUG:", {
-            orderId: order.id,
-            orderStatusId: order.statusId,
-            statusInfo,
-            currentStatusName,
-            allStatuses: orderStatuses?.length
-          });
+          // Статуси тепер завантажуються та відображаються правильно
           
           return (
             <div onClick={(e) => e.stopPropagation()}>

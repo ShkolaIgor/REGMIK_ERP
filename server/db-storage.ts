@@ -811,6 +811,7 @@ export class DatabaseStorage implements IStorage {
           carrierId: order.carrier_id,
           companyId: order.company_id,
           status: order.status,
+          statusId: order.status_id, // ДОДАНО: statusId для відображення статусу
           totalAmount: order.total_amount,
           paidAmount: order.paid_amount,
           shippingCost: order.shipping_cost,

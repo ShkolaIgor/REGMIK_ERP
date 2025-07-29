@@ -1,0 +1,251 @@
+[Log] 🔧 FRONTEND: Updating status – {id: 174, statusId: 10} (orders.tsx, line 1120)
+[Log] apiRequest - Status update: – {url: "/api/orders/174/status", method: "PUT", data: {statusId: 10}} (queryClient.ts, line 36)
+[Log] Frontend: Making PUT request to: /api/orders/174/status (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"statusId\":10}" (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "sidebar_state=true" (queryClient.ts, line 51)
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 174, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 174, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔴 OVERDUE ORDER: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 201)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", isOverdue: true}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 173, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 173, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 172, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 172, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 171, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 171, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 170, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 170, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 169, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 169, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 168, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 168, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 167, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 167, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 166, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 166, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 165, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 165, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 164, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 164, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 163, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 163, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 162, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 162, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 161, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 161, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 160, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 160, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 158, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 158, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 157, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 157, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 156, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 156, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 155, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 155, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 154, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 154, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 152, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 152, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 151, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 151, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 150, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 150, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 149, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 149, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 148, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 148, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] Frontend: Response status: 200 for PUT /api/orders/174/status (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "737", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 06:05:09 GMT", …} (queryClient.ts, line 67)
+{content-length: "737", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 06:05:09 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] 🔧 FRONTEND: Status update result – {id: 174, orderSequenceNumber: 167, orderNumber: "ORD-1753708471532", …} (orders.tsx, line 1123)
+{id: 174, orderSequenceNumber: 167, orderNumber: "ORD-1753708471532", clientId: 79, clientContactsId: null, …}Object
+[Log] 🔧 FRONTEND: Status update SUCCESS – {data: Object, variables: {id: 174, statusId: 10}} (orders.tsx, line 1127)
+{data: Object, variables: {id: 174, statusId: 10}}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 174, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 174, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔴 OVERDUE ORDER: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 201)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", isOverdue: true}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 173, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 173, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 172, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 172, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 171, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 171, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 170, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 170, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 169, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 169, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 168, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 168, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 167, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 167, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 166, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 166, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 165, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 165, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 164, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 164, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 163, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 163, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 162, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 162, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 161, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 161, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 160, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 160, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 158, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 158, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 157, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 157, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 156, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 156, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 155, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 155, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 154, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 154, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 152, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 152, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 151, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 151, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 150, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 150, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 149, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 149, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 148, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 148, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 174, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 174, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔴 OVERDUE ORDER: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 201)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", isOverdue: true}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔍 OVERDUE LOGIC: – {id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", …} (orders.tsx, line 1616)
+{id: 173, orderNumber: "ORD-1753702317646", dueDate: "2025-07-21T21:00:00.000Z", paidAmount: 0, totalAmount: 35200, …}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 173, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 173, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 172, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 172, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 171, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 171, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 170, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 170, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 169, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 169, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 168, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 168, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 167, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 167, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 166, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 166, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 165, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 165, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 164, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 164, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 163, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 163, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 162, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 162, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 161, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 161, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "pending", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: (orders.tsx, line 676)
+Object
+
+allStatuses: 12
+
+currentStatusName: "pending"
+
+orderId: 160
+
+orderStatusId: undefined
+
+statusInfo: undefined
+
+Object Prototype
+[Log] 🔧 STATUS DEBUG: – {orderId: 158, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 158, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: (orders.tsx, line 676)
+Object
+
+allStatuses: 12
+
+currentStatusName: "confirmed"
+
+orderId: 157
+
+orderStatusId: undefined
+
+statusInfo: undefined
+
+Object Prototype
+[Log] 🔧 STATUS DEBUG: – {orderId: 156, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 156, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 155, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 155, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "confirmed", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 154, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 154, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "Нове", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 152, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 152, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 151, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 151, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 150, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 150, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: – {orderId: 149, orderStatusId: undefined, statusInfo: undefined, …} (orders.tsx, line 676)
+{orderId: 149, orderStatusId: undefined, statusInfo: undefined, currentStatusName: "processing", allStatuses: 12}Object
+[Log] 🔧 STATUS DEBUG: (orders.tsx, line 676)
+Object
+
+allStatuses: 12
+
+currentStatusName: "processing"
+
+orderId: 148
+
+orderStatusId: undefined
+
+statusInfo: undefined
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
