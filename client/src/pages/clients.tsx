@@ -18,7 +18,7 @@ import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { 
   Search, Plus, Edit, User, Building2, Truck, Package, Percent,
-  Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload, FileText, Download, Scan, Printer 
+  Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload, FileText, Download, Scan, Printer, Globe 
 } from "lucide-react";
 import { Client, type InsertClient } from "@shared/schema";
 import ClientForm from "@/components/ClientForm";
@@ -692,6 +692,38 @@ export default function Clients() {
               <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.physicalAddress}</p>
             </div>
           )}
+          
+          {/* Контактна інформація */}
+          {(client.contactPerson || client.phone || client.email || client.website) && (
+            <div className="space-y-2">
+              <span className="font-medium text-foreground">Контактна інформація:</span>
+              {client.contactPerson && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  <span>{client.contactPerson}</span>
+                </div>
+              )}
+              {client.phone && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Phone className="h-3 w-3" />
+                  <span>{client.phone}</span>
+                </div>
+              )}
+              {client.email && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Mail className="h-3 w-3" />
+                  <span>{client.email}</span>
+                </div>
+              )}
+              {client.website && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Globe className="h-3 w-3" />
+                  <span>{client.website}</span>
+                </div>
+              )}
+            </div>
+          )}
+          
           {client.notes && (
             <div>
               <span className="font-medium text-foreground">Примітки:</span>
