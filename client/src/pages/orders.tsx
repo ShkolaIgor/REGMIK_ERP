@@ -1425,14 +1425,27 @@ export default function Orders() {
 
   // Функція для закриття діалогу редагування
   const handleCloseEditDialog = () => {
+    setIsDialogOpen(false);
     setIsEditMode(false);
     setEditingOrder(null);
     setOrderItems([]);
+    setClientSearchValue("");
+    setClientComboboxOpen(false);
+    setSelectedClientId("");
+    setSelectedCompanyId("");
+    setSelectedContactId(undefined);
+    setClientContactsForOrder([]);
+    setProductSearchTerm("");
     form.reset();
   };
 
   // Функція для початку редагування замовлення - МАКСИМАЛЬНО ОПТИМІЗОВАНА
   const handleEditOrder = (order: any) => {
+    console.log("handleEditOrder called with order:", order);
+    
+    // Спочатку очищаємо попередній стан для запобігання проблемам
+    setClientContactsForOrder([]);
+    setSelectedContactId(undefined);
     
     // Швидке встановлення стану без зайвих операцій
     setEditingOrder(order);
@@ -1798,7 +1811,12 @@ export default function Orders() {
               </div>
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 if (!open) {
-                  handleCloseDialog();
+                  // Використовуємо правильний handler в залежності від режиму
+                  if (isEditMode) {
+                    handleCloseEditDialog();
+                  } else {
+                    handleCloseDialog();
+                  }
                 } else {
                   setIsDialogOpen(open);
                 }
