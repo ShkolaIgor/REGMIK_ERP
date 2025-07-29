@@ -424,9 +424,19 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                   <ContactPersonAutocomplete
                     clientId={editingClient?.id}
                     value={field.value}
-                    onChange={(contactId, contactName) => {
+                    onChange={(contactId, contactName, contactData) => {
                       field.onChange(contactName || "");
                       form.setValue("contactPersonId", contactId);
+                      
+                      // Автозаповнення email та телефону при виборі контакту
+                      if (contactData) {
+                        if (contactData.email) {
+                          form.setValue("email", contactData.email);
+                        }
+                        if (contactData.phone) {
+                          form.setValue("phone", contactData.phone);
+                        }
+                      }
                     }}
                     placeholder="Введіть ім'я контактної особи..."
                   />

@@ -1658,7 +1658,7 @@ export default function Orders() {
   // Функції для роботи з клієнтами - серверний пошук замість клієнтського фільтрування
   const filteredClients = clientsList; // Дані вже відфільтровані на сервері
 
-  const handleClientSelect = (clientId: string) => {
+  const handleClientSelect = async (clientId: string) => {
     
     // Шукаємо клієнта у відфільтрованому списку
     const selectedClient = filteredClients.find((c: any) => c.id.toString() === clientId);
@@ -1672,6 +1672,31 @@ export default function Orders() {
       // Очищаємо контакт при зміні клієнта
       form.setValue("clientContactsId", "");
       setSelectedContactId(undefined);
+      
+      // Автоматично вибираємо primary контакт якщо є
+      try {
+        const contactsResponse = await fetch(`/api/client-contacts?clientId=${clientId}`);
+        if (contactsResponse.ok) {
+          const contacts = await contactsResponse.json();
+          const primaryContact = contacts.find((contact: any) => contact.isPrimary);
+          
+          if (primaryContact && !isEditMode) {
+            // Автоматично вибираємо primary контакт для нових замовлень
+            form.setValue("clientContactsId", primaryContact.id.toString());
+            setSelectedContactId(primaryContact.id);
+            
+            // Автозаповнення email та телефону
+            if (primaryContact.email) {
+              form.setValue("customerEmail", primaryContact.email);
+            }
+            if (primaryContact.primaryPhone) {
+              form.setValue("customerPhone", primaryContact.primaryPhone);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Помилка завантаження primary контакту:", error);
+      }
       
     } else {
     }
