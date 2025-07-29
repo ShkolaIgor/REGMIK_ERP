@@ -566,6 +566,15 @@ export default function Orders() {
           const statusInfo = orderStatuses.find(s => s.id === order.statusId);
           const currentStatusName = statusInfo?.name || order.status || 'Невідомо';
           
+          // Debug: логування статусу для конкретного замовлення
+          console.log("🔧 STATUS DEBUG:", {
+            orderId: order.id,
+            orderStatusId: order.statusId,
+            statusInfo,
+            currentStatusName,
+            allStatuses: orderStatuses?.length
+          });
+          
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <Select
@@ -714,8 +723,15 @@ export default function Orders() {
 
 
   // Завантажуємо статуси для відображення в таблиці замовлень
-  const { data: orderStatuses = [] } = useQuery<OrderStatus[]>({
+  const { data: orderStatuses = [], isLoading: isLoadingStatuses } = useQuery<OrderStatus[]>({
     queryKey: ["/api/order-statuses"],
+    queryFn: async () => {
+      const response = await fetch('/api/order-statuses');
+      if (!response.ok) throw new Error('Failed to fetch order statuses');
+      const data = await response.json();
+      console.log("🔧 ORDER STATUSES LOADED:", data?.length || 0, "statuses");
+      return data;
+    },
     // Статуси потрібні для відображення колонки статусу в таблиці замовлень
   });
 
@@ -955,10 +971,14 @@ export default function Orders() {
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
     mutationFn: async (params: { id: number; statusId: number }) => {
+      console.log("🔧 FRONTEND: Updating status", params);
       const requestData = { statusId: params.statusId };
-      return await apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
+      const result = await apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
+      console.log("🔧 FRONTEND: Status update result", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log("🔧 FRONTEND: Status update SUCCESS", { data, variables });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       toast({
@@ -966,7 +986,8 @@ export default function Orders() {
         description: "Статус оновлено",
       });
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
+      console.error("🔧 FRONTEND: Status update ERROR", { error, variables });
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити статус",
