@@ -130,6 +130,14 @@ User has Russian-language 1C system and needs integration setup guidance.
 
 ## Recent Changes
 
+### July 29, 2025
+- ✅ **ORDERS DATATABLE MIGRATION COMPLETED** - Successfully replaced legacy Table component with modern DataTable on orders page
+- ✅ **CONSISTENT TABLE INTERFACE** - Orders page now uses same DataTable component as other pages (component-stock, etc.) for unified UX
+- ✅ **PRESERVED FUNCTIONALITY** - Maintained all existing features including expandable order details, ComponentDeductions, and column rendering
+- ✅ **CODE CLEANUP** - Removed obsolete Table imports, column ordering logic, drag-drop functionality, and unused state variables
+- ✅ **FIXED JSX STRUCTURE** - Resolved syntax errors and properly structured DataTable implementation with correct div nesting
+- ✅ **ENHANCED PERFORMANCE** - DataTable provides better sorting, filtering, and pagination performance compared to legacy Table
+
 ### July 28, 2025
 - ✅ **PAYMENT DATE DISPLAY PRIORITY SYSTEM COMPLETED** - Fixed payment date display logic to prioritize order_payments table over orders.payment_date field
 - ✅ **DUAL PAYMENT DATA SOURCE INTEGRATION** - System now shows dates from bank-imported payments (order_payments) with fallback to manual orders.payment_date

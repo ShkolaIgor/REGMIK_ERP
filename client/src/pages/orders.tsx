@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DataTable, DataTableColumn } from "@/components/DataTable";
+
+import { DataTable } from "@/components/DataTable/DataTable";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Building2 } from "lucide-react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, ChevronUp, ChevronDown, Search, Filter, X, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Building2 } from "lucide-react";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -223,39 +222,7 @@ export default function Orders() {
   // Пагінація
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(25);
-  const [showPaginationSettings, setShowPaginationSettings] = useState(false);
-  
-  // Стан для керування порядком стовпців
-  const [columnOrder, setColumnOrder] = useState(() => {
-    const defaultColumns = [
-      'orderSequenceNumber',
-      'orderNumber', 
-      'clientName',
-      'paymentDate',
-      'dueDate',
-      'totalAmount',
-      'shippedDate',
-      'status',
-      'actions'
-    ];
-    
-    const saved = localStorage.getItem('orders-column-order');
-    if (saved) {
-      try {
-        const parsedColumns = JSON.parse(saved);
-        // Переконуємося що колонка 'actions' завжди присутня
-        if (!parsedColumns.includes('actions')) {
-          parsedColumns.push('actions');
-        }
-        return parsedColumns;
-      } catch (e) {
-        console.error('Error parsing saved column order:', e);
-        return defaultColumns;
-      }
-    }
-    
-    return defaultColumns;
-  });
+
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -285,30 +252,7 @@ export default function Orders() {
     setDateRangeFilter("all");
   };
 
-  // Функція обробки перетягування стовпців
-  const handleColumnDragEnd = (result: any) => {
-    if (!result.destination) return;
 
-    const newColumnOrder = Array.from(columnOrder);
-    const [reorderedItem] = newColumnOrder.splice(result.source.index, 1);
-    newColumnOrder.splice(result.destination.index, 0, reorderedItem);
-
-    setColumnOrder(newColumnOrder);
-    localStorage.setItem('orders-column-order', JSON.stringify(newColumnOrder));
-  };
-
-  // Мапа назв стовпців
-  const columnLabels = {
-    orderSequenceNumber: 'Замовлення',
-    orderNumber: 'Рахунок',
-    clientName: 'Клієнт',
-    paymentDate: 'Дата оплати',
-    dueDate: 'Термін виконання',
-    totalAmount: 'Сума',
-    shippedDate: 'Відвантаження',
-    status: 'Статус',
-    actions: 'Дії'
-  };
 
   // Функція рендерингу контенту стовпця
   const renderColumnContent = (columnKey: string, order: any) => {
@@ -2725,304 +2669,179 @@ export default function Orders() {
 
         {/* Orders Table */}
         <div className="w-full pt-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Список замовлень</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {orders.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Замовлення відсутні</p>
-                <Button className="mt-4" onClick={() => {
-                  setIsEditMode(false);
-                  setEditingOrder(null);
-                  setOrderItems([]);
-                  form.reset();
-                  setIsDialogOpen(true);
-                }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Створити перше замовлення
-                </Button>
-              </div>
-            ) : (
-              <>
-              <DragDropContext onDragEnd={handleColumnDragEnd}>
-                <Table>
-                  <TableHeader>
-                    <Droppable droppableId="table-headers" direction="horizontal">
-                      {(provided) => (
-                        <TableRow ref={provided.innerRef} {...provided.droppableProps}>
-                          {columnOrder.map((columnKey: string, index: number) => (
-                            <Draggable key={columnKey} draggableId={columnKey} index={index}>
-                              {(provided, snapshot) => (
-                                <TableHead
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className={`relative ${snapshot.isDragging ? 'bg-blue-100 shadow-lg' : ''}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
-                                      <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                                    </div>
-                                    {columnKey !== 'actions' ? (
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSort(columnKey);
-                                        }}
-                                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                                      >
-                                        <span>{columnLabels[columnKey as keyof typeof columnLabels]}</span>
-                                        {sortConfig.field === columnKey && (
-                                          sortConfig.direction === 'asc' ? 
-                                            <ChevronUp className="w-4 h-4" /> : 
-                                            <ChevronDown className="w-4 h-4" />
-                                        )}
-                                      </button>
-                                    ) : (
-                                      <span>{columnLabels[columnKey as keyof typeof columnLabels]}</span>
-                                    )}
-                                  </div>
-                                </TableHead>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </TableRow>
-                      )}
-                    </Droppable>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order: any) => [
-                      <TableRow 
-                        key={order.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => toggleOrderExpansion(order.id)}
-                      >
-                        {columnOrder.map((columnKey: any) => (
-                          <TableCell key={columnKey}>
-                            {renderColumnContent(columnKey, order)}
-                          </TableCell>
-                        ))}
-                      </TableRow>,
-                      
-                      expandedOrderId === order.id && (
-                        <TableRow key={`expanded-${order.id}`}>
-                          <TableCell colSpan={columnOrder.length} className="bg-gray-50 p-0">
-                            <div className="p-4">
-                              <h4 className="font-medium mb-3">Склад замовлення:</h4>
-                              {order.items && order.items.length > 0 ? (
-                                <div className="space-y-4">
-                                  {order.items.map((item: any, index: number) => (
-                                    <div key={index} className="bg-white rounded border p-4 space-y-4">
-                                      <div className="flex justify-between items-center">
-                                        <div className="flex-1">
-                                          <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
-                                          <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
-                                        </div>
-                                        <div className="flex items-center space-x-4">
-                                          <span className="text-sm text-gray-600">
-                                            Кількість: <span className="font-medium">{item.quantity}</span>
-                                          </span>
-                                          <span className="text-sm text-gray-600">
-                                            Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
-                                          </span>
-                                          <span className="text-sm font-medium">
-                                            Всього: {formatCurrency(item.totalPrice)}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Компонент для прив'язки серійних номерів */}
-                                      {item.product?.hasSerialNumbers && (
-                                        <InlineSerialNumbers 
-                                          orderItemId={item.id}
-                                          productId={item.productId}
-                                          productName={item.product?.name || 'Невідомий товар'}
-                                          quantity={parseInt(item.quantity)}
-                                        />
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
-                              )}
-                              
-                              {/* Списання компонентів */}
-                              <div className="mt-6 border-t pt-4">
-                                <ComponentDeductions orderId={order.id} />
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    ]).flat()}
-                  </TableBody>
-                </Table>
-              </DragDropContext>
-
-              {orders.length > 0 && (
-                <div className="flex items-center justify-between p-4 border-t">
-                  <div className="flex items-center space-x-4">
-                    <p className="text-sm text-muted-foreground">
-                      Показано {((serverPagination.page - 1) * serverPagination.limit) + 1}-{Math.min(serverPagination.page * serverPagination.limit, totalServerRecords)} з {totalServerRecords} замовлень
-                    </p>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowPaginationSettings(!showPaginationSettings)}
-                      className="h-8"
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      Налаштування
-                    </Button>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {showPaginationSettings && (
-                      <div className="flex items-center space-x-2 mr-4">
-                        <Label className="text-sm">Рядків на сторінці:</Label>
-                        <Select
-                          value={itemsPerPage.toString()}
-                          onValueChange={(value) => setItemsPerPage(Number(value))}
-                        >
-                          <SelectTrigger className="h-8 w-[80px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent side="top">
-                            {itemsPerPageOptions.map((pageSize) => (
-                              <SelectItem key={pageSize} value={pageSize.toString()}>
-                                {pageSize}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+          <DataTable
+            data={orders}
+            columns={[
+              {
+                key: 'orderSequenceNumber',
+                label: 'Замовлення',
+                sortable: true,
+                render: (value, order) => renderColumnContent('orderSequenceNumber', order)
+              },
+              {
+                key: 'orderNumber',
+                label: 'Рахунок',
+                sortable: true,
+                render: (value, order) => renderColumnContent('orderNumber', order)
+              },
+              {
+                key: 'clientName',
+                label: 'Клієнт',
+                sortable: true,
+                render: (value, order) => renderColumnContent('clientName', order)
+              },
+              {
+                key: 'paymentDate',
+                label: 'Дата оплати',
+                sortable: true,
+                render: (value, order) => renderColumnContent('paymentDate', order)
+              },
+              {
+                key: 'dueDate',
+                label: 'Термін виконання',
+                sortable: true,
+                render: (value, order) => renderColumnContent('dueDate', order)
+              },
+              {
+                key: 'totalAmount',
+                label: 'Сума',
+                sortable: true,
+                type: 'number',
+                render: (value, order) => renderColumnContent('totalAmount', order)
+              },
+              {
+                key: 'shippedDate',
+                label: 'Відвантаження',
+                sortable: true,
+                render: (value, order) => renderColumnContent('shippedDate', order)
+              },
+              {
+                key: 'status',
+                label: 'Статус',
+                sortable: true,
+                render: (value, order) => renderColumnContent('status', order)
+              }
+            ]}
+            loading={isOrdersLoading}
+            onSort={(field, direction) => handleSort(field)}
+            onRowClick={(order) => toggleOrderExpansion(order.id)}
+            actions={(order) => renderColumnContent('actions', order)}
+            title="Список замовлень"
+            storageKey="orders-datatable"
+            expandableContent={(order) => (
+              <div className="p-4">
+                <h4 className="font-medium mb-3">Склад замовлення:</h4>
+                {order.items && order.items.length > 0 ? (
+                  <div className="space-y-4">
+                    {order.items.map((item: any, index: number) => (
+                      <div key={index} className="bg-white rounded border p-4 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
+                            <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <span className="text-sm text-gray-600">
+                              Кількість: <span className="font-medium">{item.quantity}</span>
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
+                            </span>
+                            <span className="text-sm font-medium">
+                              Всього: {formatCurrency(item.totalPrice)}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Компонент для прив'язки серійних номерів */}
+                        {item.product?.hasSerialNumbers && (
+                          <InlineSerialNumbers 
+                            orderItemId={item.id}
+                            productId={item.productId}
+                            productName={item.product?.name || 'Невідомий товар'}
+                            quantity={parseInt(item.quantity)}
+                          />
+                        )}
                       </div>
-                    )}
-                    
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToFirstPage}
-                        disabled={serverPagination.page === 1}
-                        className="h-8 w-8 p-0"
-                        title="Перша сторінка"
-                      >
-                        <ChevronsLeft className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToPreviousPage}
-                        disabled={serverPagination.page === 1}
-                        className="h-8 w-8 p-0"
-                        title="Попередня сторінка"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      
-                      <div className="flex items-center space-x-2 mx-2">
-                        <Input
-                          className="w-16 h-8 text-center"
-                          type="number"
-                          min={1}
-                          max={totalServerPages}
-                          value={serverPagination.page}
-                          onChange={(e) => {
-                            const page = parseInt(e.target.value);
-                            if (!isNaN(page)) {
-                              goToPage(page);
-                            }
-                          }}
-                        />
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">
-                          з {totalServerPages}
-                        </span>
-                      </div>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToNextPage}
-                        disabled={serverPagination.page >= totalServerPages}
-                        className="h-8 w-8 p-0"
-                        title="Наступна сторінка"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToLastPage}
-                        disabled={serverPagination.page >= totalServerPages}
-                        className="h-8 w-8 p-0"
-                        title="Остання сторінка"
-                      >
-                        <ChevronsRight className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    ))}
                   </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
+                )}
+                
+                {/* Списання компонентів */}
+                <div className="mt-6 border-t pt-4">
+                  <ComponentDeductions orderId={order.id} />
                 </div>
-              )}
-              </>
+              </div>
             )}
-          </CardContent>
-        </Card>
-       {/* </main> */}
-      </div>
-
-      {/* Діалог часткового відвантаження */}
-      {selectedOrderForShipment && (
-        <PartialShipmentDialog
-          open={isPartialShipmentOpen}
-          onOpenChange={setIsPartialShipmentOpen}
-          orderId={selectedOrderForShipment.id}
-          orderNumber={selectedOrderForShipment.orderNumber}
-        />
-      )}
-
-      {/* Діалог для створення нового клієнта */}
-      <Dialog open={isCreateClientDialogOpen} onOpenChange={setIsCreateClientDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Створити нового клієнта</DialogTitle>
-            <DialogDescription>
-              Додайте повну інформацію про нового клієнта
-            </DialogDescription>
-          </DialogHeader>
-          <ClientForm
-            prefillName={newClientName}
-            onSubmit={handleCreateNewClient}
-            onCancel={() => {
-              setIsCreateClientDialogOpen(false);
-              setNewClientName("");
-            }}
-            isLoading={createClientMutation.isPending}
+            expandedItems={new Set(expandedOrderId ? [expandedOrderId] : [])}
+            onToggleExpand={(itemId) => toggleOrderExpansion(Number(itemId))}
           />
-        </DialogContent>
-      </Dialog>
-
-      {/* Попередній перегляд друку */}
-      <PrintPreviewModal
-        isOpen={isPrintPreviewOpen}
-        onClose={() => setIsPrintPreviewOpen(false)}
-        printData={printData}
-        orderId={printOrderId}
-      />
-
-      {/* Друк по відділах */}
-      <DepartmentPrintModal
-        isOpen={isDepartmentPrintOpen}
-        onClose={() => setIsDepartmentPrintOpen(false)}
-        orderId={departmentPrintOrderId}
-      />
-    </div>
-    </div>
+          
+          {/* Empty state - показується якщо немає даних */}
+          {orders.length === 0 && !isOrdersLoading && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Замовлення відсутні</p>
+              <Button className="mt-4" onClick={() => {
+                setIsEditMode(false);
+                setEditingOrder(null);
+                setOrderItems([]);
+                form.reset();
+                setIsDialogOpen(true);
+              }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Створити перше замовлення
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* Діалог часткового відвантаження */}
+        {selectedOrderForShipment && (
+          <PartialShipmentDialog
+            open={isPartialShipmentOpen}
+            onOpenChange={setIsPartialShipmentOpen}
+            orderId={selectedOrderForShipment.id}
+            orderNumber={selectedOrderForShipment.orderNumber}
+          />
+        )}
+
+        {/* Діалог для створення нового клієнта */}
+        <Dialog open={isCreateClientDialogOpen} onOpenChange={setIsCreateClientDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Створити нового клієнта</DialogTitle>
+              <DialogDescription>
+                Додайте повну інформацію про нового клієнта
+              </DialogDescription>
+            </DialogHeader>
+            <ClientForm
+              prefillName={newClientName}
+              onSubmit={handleCreateNewClient}
+              onCancel={() => {
+                setIsCreateClientDialogOpen(false);
+                setNewClientName("");
+              }}
+              isLoading={createClientMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Попередній перегляд друку */}
+        <PrintPreviewModal
+          isOpen={isPrintPreviewOpen}
+          onClose={() => setIsPrintPreviewOpen(false)}
+          printData={printData}
+          orderId={printOrderId}
+        />
+
+        {/* Друк по відділах */}
+        <DepartmentPrintModal
+          isOpen={isDepartmentPrintOpen}
+          onClose={() => setIsDepartmentPrintOpen(false)}
+          orderId={departmentPrintOrderId}
+        />
+      </div>
   );
 }
