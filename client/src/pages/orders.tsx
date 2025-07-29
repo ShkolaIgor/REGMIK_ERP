@@ -2722,7 +2722,7 @@ export default function Orders() {
                 render: (value, order) => renderColumnContent('status', order)
               }
             ]}
-            loading={isOrdersLoading}
+            loading={isLoading}
             onSort={(field, direction) => handleSort(field)}
             onRowClick={(order) => toggleOrderExpansion(order.id)}
             actions={(order) => renderColumnContent('actions', order)}
@@ -2780,7 +2780,7 @@ export default function Orders() {
           />
           
           {/* Empty state - показується якщо немає даних */}
-          {orders.length === 0 && !isOrdersLoading && (
+          {orders.length === 0 && !isLoading && (
             <div className="text-center py-8">
               <p className="text-gray-500">Замовлення відсутні</p>
               <Button className="mt-4" onClick={() => {
