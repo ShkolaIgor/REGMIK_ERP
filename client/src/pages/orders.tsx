@@ -2056,11 +2056,7 @@ export default function Orders() {
                     <Label htmlFor="clientContactsId">Контактна особа</Label>
                     <ContactPersonAutocomplete
                       clientId={form.watch("clientId") ? parseInt(form.watch("clientId")) : undefined}
-                      value={form.watch("clientContactsId") ? 
-                        // При редагуванні використовуємо ім'я з замовлення якщо доступне
-                        (isEditMode && editingOrder?.contactName) || 
-                        clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"))?.fullName || ""
-                        : ""}
+                      value={isEditMode ? (editingOrder?.contact?.fullName || editingOrder?.contactName || "") : ""}
                       onChange={async (contactId, contactName) => {
                         console.log("ContactPersonAutocomplete onChange:", { contactId, contactName });
                         form.setValue("clientContactsId", contactId ? contactId.toString() : "");
