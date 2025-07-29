@@ -261,13 +261,17 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   const handleFormSubmit = async (data: FormData) => {
     console.log("Form submitted with data:", data);
     
-    // Обробляємо пусті рядки як null для унікальних полів
+    // Обробляємо пусті рядки як undefined для TypeScript сумісності
     const processedData = {
       ...data,
-      taxCode: data.taxCode?.trim() || null,
-      cityRef: data.cityRef?.trim() || null,
-      warehouseRef: data.warehouseRef?.trim() || null,
-      carrierId: data.carrierId || null,
+      taxCode: data.taxCode?.trim() || undefined,
+      cityRef: data.cityRef?.trim() || undefined,
+      warehouseRef: data.warehouseRef?.trim() || undefined,
+      carrierId: data.carrierId || undefined,
+      contactPerson: data.contactPerson?.trim() || undefined,
+      contactPersonId: data.contactPersonId || undefined,
+      phone: data.phone?.trim() || undefined,
+      email: data.email?.trim() || undefined,
     };
     
     try {
@@ -595,7 +599,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                       )}
                       {filteredCities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
                         <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-48 overflow-y-auto">
-                          {filteredCities.map((city) => (
+                          {filteredCities.map((city: any) => (
                             <div
                               key={city.Ref}
                               className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"

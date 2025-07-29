@@ -141,6 +141,8 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **CLIENT FORM AUTO-FILL COMPLETED** - Added contact auto-fill functionality to ClientForm.tsx for default contact person selection
 - ✅ **PRIMARY CONTACT AUTO-SELECTION** - Implemented automatic selection of primary contact (isPrimary=true) when creating new orders
 - ✅ **SMART CONTACT DETECTION** - System automatically finds and selects primary contact with email/phone auto-fill when client is chosen
+- ✅ **CLIENT FORM SAVE FIX** - Fixed ContactPersonAutocomplete data not saving in ClientForm.tsx by including contactPerson and contactPersonId fields in form submission
+- ✅ **TYPESCRIPT COMPATIBILITY** - Fixed type errors by using undefined instead of null for optional form fields
 - ✅ **ORDERS DATATABLE MIGRATION FULLY COMPLETED** - Successfully replaced legacy Table component with modern DataTable on orders page, resolving all JSX structure issues
 - ✅ **CONSISTENT TABLE INTERFACE** - Orders page now uses same DataTable component as other pages (component-stock, etc.) for unified UX across entire system
 - ✅ **PRESERVED ALL FUNCTIONALITY** - Maintained all existing features including expandable order details, ComponentDeductions display, and column rendering
