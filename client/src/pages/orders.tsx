@@ -2000,26 +2000,38 @@ export default function Orders() {
                       value={form.watch("clientContactsId") ? 
                         clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"))?.fullName || ""
                         : ""}
-                      onChange={(contactId, contactName) => {
+                      onChange={async (contactId, contactName) => {
                         console.log("ContactPersonAutocomplete onChange:", { contactId, contactName });
                         form.setValue("clientContactsId", contactId ? contactId.toString() : "");
                         
                         // Автозаповнення email та телефону з контактної особи
-                        if (contactId && clientContactsForOrder) {
-                          const selectedContact = clientContactsForOrder.find((c: any) => c.id === contactId);
-                          console.log("Found selected contact:", selectedContact);
-                          if (selectedContact) {
-                            if (selectedContact.email) {
-                              console.log("Setting email:", selectedContact.email);
-                              form.setValue("customerEmail", selectedContact.email);
+                        if (contactId) {
+                          try {
+                            // Завантажуємо свіжі дані контакту безпосередньо з API
+                            const clientId = form.watch("clientId");
+                            if (clientId) {
+                              const response = await fetch(`/api/client-contacts?clientId=${clientId}`);
+                              if (response.ok) {
+                                const contactsData = await response.json();
+                                const selectedContact = contactsData?.find((c: any) => c.id === contactId);
+                                console.log("Found selected contact:", selectedContact);
+                                if (selectedContact) {
+                                  if (selectedContact.email) {
+                                    console.log("Setting email:", selectedContact.email);
+                                    form.setValue("customerEmail", selectedContact.email);
+                                  }
+                                  if (selectedContact.primaryPhone) {
+                                    console.log("Setting phone:", selectedContact.primaryPhone);
+                                    form.setValue("customerPhone", selectedContact.primaryPhone);
+                                  } else if (selectedContact.phone) {
+                                    console.log("Setting phone (fallback):", selectedContact.phone);
+                                    form.setValue("customerPhone", selectedContact.phone);
+                                  }
+                                }
+                              }
                             }
-                            if (selectedContact.primaryPhone) {
-                              console.log("Setting phone:", selectedContact.primaryPhone);
-                              form.setValue("customerPhone", selectedContact.primaryPhone);
-                            } else if (selectedContact.phone) {
-                              console.log("Setting phone (fallback):", selectedContact.phone);
-                              form.setValue("customerPhone", selectedContact.phone);
-                            }
+                          } catch (error) {
+                            console.error("Error loading contact details:", error);
                           }
                         }
                       }}
