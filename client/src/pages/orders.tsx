@@ -743,6 +743,11 @@ export default function Orders() {
     // Завантажуємо завжди для відображення в таблиці замовлень
   });
 
+  const { data: defaultCarrier } = useQuery<any>({
+    queryKey: ["/api/carriers/default"],
+    // Завантажуємо перевізника за замовчуванням для автозаповнення форми
+  });
+
   // Стабільне оновлення серверної пагінації при зміні фільтрів
   useEffect(() => {
     setServerPagination(prev => ({ ...prev, page: 1 }));
@@ -1382,7 +1387,7 @@ export default function Orders() {
       shippedDate: "",
       trackingNumber: "",
       invoiceNumber: "",
-      carrierId: null,
+      carrierId: defaultCarrier?.id || null,
       statusId: undefined,
       paymentType: "full",
       paidAmount: "0",

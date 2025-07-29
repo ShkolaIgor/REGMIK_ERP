@@ -43,6 +43,7 @@ interface Carrier {
   serviceType: string | null;
   rating: number | null;
   isActive: boolean;
+  isDefault: boolean;
   apiKey: string | null;
   lastSyncAt: Date | null;
   citiesCount: number;
@@ -157,6 +158,30 @@ export default function Carriers() {
       toast({ 
         title: "Помилка синхронізації", 
         description: "Перевірте API ключ та налаштування перевізника",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const setDefaultMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/carriers/${id}/set-default`, {
+        method: "PATCH",
+      });
+      if (!response.ok) throw new Error("Помилка встановлення перевізника за замовчуванням");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/carriers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/carriers/default"] });
+      toast({ 
+        title: "Перевізника встановлено за замовчуванням",
+        description: "Цей перевізник буде автоматично обиратися в нових замовленнях"
+      });
+    },
+    onError: () => {
+      toast({ 
+        title: "Помилка встановлення перевізника за замовчуванням", 
         variant: "destructive" 
       });
     },
@@ -498,6 +523,7 @@ export default function Carriers() {
                 <TableHead>Тип послуг</TableHead>
                 <TableHead>Рейтинг</TableHead>
                 <TableHead>Синхронізація</TableHead>
+                <TableHead>За замовчуванням</TableHead>
                 <TableHead>Статус</TableHead>
                 <TableHead>Дії</TableHead>
               </TableRow>
@@ -548,6 +574,26 @@ export default function Carriers() {
                     </div>
                   </TableCell>
                   <TableCell>
+                    <div className="flex items-center space-x-2">
+                      {carrier.isDefault ? (
+                        <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-medium">
+                          ✓ За замовчуванням
+                        </span>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDefaultMutation.mutate(carrier.id)}
+                          disabled={setDefaultMutation.isPending}
+                          className="text-xs"
+                        >
+                          <Star className="h-3 w-3 mr-1" />
+                          Встановити
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${
                         carrier.isActive
@@ -590,7 +636,7 @@ export default function Carriers() {
               ))}
               {carriers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
+                  <TableCell colSpan={10} className="text-center py-8">
                     Немає перевізників для відображення
                   </TableCell>
                 </TableRow>

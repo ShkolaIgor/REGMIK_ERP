@@ -1515,6 +1515,7 @@ export const carriers = pgTable("carriers", {
   description: text("description"),
   serviceType: varchar("service_type", { length: 100 }), // express, standard, freight
   rating: integer("rating").default(5), // 1-10
+  isDefault: boolean("is_default").default(false), // перевізник за замовчуванням
   isActive: boolean("is_active").default(true).notNull(),
   apiKey: varchar("api_key", { length: 500 }), // API ключ для інтеграції
   lastSyncAt: timestamp("last_sync_at"), // Дата останньої синхронізації

@@ -3464,6 +3464,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/carriers/default', async (req, res) => {
+    try {
+      const defaultCarrier = await storage.getDefaultCarrier();
+      res.json(defaultCarrier);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get default carrier' });
+    }
+  });
+
+  app.patch('/api/carriers/:id/set-default', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.setDefaultCarrier(id);
+      if (!success) {
+        return res.status(500).json({ error: 'Failed to set default carrier' });
+      }
+      res.json({ message: 'Default carrier set successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to set default carrier' });
+    }
+  });
+
   app.get('/api/carriers/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id);

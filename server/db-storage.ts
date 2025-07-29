@@ -4127,6 +4127,28 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(carriers).where(eq(carriers.isActive, true)).orderBy(carriers.name);
   }
 
+  async getDefaultCarrier(): Promise<Carrier | null> {
+    const [carrier] = await db.select().from(carriers).where(eq(carriers.isDefault, true));
+    return carrier || null;
+  }
+
+  async setDefaultCarrier(carrierId: number): Promise<boolean> {
+    try {
+      // Скидаємо всі інші перевізники як не за замовчуванням
+      await db.update(carriers).set({ isDefault: false });
+      
+      // Встановлюємо обраного перевізника як за замовчуванням
+      const result = await db.update(carriers)
+        .set({ isDefault: true })
+        .where(eq(carriers.id, carrierId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error setting default carrier:', error);
+      return false;
+    }
+  }
+
   async getCarrier(id: number): Promise<Carrier | null> {
     const [carrier] = await db.select().from(carriers).where(eq(carriers.id, id));
     return carrier || null;
