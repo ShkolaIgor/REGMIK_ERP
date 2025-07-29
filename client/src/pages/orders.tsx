@@ -1443,82 +1443,116 @@ export default function Orders() {
   const handleEditOrder = (order: any) => {
     console.log("handleEditOrder called with order:", order);
     
-    // Спочатку очищаємо попередній стан для запобігання проблемам
-    setClientContactsForOrder([]);
+    // ПОВНЕ очищення попереднього стану для запобігання змішуванню даних  
+    setEditingOrder(null);
+    setOrderItems([]);
+    setClientSearchValue("");
+    setCompanySearchValue("");
+    setSelectedClientId("");
+    setSelectedCompanyId("");
     setSelectedContactId(undefined);
+    setClientContactsForOrder([]);
+    setProductSearchTerm("");
     
-    // Швидке встановлення стану без зайвих операцій
+    // Повне скидання форми перед заповненням новими даними
+    form.reset({
+      clientId: "",
+      clientContactsId: "",
+      companyId: "",
+      orderNumber: "",
+      totalAmount: "",
+      status: "Нове",
+      notes: "",
+      paymentDate: "",
+      paymentType: "full",
+      paidAmount: "0",
+      dueDate: "",
+      shippedDate: "",
+      trackingNumber: "",
+      invoiceNumber: "",
+      carrierId: null,
+      statusId: undefined,
+      productionApproved: false,
+      productionApprovedBy: "",
+      productionApprovedAt: "",
+      customerEmail: "",
+      customerPhone: "",
+    });
+    
+    // Встановлення нового стану
     setEditingOrder(order);
     setIsEditMode(true);
-    
-    // Оптимізована функція для дат
-    const formatDate = (dateString: string | null) => 
-      dateString ? new Date(dateString).toISOString().slice(0, 16) : "";
-    
-    // Миттєве заповнення форми без затримок
-    form.reset({
-      clientId: order.clientId?.toString() || "",
-      clientContactsId: order.clientContactsId?.toString() || "",
-      companyId: order.companyId?.toString() || "",
-      orderNumber: order.orderNumber || "",
-      totalAmount: order.totalAmount || "",
-      status: order.status || "Нове",
-      notes: order.notes || "",
-      paymentDate: formatDate(order.paymentDate),
-      paymentType: order.paymentType || "full",
-      paidAmount: order.paidAmount || "0",
-      dueDate: formatDate(order.dueDate),
-      shippedDate: formatDate(order.shippedDate),
-      trackingNumber: order.trackingNumber || "",
-      invoiceNumber: order.invoiceNumber || "",
-      carrierId: order.carrierId || null,
-      statusId: order.statusId || undefined,
-      productionApproved: order.productionApproved || false,
-      productionApprovedBy: order.productionApprovedBy || "",
-      productionApprovedAt: formatDate(order.productionApprovedAt),
-      // Додаємо email та телефон з контактних даних замовлення
-      customerEmail: order.contact?.email || order.contactEmail || "",
-      customerPhone: order.contact?.primaryPhone || order.contact?.phone || order.contactPhone || "",
-    });
-
-    // Швидке встановлення клієнта з мінімальною логікою
-    if (order.clientId) {
-      setSelectedClientId(order.clientId.toString());
-      // Використовуємо дані з замовлення якщо доступні
-      const clientName = order.clientName || order.client?.name || `Client ${order.clientId}`;
-      setClientSearchValue(clientName);
-    } else {
-      setSelectedClientId("");
-      setClientSearchValue("");
-    }
-
-    // Швидке встановлення компанії
-    if (order.companyId) {
-      setSelectedCompanyId(order.companyId.toString());
-      const company = companies?.find((c: any) => c.id === order.companyId);
-      setCompanySearchValue(company?.name || `Company ${order.companyId}`);
-    } else {
-      setSelectedCompanyId("");
-      setCompanySearchValue("");
-    }
-
-    // Завантажуємо контакти для правильного відображення значення
-    if (order.clientId && order.clientContactsId) {
-      // Встановлюємо selectedContactId для правильного відображення
-      setSelectedContactId(parseInt(order.clientContactsId));
-    }
-
-    // Оптимізоване встановлення товарів
-    const items = order.items?.map((item: any) => ({
-      productId: item.productId || 0,
-      itemName: item.itemName || item.product?.name || "",
-      quantity: String(item.quantity || 1),
-      unitPrice: String(item.unitPrice || 0),
-      comment: item.comment || "",
-    })) || [];
-    setOrderItems(items);
-    
     setIsDialogOpen(true);
+    
+    // Невелика затримка для обробки React state updates
+    setTimeout(() => {
+      // Оптимізована функція для дат
+      const formatDate = (dateString: string | null) => 
+        dateString ? new Date(dateString).toISOString().slice(0, 16) : "";
+      
+      // Заповнення форми новими даними
+      form.reset({
+        clientId: order.clientId?.toString() || "",
+        clientContactsId: order.clientContactsId?.toString() || "",
+        companyId: order.companyId?.toString() || "",
+        orderNumber: order.orderNumber || "",
+        totalAmount: order.totalAmount || "",
+        status: order.status || "Нове",
+        notes: order.notes || "",
+        paymentDate: formatDate(order.paymentDate),
+        paymentType: order.paymentType || "full",
+        paidAmount: order.paidAmount || "0",
+        dueDate: formatDate(order.dueDate),
+        shippedDate: formatDate(order.shippedDate),
+        trackingNumber: order.trackingNumber || "",
+        invoiceNumber: order.invoiceNumber || "",
+        carrierId: order.carrierId || null,
+        statusId: order.statusId || undefined,
+        productionApproved: order.productionApproved || false,
+        productionApprovedBy: order.productionApprovedBy || "",
+        productionApprovedAt: formatDate(order.productionApprovedAt),
+        // Додаємо email та телефон з контактних даних замовлення
+        customerEmail: order.contact?.email || order.contactEmail || "",
+        customerPhone: order.contact?.primaryPhone || order.contact?.phone || order.contactPhone || "",
+      });
+
+      // Швидке встановлення клієнта з мінімальною логікою
+      if (order.clientId) {
+        setSelectedClientId(order.clientId.toString());
+        // Використовуємо дані з замовлення якщо доступні
+        const clientName = order.clientName || order.client?.name || `Client ${order.clientId}`;
+        setClientSearchValue(clientName);
+      } else {
+        setSelectedClientId("");
+        setClientSearchValue("");
+      }
+
+      // Швидке встановлення компанії
+      if (order.companyId) {
+        setSelectedCompanyId(order.companyId.toString());
+        const company = companies?.find((c: any) => c.id === order.companyId);
+        setCompanySearchValue(company?.name || `Company ${order.companyId}`);
+      } else {
+        setSelectedCompanyId("");
+        setCompanySearchValue("");
+      }
+
+      // Завантажуємо контакти для правильного відображення значення
+      if (order.clientId && order.clientContactsId) {
+        // Встановлюємо selectedContactId для правильного відображення
+        setSelectedContactId(parseInt(order.clientContactsId));
+      }
+
+      // Оптимізоване встановлення товарів
+      const items = order.items?.map((item: any) => ({
+        productId: item.productId || 0,
+        itemName: item.itemName || item.product?.name || "",
+        quantity: String(item.quantity || 1),
+        unitPrice: String(item.unitPrice || 0),
+        comment: item.comment || "",
+      })) || [];
+      setOrderItems(items);
+    }, 100);
     
     // Встановлюємо фокус тільки для нових замовлень
     if (!order) {
