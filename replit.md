@@ -135,6 +135,9 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **ORDERS.TSX SYNTAX ERRORS RESOLVED** - Fixed syntax errors caused by sed command cleanup, restored proper JSX structure and type handling
 - ✅ **DEBUG CLEANUP PARTIALLY COMPLETED** - Removed all console.log statements from orders.tsx (production-ready), bank-email-service.ts still has essential logging for system monitoring
 - ✅ **SYSTEM FULLY OPERATIONAL** - Server running successfully, all critical functionality restored after file damage incident
+- ✅ **CONTACT AUTO-FILL BUG FIXED** - Fixed email/phone fields not displaying immediately when contact selected, now auto-fills instantly
+- ✅ **ENHANCED CONTACT COMPONENT** - Improved ContactPersonAutocomplete to pass contact data (email, phone) directly through onChange callback
+- ✅ **UNIVERSAL AUTO-FILL** - Removed editMode restriction, auto-fill now works for both new and existing orders
 - ✅ **ORDERS DATATABLE MIGRATION FULLY COMPLETED** - Successfully replaced legacy Table component with modern DataTable on orders page, resolving all JSX structure issues
 - ✅ **CONSISTENT TABLE INTERFACE** - Orders page now uses same DataTable component as other pages (component-stock, etc.) for unified UX across entire system
 - ✅ **PRESERVED ALL FUNCTIONALITY** - Maintained all existing features including expandable order details, ComponentDeductions display, and column rendering

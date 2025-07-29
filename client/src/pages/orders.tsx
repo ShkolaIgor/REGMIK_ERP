@@ -2037,33 +2037,13 @@ export default function Orders() {
                     <ContactPersonAutocomplete
                       clientId={form.watch("clientId") ? parseInt(form.watch("clientId")) : undefined}
                       value={isEditMode ? (editingOrder?.contact?.fullName || editingOrder?.contactName || "") : ""}
-                      onChange={async (contactId, contactName) => {
+                      onChange={(contactId, contactName, contactData) => {
                         form.setValue("clientContactsId", contactId ? contactId.toString() : "");
                         
-                        // Автозаповнення email та телефону ТІЛЬКИ для нових замовлень
-                        if (contactId && !isEditMode) {
-                          try {
-                            // Завантажуємо свіжі дані контакту безпосередньо з API
-                            const clientId = form.watch("clientId");
-                            if (clientId) {
-                              const response = await fetch(`/api/client-contacts?clientId=${clientId}`);
-                              if (response.ok) {
-                                const contactsData = await response.json();
-                                const selectedContact = contactsData?.find((c: any) => c.id === contactId);
-                                if (selectedContact) {
-                                  if (selectedContact.email) {
-                                    form.setValue("customerEmail", selectedContact.email);
-                                  }
-                                  if (selectedContact.primaryPhone) {
-                                    form.setValue("customerPhone", selectedContact.primaryPhone);
-                                  } else if (selectedContact.phone) {
-                                    form.setValue("customerPhone", selectedContact.phone);
-                                  }
-                                }
-                              }
-                            }
-                          } catch (error) {
-                          }
+                        // Миттєве автозаповнення або очищення email та телефону
+                        if (contactData) {
+                          form.setValue("customerEmail", contactData.email || "");
+                          form.setValue("customerPhone", contactData.phone || "");
                         }
                       }}
                       disabled={!form.watch("clientId")}

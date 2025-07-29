@@ -26,7 +26,7 @@ type ContactFormData = z.infer<typeof contactFormSchema>;
 interface ContactPersonAutocompleteProps {
   clientId?: number;
   value?: string;
-  onChange: (contactId?: number, contactName?: string) => void;
+  onChange: (contactId?: number, contactName?: string, contactData?: {email?: string, phone?: string}) => void;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -101,7 +101,14 @@ export function ContactPersonAutocomplete({
         setSelectedContactId(newContact.id);
         setSearchValue(newContact.fullName);
         setIsDropdownOpen(false);
-        onChange(newContact.id, newContact.fullName);
+        
+        // Передаємо контактні дані нового контакту
+        const contactData = {
+          email: newContact.email || "",
+          phone: newContact.primaryPhone || newContact.phone || ""
+        };
+        
+        onChange(newContact.id, newContact.fullName, contactData);
       }, 100);
       
       toast({
@@ -131,7 +138,14 @@ export function ContactPersonAutocomplete({
     setSelectedContactId(contact.id);
     setSearchValue(contact.fullName);
     setIsDropdownOpen(false);
-    onChange(contact.id, contact.fullName);
+    
+    // Передаємо контактні дані разом з ID та ім'ям
+    const contactData = {
+      email: contact.email || "",
+      phone: contact.primaryPhone || contact.phone || ""
+    };
+    
+    onChange(contact.id, contact.fullName, contactData);
   };
 
   // Обробка зміни тексту в полі пошуку
@@ -145,10 +159,10 @@ export function ContactPersonAutocomplete({
       setIsDropdownOpen(false);
     }
 
-    // Якщо поле очищено, скидаємо вибір
+    // Якщо поле очищено, скидаємо вибір та очищаємо контактні дані
     if (!newValue) {
       setSelectedContactId(undefined);
-      onChange(undefined, undefined);
+      onChange(undefined, undefined, { email: "", phone: "" });
     }
   };
 
