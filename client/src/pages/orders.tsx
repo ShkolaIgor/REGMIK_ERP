@@ -545,16 +545,11 @@ export default function Orders() {
         const statusInfo = orderStatuses.find(s => s.id === order.statusId);
         const currentStatusName = statusInfo?.name || order.status || 'Невідомо';
         
-        const handleStatusChange = (newStatusId: string) => {
-          const statusId = parseInt(newStatusId);
-          updateStatusMutation.mutate({ id: order.id, statusId });
-        };
-        
         return (
           <div onClick={(e) => e.stopPropagation()}>
             <Select
               value={order.statusId?.toString() || ''}
-              onValueChange={handleStatusChange}
+              onValueChange={(newStatusId) => handleStatusChange(order.id, newStatusId)}
             >
               <SelectTrigger className="w-[140px] h-7 border-0 p-1">
                 <Badge 
@@ -930,9 +925,18 @@ export default function Orders() {
 
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
-    mutationFn: (params: { id: number; statusId: number }) => {
+    mutationFn: async (params: { id: number; statusId: number }) => {
+      console.log("🔄 updateStatusMutation called with:", params);
       const requestData = { statusId: params.statusId };
-      return apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
+      console.log("🔄 Request data:", requestData);
+      try {
+        const result = await apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
+        console.log("✅ Status update successful:", result);
+        return result;
+      } catch (error) {
+        console.error("❌ Status update failed:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
@@ -943,6 +947,7 @@ export default function Orders() {
       });
     },
     onError: (error: any) => {
+      console.error("❌ Status mutation error:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити статус",
@@ -950,6 +955,17 @@ export default function Orders() {
       });
     },
   });
+
+  // Функція для зміни статусу (винесена з renderColumnContent)
+  const handleStatusChange = (orderId: number, newStatusId: string) => {
+    console.log("🎯 handleStatusChange called:", { orderId, newStatusId });
+    const statusId = parseInt(newStatusId);
+    if (isNaN(statusId)) {
+      console.error("❌ Invalid statusId:", newStatusId);
+      return;
+    }
+    updateStatusMutation.mutate({ id: orderId, statusId });
+  };
 
   // Мутація для видалення замовлення
   const deleteOrderMutation = useMutation({
