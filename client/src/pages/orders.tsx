@@ -542,15 +542,35 @@ export default function Orders() {
         );
 
       case 'status':
-        const statusInfo = orderStatuses.find(s => s.id === order.statusId);
-        const currentStatusName = statusInfo?.name || order.status || 'Невідомо';
-        
-        return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <Select
-              value={order.statusId?.toString() || ''}
-              onValueChange={(newStatusId) => handleStatusChange(order.id, newStatusId)}
-            >
+        try {
+          console.log("🎯 Rendering status column for order:", order.id);
+          console.log("🎯 Order statusId:", order.statusId);
+          console.log("🎯 Available orderStatuses:", orderStatuses?.length || 0);
+          
+          if (!orderStatuses || orderStatuses.length === 0) {
+            return (
+              <div className="text-red-500 text-sm">
+                Статуси не завантажені
+              </div>
+            );
+          }
+          
+          const statusInfo = orderStatuses.find(s => s.id === order.statusId);
+          const currentStatusName = statusInfo?.name || order.status || 'Невідомо';
+          
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <Select
+                value={order.statusId?.toString() || ''}
+                onValueChange={(newStatusId) => {
+                  console.log("🎯 Select onValueChange triggered:", newStatusId);
+                  try {
+                    handleStatusChange(order.id, newStatusId);
+                  } catch (error) {
+                    console.error("❌ Error in handleStatusChange:", error);
+                  }
+                }}
+              >
               <SelectTrigger className="w-[140px] h-7 border-0 p-1">
                 <Badge 
                   className="text-sm font-medium border-0 w-full justify-center"
@@ -575,15 +595,23 @@ export default function Orders() {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+              </Select>
 
-            {order.productionApproved && (
-              <div className="text-xs text-green-600 mt-1 flex items-center">
-                ✅ Виробництво дозволено
-              </div>
-            )}
-          </div>
-        );
+              {order.productionApproved && (
+                <div className="text-xs text-green-600 mt-1 flex items-center">
+                  ✅ Виробництво дозволено
+                </div>
+              )}
+            </div>
+          );
+        } catch (error) {
+          console.error("❌ Error rendering status column:", error);
+          return (
+            <div className="text-red-500 text-sm">
+              Помилка відображення статусу
+            </div>
+          );
+        }
       
       case 'actions':
         return (
