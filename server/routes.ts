@@ -6205,12 +6205,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = req.params.id;
       // Виключаємо ID з даних оновлення, щоб не порушувати foreign key constraints
       const { id: clientId, ...updateData } = req.body;
+      
+      console.log(`PATCH /api/clients/${id} - Request body:`, JSON.stringify(req.body, null, 2));
+      console.log(`PATCH /api/clients/${id} - Update data:`, JSON.stringify(updateData, null, 2));
+      
       const client = await storage.updateClient(id, updateData);
       if (!client) {
         return res.status(404).json({ error: "Client not found" });
       }
+      
+      console.log(`PATCH /api/clients/${id} - Updated client:`, JSON.stringify(client, null, 2));
       res.json(client);
     } catch (error) {
+      console.error(`PATCH /api/clients/${id} - Error:`, error);
       res.status(500).json({ error: "Failed to update client" });
     }
   });
