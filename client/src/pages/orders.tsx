@@ -2746,6 +2746,14 @@ export default function Orders() {
           ) : (
             <DataTable
             data={orders}
+            serverPagination={{
+              enabled: true,
+              currentPage: serverPagination.page,
+              totalPages: totalServerPages,
+              totalItems: totalServerRecords,
+              pageSize: serverPagination.limit,
+              onPageChange: (page) => setServerPagination(prev => ({ ...prev, page }))
+            }}
             columns={[
               {
                 key: 'orderSequenceNumber',

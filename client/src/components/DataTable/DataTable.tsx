@@ -118,6 +118,15 @@ interface DataTableProps {
   expandableContent?: (item: any) => React.ReactNode;
   expandedItems?: Set<string | number>;
   onToggleExpand?: (itemId: string | number) => void;
+  // Server-side pagination props
+  serverPagination?: {
+    enabled: boolean;
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
 const defaultColumnSettings: ColumnSettings = {
@@ -164,7 +173,8 @@ export function DataTable({
   cardTemplate,
   expandableContent,
   expandedItems = new Set(),
-  onToggleExpand
+  onToggleExpand,
+  serverPagination
 }: DataTableProps) {
   // Load settings from localStorage
   const [settings, setSettings] = useState<DataTableSettings>(() => {
@@ -248,30 +258,52 @@ export function DataTable({
     });
   }, [data, settings.sortField, settings.sortDirection]);
 
-  // Efficient pagination with lazy loading
+  // Pagination logic: use server-side if enabled, otherwise client-side
   const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * settings.pageSize;
-    const end = start + settings.pageSize;
-    return sortedData.slice(start, end);
-  }, [sortedData, currentPage, settings.pageSize]);
+    if (serverPagination?.enabled) {
+      // Server-side pagination: use data as-is (already paginated by server)
+      return sortedData;
+    } else {
+      // Client-side pagination: slice data
+      const start = (currentPage - 1) * settings.pageSize;
+      const end = start + settings.pageSize;
+      return sortedData.slice(start, end);
+    }
+  }, [sortedData, currentPage, settings.pageSize, serverPagination]);
   
-  // Reduce default page size for large datasets
+  // Reduce default page size for large datasets (only for client-side pagination)
   useEffect(() => {
-    if (data.length > 10000 && settings.pageSize > 200) {
+    if (!serverPagination?.enabled && data.length > 10000 && settings.pageSize > 200) {
       setSettings(prev => ({ ...prev, pageSize: 100 }));
     }
-  }, [data.length, settings.pageSize]);
+  }, [data.length, settings.pageSize, serverPagination]);
 
-  const totalPages = Math.ceil(sortedData.length / settings.pageSize);
+  // Calculate pagination info based on mode
+  const paginationInfo = useMemo(() => {
+    if (serverPagination?.enabled) {
+      return {
+        totalPages: serverPagination.totalPages,
+        totalItems: serverPagination.totalItems,
+        currentPage: serverPagination.currentPage,
+        pageSize: serverPagination.pageSize
+      };
+    } else {
+      return {
+        totalPages: Math.ceil(sortedData.length / settings.pageSize),
+        totalItems: sortedData.length,
+        currentPage: currentPage,
+        pageSize: settings.pageSize
+      };
+    }
+  }, [sortedData.length, settings.pageSize, currentPage, serverPagination]);
   
   // Debug logging for pagination
   console.log('DataTable Pagination Debug:', {
+    mode: serverPagination?.enabled ? 'server' : 'client',
     totalData: data.length,
     sortedDataLength: sortedData.length,
-    pageSize: settings.pageSize,
-    totalPages,
-    currentPage,
-    shouldShowPagination: totalPages > 1 || sortedData.length > settings.pageSize
+    ...paginationInfo,
+    shouldShowPagination: paginationInfo.totalPages > 1 || paginationInfo.totalItems > paginationInfo.pageSize
   });
 
   const handleSort = (columnKey: string) => {
@@ -988,12 +1020,12 @@ export function DataTable({
       {/* Data Display */}
       {settings.viewMode === 'table' ? renderTableView() : renderCardView()}
 
-      {/* Pagination - Show always for testing */}
-      {true && (
+      {/* Pagination */}
+      {paginationInfo.totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-500">
-              Показано {((currentPage - 1) * settings.pageSize) + 1}-{Math.min(currentPage * settings.pageSize, sortedData.length)} з {sortedData.length} результатів
+              Показано {((paginationInfo.currentPage - 1) * paginationInfo.pageSize) + 1}-{Math.min(paginationInfo.currentPage * paginationInfo.pageSize, paginationInfo.totalItems)} з {paginationInfo.totalItems} результатів
             </div>
             <div className="flex items-center gap-2">
               <Label className="text-sm text-gray-600">Рядків на сторінці:</Label>
@@ -1023,41 +1055,59 @@ export function DataTable({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
+              onClick={() => {
+                if (serverPagination?.enabled) {
+                  serverPagination.onPageChange(1);
+                } else {
+                  setCurrentPage(1);
+                }
+              }}
+              disabled={paginationInfo.currentPage === 1}
             >
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
+              onClick={() => {
+                if (serverPagination?.enabled) {
+                  serverPagination.onPageChange(Math.max(1, paginationInfo.currentPage - 1));
+                } else {
+                  setCurrentPage(Math.max(1, paginationInfo.currentPage - 1));
+                }
+              }}
+              disabled={paginationInfo.currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             
             <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, paginationInfo.totalPages) }, (_, i) => {
                 let pageNum;
-                if (totalPages <= 5) {
+                if (paginationInfo.totalPages <= 5) {
                   pageNum = i + 1;
-                } else if (currentPage <= 3) {
+                } else if (paginationInfo.currentPage <= 3) {
                   pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
+                } else if (paginationInfo.currentPage >= paginationInfo.totalPages - 2) {
+                  pageNum = paginationInfo.totalPages - 4 + i;
                 } else {
-                  pageNum = currentPage - 2 + i;
+                  pageNum = paginationInfo.currentPage - 2 + i;
                 }
                 
-                if (pageNum < 1 || pageNum > totalPages) return null;
+                if (pageNum < 1 || pageNum > paginationInfo.totalPages) return null;
                 
                 return (
                   <Button
                     key={pageNum}
-                    variant={currentPage === pageNum ? "default" : "outline"}
+                    variant={paginationInfo.currentPage === pageNum ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setCurrentPage(pageNum)}
+                    onClick={() => {
+                      if (serverPagination?.enabled) {
+                        serverPagination.onPageChange(pageNum);
+                      } else {
+                        setCurrentPage(pageNum);
+                      }
+                    }}
                   >
                     {pageNum}
                   </Button>
@@ -1068,16 +1118,28 @@ export function DataTable({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                if (serverPagination?.enabled) {
+                  serverPagination.onPageChange(Math.min(paginationInfo.totalPages, paginationInfo.currentPage + 1));
+                } else {
+                  setCurrentPage(Math.min(paginationInfo.totalPages, paginationInfo.currentPage + 1));
+                }
+              }}
+              disabled={paginationInfo.currentPage === paginationInfo.totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                if (serverPagination?.enabled) {
+                  serverPagination.onPageChange(paginationInfo.totalPages);
+                } else {
+                  setCurrentPage(paginationInfo.totalPages);
+                }
+              }}
+              disabled={paginationInfo.currentPage === paginationInfo.totalPages}
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
