@@ -1104,7 +1104,7 @@ export class DatabaseStorage implements IStorage {
           fullName: contact.fullName,
           email: contact.email,
           primaryPhone: contact.primaryPhone,
-          phone: contact.primaryPhone
+          phone: contact.primaryPhone || null
         } : null,
         // ВАЖЛИВО: contactEmail/contactPhone з orders таблиці мають вищий пріоритет
         contactEmail: order.contactEmail || contact?.email || null,
@@ -7315,7 +7315,47 @@ export class DatabaseStorage implements IStorage {
 
   // Методи для клієнтів
   async getClients(): Promise<any[]> {
-    return await db.select().from(clients).orderBy(clients.name);
+    // Отримуємо клієнтів разом з їх primary контактами
+    const clientsWithPrimaryContacts = await db
+      .select({
+        id: clients.id,
+        taxCode: clients.taxCode,
+        name: clients.name,
+        fullName: clients.fullName,
+        legalAddress: clients.legalAddress,
+        physicalAddress: clients.physicalAddress,
+        addressesMatch: clients.addressesMatch,
+        email: clients.email,
+        phone: clients.phone,
+        notes: clients.notes,
+        clientTypeId: clients.clientTypeId,
+        contactPerson: clients.contactPerson,
+        cityRef: clients.cityRef,
+        warehouseRef: clients.warehouseRef,
+        carrierId: clients.carrierId,
+        discount: clients.discount,
+        isActive: clients.isActive,
+        isCustomer: clients.isCustomer,
+        isSupplier: clients.isSupplier,
+        createdAt: clients.createdAt,
+        updatedAt: clients.updatedAt,
+        // Primary контакт
+        primaryContactName: clientContacts.fullName,
+        primaryContactEmail: clientContacts.email,
+        primaryContactPhone: clientContacts.primaryPhone,
+        primaryContactPosition: clientContacts.position
+      })
+      .from(clients)
+      .leftJoin(
+        clientContacts, 
+        and(
+          eq(clientContacts.clientId, clients.id), 
+          eq(clientContacts.isPrimary, true)
+        )
+      )
+      .orderBy(clients.name);
+
+    return clientsWithPrimaryContacts;
   }
 
   async getClientsPaginated(page: number, limit: number, search?: string): Promise<{

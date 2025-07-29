@@ -255,6 +255,36 @@ const ClientsList = React.memo(({
                 </div>
               )}
               
+              {/* Контактна особа за замовчуванням */}
+              {client.primaryContactName && (
+                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-blue-900 dark:text-blue-100 text-sm">Контакт за замовчуванням:</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200">{client.primaryContactName}</p>
+                    {client.primaryContactPosition && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400">{client.primaryContactPosition}</p>
+                    )}
+                    <div className="flex flex-col gap-1">
+                      {client.primaryContactEmail && (
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-3 w-3 text-blue-500" />
+                          <span className="text-xs text-blue-700 dark:text-blue-300">{client.primaryContactEmail}</span>
+                        </div>
+                      )}
+                      {client.primaryContactPhone && (
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-3 w-3 text-blue-500" />
+                          <span className="text-xs text-blue-700 dark:text-blue-300">{client.primaryContactPhone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {/* Дати створення та оновлення */}
               <div className="pt-2 border-t border-border">
                 <div className="flex justify-between text-xs text-muted-foreground">
