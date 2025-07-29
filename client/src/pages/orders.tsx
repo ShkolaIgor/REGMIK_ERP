@@ -889,14 +889,14 @@ export default function Orders() {
       setSelectedClientId(clientId);
       // Скидаємо обрану контактну особу при зміні клієнта
       form.setValue("clientContactsId", undefined);
-      form.setValue("customerEmail", "");
-      form.setValue("customerPhone", "");
+      //form.setValue("customerEmail", "");
+      //form.setValue("customerPhone", "");
     } else {
       setSelectedClientId("");
       setClientContactsForOrder([]);
       form.setValue("clientContactsId", undefined);
-      form.setValue("customerEmail", "");
-      form.setValue("customerPhone", "");
+      //form.setValue("customerEmail", "");
+      //form.setValue("customerPhone", "");
     }
   }, [form.watch("clientId")]);
 
