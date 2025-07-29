@@ -882,37 +882,53 @@ export default function Orders() {
     }
   }, [clientContactsData]);
 
-  // Відстежуємо зміни клієнта для оновлення контактів
+  // Відстежуємо зміни клієнта для оновлення контактів (тільки для нових замовлень)
   useEffect(() => {
     const clientId = form.watch("clientId");
+    
+    // ВАЖЛИВО: не очищуємо поля при редагуванні існуючого замовлення
+    if (isEditMode && editingOrder) {
+      return;
+    }
+    
     if (clientId) {
       setSelectedClientId(clientId);
       // Скидаємо обрану контактну особу при зміні клієнта
       form.setValue("clientContactsId", undefined);
-      //form.setValue("customerEmail", "");
-      //form.setValue("customerPhone", "");
+      form.setValue("customerEmail", "");
+      form.setValue("customerPhone", "");
     } else {
       setSelectedClientId("");
       setClientContactsForOrder([]);
       form.setValue("clientContactsId", undefined);
-      //form.setValue("customerEmail", "");
-      //form.setValue("customerPhone", "");
+      form.setValue("customerEmail", "");
+      form.setValue("customerPhone", "");
     }
-  }, [form.watch("clientId")]);
+  }, [form.watch("clientId"), isEditMode, editingOrder]);
 
-  // Автозаповнення контактних даних при виборі контактної особи
+  // Автозаповнення контактних даних при виборі контактної особи (тільки для нових замовлень)
   useEffect(() => {
     const contactId = form.watch("clientContactsId");
+    
+    // ВАЖЛИВО: автозаповнення тільки для нових замовлень або якщо поля пусті
     if (contactId && clientContactsForOrder.length > 0) {
       // Перетворюємо contactId на число для порівняння
       const contactIdNum = typeof contactId === 'string' ? parseInt(contactId) : contactId;
       const selectedContact = clientContactsForOrder.find(contact => contact.id === contactIdNum);
       if (selectedContact) {
-        form.setValue("customerEmail", selectedContact.email || "");
-        form.setValue("customerPhone", selectedContact.phone || "");
+        // При редагуванні заповнюємо тільки якщо поля пусті
+        const currentEmail = form.getValues("customerEmail");
+        const currentPhone = form.getValues("customerPhone");
+        
+        if (!isEditMode || !currentEmail) {
+          form.setValue("customerEmail", selectedContact.email || "");
+        }
+        if (!isEditMode || !currentPhone) {
+          form.setValue("customerPhone", selectedContact.phone || "");
+        }
       }
     }
-  }, [form.watch("clientContactsId"), clientContactsForOrder]);
+  }, [form.watch("clientContactsId"), clientContactsForOrder, isEditMode]);
 
   // Автозаповнення компанії при відкритті нової форми
   useEffect(() => {
@@ -1441,11 +1457,6 @@ export default function Orders() {
 
   // Функція для початку редагування замовлення - МАКСИМАЛЬНО ОПТИМІЗОВАНА
   const handleEditOrder = (order: any) => {
-    console.log("=== HANDLE EDIT ORDER ===");
-    console.log("Order object:", order);
-    console.log("Order.contactEmail:", order.contactEmail);
-    console.log("Order.contactPhone:", order.contactPhone);
-    console.log("Order.contact:", order.contact);
     
     // ПОВНЕ очищення попереднього стану для запобігання змішуванню даних  
     setEditingOrder(null);

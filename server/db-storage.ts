@@ -1052,8 +1052,6 @@ export class DatabaseStorage implements IStorage {
       }
 
       console.log(`Order found: ${order.orderNumber} for client: ${client?.name || 'Unknown'}`);
-      console.log(`Order contactEmail: ${order.contactEmail}, contactPhone: ${order.contactPhone}`);
-      console.log(`Contact data:`, contact);
 
       // Отримуємо товари замовлення
       const itemsResult = await db.select({
