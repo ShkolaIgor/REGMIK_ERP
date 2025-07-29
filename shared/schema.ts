@@ -271,6 +271,10 @@ export const orders = pgTable("orders", {
   invoiceNumber: text("invoice_number"), // номер рахунку
   carrierId: integer("carrier_id").references(() => carriers.id), // зв'язок з перевізником
   
+  // Контактні дані для замовлення (окремо від контактної особи)
+  contactEmail: varchar("contact_email", { length: 255 }), // email для цього замовлення
+  contactPhone: varchar("contact_phone", { length: 20 }), // телефон для цього замовлення
+  
   // Nova Poshta додаткові поля для замовлень
   recipientCityRef: varchar("recipient_city_ref", { length: 255 }), // UUID міста отримувача
   recipientCityName: varchar("recipient_city_name", { length: 255 }), // назва міста отримувача

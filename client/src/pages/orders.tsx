@@ -1778,6 +1778,9 @@ export default function Orders() {
         ...(data.paymentDate && data.paymentDate !== '' && { paymentDate: parseDateForServer(data.paymentDate) }),
         ...(data.dueDate && data.dueDate !== '' && { dueDate: parseDateForServer(data.dueDate) }),
         ...(data.shippedDate && data.shippedDate !== '' && { shippedDate: parseDateForServer(data.shippedDate) }),
+        // Додаємо email та телефон
+        ...(data.customerEmail && data.customerEmail !== '' && { contactEmail: data.customerEmail }),
+        ...(data.customerPhone && data.customerPhone !== '' && { contactPhone: data.customerPhone }),
       },
       items: orderItems.map(item => ({
         productId: item.productId > 0 ? item.productId : null,
