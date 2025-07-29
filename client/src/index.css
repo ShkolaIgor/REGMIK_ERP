@@ -73,6 +73,17 @@
   animation: pulse-soft 2s infinite;
 }
 
+/* DataTable font weight enforcement */
+.datatable-font-bold,
+.datatable-font-bold * {
+  font-weight: bold !important;
+}
+
+.datatable-font-normal,
+.datatable-font-normal * {
+  font-weight: normal !important;
+}
+
 .animate-bounce-dots {
   animation: bounce-dots 1.4s infinite ease-in-out;
 }
