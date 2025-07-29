@@ -1330,11 +1330,18 @@ export class DatabaseStorage implements IStorage {
       }
 
       console.log("🔧 DEBUG: Final orderData being saved:", JSON.stringify(orderData, null, 2));
+      console.log("🔧 DEBUG: Contact fields in orderData - Email:", orderData.contactEmail, "Phone:", orderData.contactPhone);
+      
       const orderResult = await db.update(orders)
         .set(orderData)
         .where(eq(orders.id, id))
         .returning();
-      console.log("🔧 DEBUG: Order updated, result paymentDate:", orderResult[0]?.paymentDate);
+      
+      console.log("🔧 DEBUG: Order updated, result:", { 
+        paymentDate: orderResult[0]?.paymentDate,
+        contactEmail: orderResult[0]?.contactEmail,
+        contactPhone: orderResult[0]?.contactPhone
+      });
 
       if (orderResult.length === 0) {
         return undefined;
