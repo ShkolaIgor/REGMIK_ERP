@@ -1463,6 +1463,9 @@ export default function Orders() {
       productionApproved: order.productionApproved || false,
       productionApprovedBy: order.productionApprovedBy || "",
       productionApprovedAt: formatDate(order.productionApprovedAt),
+      // Додаємо email та телефон з контактних даних замовлення
+      customerEmail: order.contact?.email || order.contactEmail || "",
+      customerPhone: order.contact?.primaryPhone || order.contact?.phone || order.contactPhone || "",
     });
 
     // Швидке встановлення клієнта з мінімальною логікою

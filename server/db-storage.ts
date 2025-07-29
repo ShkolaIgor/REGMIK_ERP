@@ -888,6 +888,8 @@ export class DatabaseStorage implements IStorage {
           client: clientData,
           contact: contactData,
           contactName: contactData?.fullName || null, // Додаємо contactName для правильного відображення
+          contactEmail: contactData?.email || null, // Додаємо contactEmail для автозаповнення
+          contactPhone: contactData?.primaryPhone || contactData?.phone || null, // Додаємо contactPhone
           lastPaymentDate: lastPaymentDate
         };
       })
