@@ -2796,6 +2796,7 @@ export default function Orders() {
             </div>
           )}
         </div>
+      </div>
 
         {/* Діалог часткового відвантаження */}
         {selectedOrderForShipment && (
@@ -2843,5 +2844,6 @@ export default function Orders() {
           orderId={departmentPrintOrderId}
         />
       </div>
+    </div>
   );
 }
