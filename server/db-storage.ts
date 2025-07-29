@@ -887,6 +887,7 @@ export class DatabaseStorage implements IStorage {
           items: filteredItems as (OrderItem & { product: Product })[],
           client: clientData,
           contact: contactData,
+          contactName: contactData?.fullName || null, // Додаємо contactName для правильного відображення
           lastPaymentDate: lastPaymentDate
         };
       })

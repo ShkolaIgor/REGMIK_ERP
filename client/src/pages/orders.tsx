@@ -1486,7 +1486,11 @@ export default function Orders() {
       setCompanySearchValue("");
     }
 
-    // ContactPersonAutocomplete управляє своїм власним станом
+    // Завантажуємо контакти для правильного відображення значення
+    if (order.clientId && order.clientContactsId) {
+      // Встановлюємо selectedContactId для правильного відображення
+      setSelectedContactId(parseInt(order.clientContactsId));
+    }
 
     // Оптимізоване встановлення товарів
     const items = order.items?.map((item: any) => ({
@@ -1998,6 +2002,8 @@ export default function Orders() {
                     <ContactPersonAutocomplete
                       clientId={form.watch("clientId") ? parseInt(form.watch("clientId")) : undefined}
                       value={form.watch("clientContactsId") ? 
+                        // При редагуванні використовуємо ім'я з замовлення якщо доступне
+                        (isEditMode && editingOrder?.contactName) || 
                         clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"))?.fullName || ""
                         : ""}
                       onChange={async (contactId, contactName) => {
