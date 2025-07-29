@@ -543,9 +543,7 @@ export default function Orders() {
 
       case 'status':
         try {
-          console.log("🎯 Rendering status column for order:", order.id);
-          console.log("🎯 Order statusId:", order.statusId);
-          console.log("🎯 Available orderStatuses:", orderStatuses?.length || 0);
+          // Debugging видалено після виправлення проблеми завантаження статусів
           
           if (!orderStatuses || orderStatuses.length === 0) {
             return (
@@ -562,14 +560,7 @@ export default function Orders() {
             <div onClick={(e) => e.stopPropagation()}>
               <Select
                 value={order.statusId?.toString() || ''}
-                onValueChange={(newStatusId) => {
-                  console.log("🎯 Select onValueChange triggered:", newStatusId);
-                  try {
-                    handleStatusChange(order.id, newStatusId);
-                  } catch (error) {
-                    console.error("❌ Error in handleStatusChange:", error);
-                  }
-                }}
+                onValueChange={(newStatusId) => handleStatusChange(order.id, newStatusId)}
               >
               <SelectTrigger className="w-[140px] h-7 border-0 p-1">
                 <Badge 
@@ -712,10 +703,10 @@ export default function Orders() {
 
 
 
-  // ОПТИМІЗАЦІЯ: Завантажуємо базові дані тільки коли відкривається форма
+  // Завантажуємо статуси для відображення в таблиці замовлень
   const { data: orderStatuses = [] } = useQuery<OrderStatus[]>({
     queryKey: ["/api/order-statuses"],
-    enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
+    // Статуси потрібні для відображення колонки статусу в таблиці замовлень
   });
 
   const { data: carriers = [] } = useQuery<any[]>({
@@ -954,17 +945,8 @@ export default function Orders() {
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
     mutationFn: async (params: { id: number; statusId: number }) => {
-      console.log("🔄 updateStatusMutation called with:", params);
       const requestData = { statusId: params.statusId };
-      console.log("🔄 Request data:", requestData);
-      try {
-        const result = await apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
-        console.log("✅ Status update successful:", result);
-        return result;
-      } catch (error) {
-        console.error("❌ Status update failed:", error);
-        throw error;
-      }
+      return await apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
@@ -975,7 +957,6 @@ export default function Orders() {
       });
     },
     onError: (error: any) => {
-      console.error("❌ Status mutation error:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити статус",
@@ -984,12 +965,15 @@ export default function Orders() {
     },
   });
 
-  // Функція для зміни статусу (винесена з renderColumnContent)
+  // Функція для зміни статусу
   const handleStatusChange = (orderId: number, newStatusId: string) => {
-    console.log("🎯 handleStatusChange called:", { orderId, newStatusId });
     const statusId = parseInt(newStatusId);
     if (isNaN(statusId)) {
-      console.error("❌ Invalid statusId:", newStatusId);
+      toast({
+        title: "Помилка",
+        description: "Невірний статус",
+        variant: "destructive",
+      });
       return;
     }
     updateStatusMutation.mutate({ id: orderId, statusId });
