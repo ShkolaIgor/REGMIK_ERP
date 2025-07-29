@@ -1718,11 +1718,8 @@ export default function Orders() {
         ...(data.clientId && { clientId: parseInt(data.clientId) }),
         ...(data.clientContactsId && { clientContactsId: data.clientContactsId }),
         ...(data.companyId && { companyId: parseInt(data.companyId) }),
-
-
         ...(data.invoiceNumber && { invoiceNumber: data.invoiceNumber }),
         ...(data.carrierId && { carrierId: data.carrierId }),
-        status: data.status,
         ...(data.notes && { notes: data.notes }),
         ...(data.paymentDate && { paymentDate: parseDateForServer(data.paymentDate) }),
         ...(data.dueDate && { dueDate: parseDateForServer(data.dueDate) }),
