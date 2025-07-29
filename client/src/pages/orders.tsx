@@ -1655,6 +1655,12 @@ export default function Orders() {
     console.log("Order items:", orderItems);
     console.log("Is edit mode:", isEditMode);
     
+    // Якщо діалог закритий, не продовжуємо валідацію
+    if (!isDialogOpen) {
+      console.log("Dialog is closed, skipping form submission");
+      return;
+    }
+    
     // Перевіряємо, чи додані товари
     if (orderItems.length === 0) {
       toast({
