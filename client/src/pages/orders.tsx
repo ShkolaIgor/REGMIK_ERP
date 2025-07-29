@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, ChevronUp, ChevronDown, Search, Filter, X, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Building2 } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, ChevronUp, ChevronDown, Search, Filter, X, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Building2, Settings } from "lucide-react";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
