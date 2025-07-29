@@ -722,7 +722,7 @@ export default function Orders() {
   });
 
   // Оскільки сервер обробляє пагінацію, використовуємо всі отримані замовлення
-  const orders = filteredOrders;
+  const orders = filteredOrders || [];
 
   // Функції серверної пагінації
   const goToFirstPage = () => setServerPagination(prev => ({ ...prev, page: 1 }));
@@ -2669,7 +2669,13 @@ export default function Orders() {
 
         {/* Orders Table */}
         <div className="w-full pt-3">
-          <DataTable
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-600">Завантаження замовлень...</p>
+            </div>
+          ) : (
+            <DataTable
             data={orders}
             columns={[
               {
@@ -2777,7 +2783,8 @@ export default function Orders() {
             )}
             expandedItems={new Set(expandedOrderId ? [expandedOrderId] : [])}
             onToggleExpand={(itemId) => toggleOrderExpansion(Number(itemId))}
-          />
+            />
+          )}
           
           {/* Empty state - показується якщо немає даних */}
           {orders.length === 0 && !isLoading && (
