@@ -1056,7 +1056,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("🔧 DEBUG: Updating order", id, "with data:", JSON.stringify(order, null, 2));
       
-      const orderData = insertOrderSchemaForm.parse(order);
+      // Очищаємо порожні рядки що повинні бути числами
+      const cleanedOrder = {
+        ...order,
+        companyId: order.companyId && order.companyId !== '' ? parseInt(order.companyId) : undefined,
+        clientId: order.clientId && order.clientId !== '' ? parseInt(order.clientId) : undefined,
+        carrierId: order.carrierId && order.carrierId !== '' ? parseInt(order.carrierId) : undefined,
+        clientContactsId: order.clientContactsId && order.clientContactsId !== '' ? order.clientContactsId : undefined,
+      };
+      
+      console.log("🔧 DEBUG: Cleaned order data:", JSON.stringify(cleanedOrder, null, 2));
+      
+      const orderData = insertOrderSchemaForm.parse(cleanedOrder);
       
       // Передаємо дані без перетворення дат - це зробить db-storage.ts
       const updatedOrder = await storage.updateOrderWithItems(id, orderData, items || []);
