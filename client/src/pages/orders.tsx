@@ -2099,7 +2099,8 @@ export default function Orders() {
                     <Input
                       id="customerEmail"
                       type="email"
-                      {...form.register("customerEmail")}
+                      value={form.watch("customerEmail") || ""}
+                      onChange={(e) => form.setValue("customerEmail", e.target.value)}
                       className={form.formState.errors.customerEmail ? "border-red-500" : ""}
                     />
                     {form.formState.errors.customerEmail && (
@@ -2112,7 +2113,8 @@ export default function Orders() {
                     <Label htmlFor="customerPhone">Телефон</Label>
                     <Input
                       id="customerPhone"
-                      {...form.register("customerPhone")}
+                      value={form.watch("customerPhone") || ""}
+                      onChange={(e) => form.setValue("customerPhone", e.target.value)}
                     />
                   </div>
                   <div>
