@@ -273,7 +273,6 @@ export default function Orders() {
         
         // Debug: логуємо прострочені замовлення
         if (isOverdue) {
-          console.log("🔴 OVERDUE ORDER:", {
             id: order.id,
             orderNumber: order.orderNumber,
             dueDate: order.dueDate,
@@ -618,7 +617,6 @@ export default function Orders() {
             </div>
           );
         } catch (error) {
-          console.error("❌ Error rendering status column:", error);
           return (
             <div className="text-red-500 text-sm">
               Помилка відображення статусу
@@ -732,7 +730,6 @@ export default function Orders() {
       const response = await fetch('/api/order-statuses');
       if (!response.ok) throw new Error('Failed to fetch order statuses');
       const data = await response.json();
-      console.log("🔧 ORDER STATUSES LOADED:", data?.length || 0, "statuses");
       return data;
     },
     // Статуси потрібні для відображення колонки статусу в таблиці замовлень
@@ -995,14 +992,11 @@ export default function Orders() {
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
     mutationFn: async (params: { id: number; statusId: number }) => {
-      console.log("🔧 FRONTEND: Updating status", params);
       const requestData = { statusId: params.statusId };
       const result = await apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
-      console.log("🔧 FRONTEND: Status update result", result);
       return result;
     },
     onSuccess: (data, variables) => {
-      console.log("🔧 FRONTEND: Status update SUCCESS", { data, variables });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       toast({
@@ -1011,7 +1005,6 @@ export default function Orders() {
       });
     },
     onError: (error: any, variables) => {
-      console.error("🔧 FRONTEND: Status update ERROR", { error, variables });
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити статус",
@@ -1058,12 +1051,9 @@ export default function Orders() {
   // Мутація для оновлення замовлення
   const updateOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Sending PUT request to:", `/api/orders/${data.id}`);
-      console.log("Request data:", data);
       return await apiRequest(`/api/orders/${data.id}`, { method: "PUT", body: data });
     },
     onSuccess: (result) => {
-      console.log("Order update success:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       setIsDialogOpen(false);
@@ -1077,7 +1067,6 @@ export default function Orders() {
       });
     },
     onError: (error: any) => {
-      console.error("Order update error:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити замовлення",
@@ -1306,7 +1295,6 @@ export default function Orders() {
         });
       }
     } catch (error) {
-      console.error('Помилка завантаження даних друку:', error);
       toast({
         title: "Помилка",
         description: "Не вдалося завантажити дані для друку",
@@ -1632,7 +1620,6 @@ export default function Orders() {
       
       // Debug: перевіряємо логіку прострочених замовлень
       if (isOverdue) {
-        console.log("🔍 OVERDUE LOGIC:", {
           id: order.id,
           orderNumber: order.orderNumber,
           dueDate: order.dueDate,
@@ -1682,14 +1669,11 @@ export default function Orders() {
   const filteredClients = clientsList; // Дані вже відфільтровані на сервері
 
   const handleClientSelect = (clientId: string) => {
-    console.log("handleClientSelect called with ID:", clientId);
     
     // Шукаємо клієнта у відфільтрованому списку
     const selectedClient = filteredClients.find((c: any) => c.id.toString() === clientId);
-    console.log("Found client in filteredClients:", selectedClient);
     
     if (selectedClient) {
-      console.log("Setting client:", selectedClient.name);
       form.setValue("clientId", clientId);
       setSelectedClientId(clientId);
       setClientSearchValue(selectedClient.name);
@@ -1699,9 +1683,7 @@ export default function Orders() {
       form.setValue("clientContactsId", "");
       setSelectedContactId(undefined);
       
-      console.log("Client selection completed");
     } else {
-      console.log("Client not found!");
     }
   };
 
@@ -1719,14 +1701,9 @@ export default function Orders() {
   };
 
   const handleSubmit = (data: OrderFormData) => {
-    console.log("=== FORM SUBMIT STARTED ===");
-    console.log("Handle submit called with data:", data);
-    console.log("Order items:", orderItems);
-    console.log("Is edit mode:", isEditMode);
     
     // Якщо діалог закритий, не продовжуємо валідацію
     if (!isDialogOpen) {
-      console.log("Dialog is closed, skipping form submission");
       return;
     }
     
@@ -1809,7 +1786,6 @@ export default function Orders() {
     
     if (isEditMode && editingOrder) {
       // Редагування існуючого замовлення
-      console.log("Updating order with data:", {
         id: editingOrder.id,
         ...orderData,
       });
@@ -1891,7 +1867,6 @@ export default function Orders() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(handleSubmit, (errors) => {
-                console.log("Form validation errors:", errors);
                 toast({
                   title: "Помилка валідації",
                   description: "Перевірте правильність заповнення всіх полів",
@@ -2076,7 +2051,6 @@ export default function Orders() {
                       clientId={form.watch("clientId") ? parseInt(form.watch("clientId")) : undefined}
                       value={isEditMode ? (editingOrder?.contact?.fullName || editingOrder?.contactName || "") : ""}
                       onChange={async (contactId, contactName) => {
-                        //console.log("ContactPersonAutocomplete onChange:", { contactId, contactName });
                         form.setValue("clientContactsId", contactId ? contactId.toString() : "");
                         
                         // Автозаповнення email та телефону ТІЛЬКИ для нових замовлень
@@ -2102,7 +2076,6 @@ export default function Orders() {
                               }
                             }
                           } catch (error) {
-                            console.error("Error loading contact details:", error);
                           }
                         }
                       }}
@@ -2441,7 +2414,6 @@ export default function Orders() {
                             placeholder="Ціна"
                             value={item.unitPrice}
                             onChange={(e) => {
-                              console.log("Price change:", e.target.value);
                               updateOrderItem(index, "unitPrice", e.target.value);
                             }}
                             className="w-24"
