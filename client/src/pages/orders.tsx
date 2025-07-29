@@ -538,14 +538,24 @@ export default function Orders() {
                 🚚 {carrier.name}
               </div>
             )}
+            {!carrier && order.carrierId && (
+              <div className="text-xs text-orange-500">
+                Перевізник ID: {order.carrierId} (не знайдено)
+              </div>
+            )}
             {order.trackingNumber && (
               <div className="text-xs text-blue-600 font-mono">
                 📦 {order.trackingNumber}
               </div>
             )}
-            {!order.shippedDate && (
+            {!order.shippedDate && !carrier && !order.carrierId && (
               <div className="text-xs text-gray-400">
                 Не відвантажено
+              </div>
+            )}
+            {!order.shippedDate && carrier && (
+              <div className="text-xs text-gray-500">
+                Готово до відвантаження
               </div>
             )}
           </div>
@@ -730,7 +740,7 @@ export default function Orders() {
 
   const { data: carriers = [] } = useQuery<any[]>({
     queryKey: ["/api/carriers"],
-    enabled: isDialogOpen, // Завантажуємо тільки при відкритті форми
+    // Завантажуємо завжди для відображення в таблиці замовлень
   });
 
   // Стабільне оновлення серверної пагінації при зміні фільтрів
