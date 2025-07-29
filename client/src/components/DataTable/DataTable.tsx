@@ -297,14 +297,7 @@ export function DataTable({
     }
   }, [sortedData.length, settings.pageSize, currentPage, serverPagination]);
   
-  // Debug logging for pagination
-  console.log('DataTable Pagination Debug:', {
-    mode: serverPagination?.enabled ? 'server' : 'client',
-    totalData: data.length,
-    sortedDataLength: sortedData.length,
-    ...paginationInfo,
-    shouldShowPagination: paginationInfo.totalPages > 1 || paginationInfo.totalItems > paginationInfo.pageSize
-  });
+  // Pagination info calculated for current mode
 
   const handleSort = (columnKey: string) => {
     const newDirection = settings.sortField === columnKey && settings.sortDirection === 'asc' ? 'desc' : 'asc';
