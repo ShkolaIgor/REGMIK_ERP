@@ -278,7 +278,7 @@ export default function ClientContacts() {
     mutationFn: async (data: FormData) => {
       return await apiRequest("/api/client-contacts", {
         method: "POST",
-        body: JSON.stringify(data)
+        body: data
       });
     },
     onSuccess: () => {
@@ -319,7 +319,7 @@ export default function ClientContacts() {
     mutationFn: async (data: { id: number; updates: Partial<ClientContact> }) => {
       return await apiRequest(`/api/client-contacts/${data.id}`, {
         method: "PATCH",
-        body: JSON.stringify(data.updates)
+        body: data.updates
       });
     },
     onSuccess: () => {
