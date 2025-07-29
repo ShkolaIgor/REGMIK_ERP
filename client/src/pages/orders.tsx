@@ -2061,8 +2061,8 @@ export default function Orders() {
                         //console.log("ContactPersonAutocomplete onChange:", { contactId, contactName });
                         form.setValue("clientContactsId", contactId ? contactId.toString() : "");
                         
-                        // Автозаповнення email та телефону з контактної особи
-                        if (contactId) {
+                        // Автозаповнення email та телефону ТІЛЬКИ для нових замовлень
+                        if (contactId && !isEditMode) {
                           try {
                             // Завантажуємо свіжі дані контакту безпосередньо з API
                             const clientId = form.watch("clientId");
@@ -2071,17 +2071,13 @@ export default function Orders() {
                               if (response.ok) {
                                 const contactsData = await response.json();
                                 const selectedContact = contactsData?.find((c: any) => c.id === contactId);
-                                //console.log("Found selected contact:", selectedContact);
                                 if (selectedContact) {
                                   if (selectedContact.email) {
-                                    //console.log("Setting email:", selectedContact.email);
                                     form.setValue("customerEmail", selectedContact.email);
                                   }
                                   if (selectedContact.primaryPhone) {
-                                    //console.log("Setting phone:", selectedContact.primaryPhone);
                                     form.setValue("customerPhone", selectedContact.primaryPhone);
                                   } else if (selectedContact.phone) {
-                                    //console.log("Setting phone (fallback):", selectedContact.phone);
                                     form.setValue("customerPhone", selectedContact.phone);
                                   }
                                 }
@@ -2092,7 +2088,6 @@ export default function Orders() {
                           }
                         }
                       }}
-                      //placeholder={!form.watch("clientId") ? "Спочатку оберіть клієнта" : "Почніть вводити ім'я контакта..."}
                       disabled={!form.watch("clientId")}
                     />
                   </div>
