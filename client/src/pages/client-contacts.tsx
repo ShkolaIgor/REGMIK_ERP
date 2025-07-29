@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -346,29 +347,50 @@ export default function ClientContacts() {
     }
   };
 
-  const handleSave = () => {
+  // Окрема форма для редагування контактів
+  const editForm = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fullName: "",
+      position: "",
+      email: "",
+      primaryPhone: "",
+      primaryPhoneType: "mobile",
+      secondaryPhone: "",
+      secondaryPhoneType: "office",
+      tertiaryPhone: "",
+      tertiaryPhoneType: "fax",
+      notes: "",
+      isPrimary: false,
+      isActive: true
+    }
+  });
+
+  // Заповнюємо форму редагування при виборі контакту
+  React.useEffect(() => {
+    if (editingContact) {
+      editForm.reset({
+        clientId: editingContact.clientId.toString(),
+        fullName: editingContact.fullName || "",
+        position: editingContact.position || "",
+        email: editingContact.email || "",
+        primaryPhone: editingContact.primaryPhone || "",
+        primaryPhoneType: editingContact.primaryPhoneType || "mobile",
+        secondaryPhone: editingContact.secondaryPhone || "",
+        secondaryPhoneType: editingContact.secondaryPhoneType || "office",
+        tertiaryPhone: editingContact.tertiaryPhone || "",
+        tertiaryPhoneType: editingContact.tertiaryPhoneType || "fax",
+        notes: editingContact.notes || "",
+        isPrimary: editingContact.isPrimary || false,
+        isActive: editingContact.isActive || true
+      });
+    }
+  }, [editingContact, editForm]);
+
+  const handleEditSubmit = (data: FormData) => {
     if (!editingContact) return;
     
-    // Збираємо дані з форми редагування
-    const formElement = document.getElementById('edit-contact-form') as HTMLFormElement;
-    if (!formElement) return;
-    
-    const formData = new FormData(formElement);
-    const updates: Partial<ClientContact> = {
-      fullName: formData.get('fullName') as string,
-      position: formData.get('position') as string || undefined,
-      email: formData.get('email') as string || undefined,
-      primaryPhone: formData.get('primaryPhone') as string || undefined,
-      primaryPhoneType: formData.get('primaryPhoneType') as 'mobile' | 'office' | 'home',
-      secondaryPhone: formData.get('secondaryPhone') as string || undefined,
-      secondaryPhoneType: formData.get('secondaryPhoneType') as 'mobile' | 'office' | 'home' | 'fax',
-      tertiaryPhone: formData.get('tertiaryPhone') as string || undefined,
-      tertiaryPhoneType: formData.get('tertiaryPhoneType') as 'mobile' | 'office' | 'home' | 'fax',
-      notes: formData.get('notes') as string || undefined,
-      isPrimary: formData.get('isPrimary') === 'on',
-      isActive: formData.get('isActive') === 'on'
-    };
-
+    const { clientId, ...updates } = data;
     updateMutation.mutate({ id: editingContact.id, updates });
   };
 
@@ -786,188 +808,237 @@ export default function ClientContacts() {
               </DialogDescription>
             </DialogHeader>
             {editingContact && (
-              <form id="edit-contact-form" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium">Клієнт</label>
-                    <select 
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
                       name="clientId"
-                      defaultValue={editingContact.clientId.toString()}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    >
-                      {Array.isArray(clients) && clients.map((client: Client) => (
-                        <option key={client.id} value={client.id.toString()}>
-                          {client.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Клієнт</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Array.isArray(clients) && clients.map((client: Client) => (
+                                <SelectItem key={client.id} value={client.id.toString()}>
+                                  {client.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Повне ім'я *</label>
-                    <input
+                    <FormField
+                      control={editForm.control}
                       name="fullName"
-                      type="text"
-                      defaultValue={editingContact.fullName}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Повне ім'я *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Введіть повне ім'я" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Посада</label>
-                    <input
+                    <FormField
+                      control={editForm.control}
                       name="position"
-                      type="text"
-                      defaultValue={editingContact.position || ''}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Посада</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Введіть посаду" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Email</label>
-                    <input
+                    <FormField
+                      control={editForm.control}
                       name="email"
-                      type="email"
-                      defaultValue={editingContact.email || ''}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="email@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Основний телефон</label>
-                    <input
+                    <FormField
+                      control={editForm.control}
                       name="primaryPhone"
-                      type="text"
-                      defaultValue={editingContact.primaryPhone || ''}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Основний телефон</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+380..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Тип основного телефону</label>
-                    <select 
+                    <FormField
+                      control={editForm.control}
                       name="primaryPhoneType"
-                      defaultValue={editingContact.primaryPhoneType}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    >
-                      {Object.entries(phoneTypeLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Тип основного телефону</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(phoneTypeLabels).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Додатковий телефон</label>
-                    <input
+                    <FormField
+                      control={editForm.control}
                       name="secondaryPhone"
-                      type="text"
-                      defaultValue={editingContact.secondaryPhone || ''}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Додатковий телефон</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+380..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Тип додаткового телефону</label>
-                    <select 
+                    <FormField
+                      control={editForm.control}
                       name="secondaryPhoneType"
-                      defaultValue={editingContact.secondaryPhoneType}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    >
-                      {Object.entries(phoneTypeLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Третій телефон</label>
-                    <input
-                      name="tertiaryPhone"
-                      type="text"
-                      defaultValue={editingContact.tertiaryPhone || ''}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Тип додаткового телефону</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(phoneTypeLabels).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Тип третього телефону</label>
-                    <select 
-                      name="tertiaryPhoneType"
-                      defaultValue={editingContact.tertiaryPhoneType}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    >
-                      {Object.entries(phoneTypeLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium">Примітки</label>
-                    <textarea
+                    <FormField
+                      control={editForm.control}
                       name="notes"
-                      defaultValue={editingContact.notes || ''}
-                      rows={3}
-                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background resize-none"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Примітки</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Додаткові примітки..." rows={3} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="flex items-center space-x-4 md:col-span-2">
-                    <div className="flex items-center space-x-2">
-                      <input 
+                    <div className="md:col-span-2 flex items-center space-x-4">
+                      <FormField
+                        control={editForm.control}
                         name="isPrimary"
-                        type="checkbox" 
-                        defaultChecked={editingContact.isPrimary}
-                        className="h-4 w-4 rounded border border-input"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Основний контакт</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
                       />
-                      <label className="text-sm font-medium">Основний контакт</label>
-                    </div>
 
-                    <div className="flex items-center space-x-2">
-                      <input 
+                      <FormField
+                        control={editForm.control}
                         name="isActive"
-                        type="checkbox" 
-                        defaultChecked={editingContact.isActive}
-                        className="h-4 w-4 rounded border border-input"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Активний</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
                       />
-                      <label className="text-sm font-medium">Активний</label>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-between pt-4">
-                  <Button 
-                    variant="destructive"
-                    onClick={() => handleDelete(editingContact)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash className="w-4 h-4 mr-2" />
-                    {deleteMutation.isPending ? "Видалення..." : "Видалити контакт"}
-                  </Button>
+                  <div className="flex justify-between pt-4">
+                    <Button 
+                      type="button"
+                      variant="destructive"
+                      onClick={() => handleDelete(editingContact)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash className="w-4 h-4 mr-2" />
+                      {deleteMutation.isPending ? "Видалення..." : "Видалити контакт"}
+                    </Button>
 
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setEditingContact(null)}
-                    >
-                      Скасувати
-                    </Button>
-                    <Button 
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-                      onClick={handleSave}
-                      disabled={updateMutation.isPending}
-                    >
-                      {updateMutation.isPending ? "Збереження..." : "Зберегти зміни"}
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        onClick={() => setEditingContact(null)}
+                      >
+                        Скасувати
+                      </Button>
+                      <Button 
+                        type="submit"
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                        disabled={updateMutation.isPending}
+                      >
+                        {updateMutation.isPending ? "Збереження..." : "Зберегти зміни"}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </form>
+                </form>
+              </Form>
             )}
           </DialogContent>
         </Dialog>
