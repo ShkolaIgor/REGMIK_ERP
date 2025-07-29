@@ -373,7 +373,7 @@ export default function Orders() {
                   trigger={
                     <div className="space-y-1 cursor-pointer hover:opacity-80">
                       <Badge className="bg-blue-100 text-blue-800 border-blue-300">
-                        💳 Оплачено (записи)
+                        💳 Оплачено
                       </Badge>
                       <div className="text-xs text-blue-700 font-medium flex items-center gap-1">
                         📅 <UkrainianDate date={order.paymentDate} format="short" />
