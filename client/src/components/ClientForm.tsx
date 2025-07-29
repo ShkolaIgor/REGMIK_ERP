@@ -14,6 +14,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Loader2, MapPin, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContactPersonAutocomplete } from "./ContactPersonAutocomplete";
+import { formatUkrainianPhone, normalizePhoneInput } from "../utils/phoneFormatter";
 
 // Схема валідації з оновленими правилами для taxCode
 const formSchema = z.object({
@@ -457,7 +458,20 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               <FormItem>
                 <FormLabel>Телефон</FormLabel>
                 <FormControl>
-                  <Input placeholder="+380671234567" {...field} />
+                  <Input 
+                    placeholder="+380671234567" 
+                    {...field}
+                    onChange={(e) => {
+                      const normalized = normalizePhoneInput(e.target.value);
+                      field.onChange(normalized);
+                    }}
+                    onBlur={(e) => {
+                      if (e.target.value) {
+                        const formatted = formatUkrainianPhone(e.target.value);
+                        field.onChange(formatted);
+                      }
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

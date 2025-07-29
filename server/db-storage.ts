@@ -7316,47 +7316,39 @@ export class DatabaseStorage implements IStorage {
   // Методи для клієнтів
   async getClients(): Promise<any[]> {
     try {
-      // Отримуємо клієнтів разом з їх primary контактами
-      const clientsWithPrimaryContacts = await db
-        .select({
-          id: clients.id,
-          taxCode: clients.taxCode,
-          name: clients.name,
-          fullName: clients.fullName,
-          legalAddress: clients.legalAddress,
-          physicalAddress: clients.physicalAddress,
-          addressesMatch: clients.addressesMatch,
-          email: clients.email,
-          phone: clients.phone,
-          notes: clients.notes,
-          clientTypeId: clients.clientTypeId,
-          contactPerson: clients.contactPerson,
-          cityRef: clients.cityRef,
-          warehouseRef: clients.warehouseRef,
-          carrierId: clients.carrierId,
-          discount: clients.discount,
-          isActive: clients.isActive,
-          isCustomer: clients.isCustomer,
-          isSupplier: clients.isSupplier,
-          createdAt: clients.createdAt,
-          updatedAt: clients.updatedAt,
-          // Primary контакт
-          primaryContactName: clientContacts.fullName,
-          primaryContactEmail: clientContacts.email,
-          primaryContactPhone: clientContacts.primaryPhone,
-          primaryContactPosition: clientContacts.position
-        })
-        .from(clients)
-        .leftJoin(
-          clientContacts, 
-          and(
-            eq(clientContacts.clientId, clients.id), 
-            eq(clientContacts.isPrimary, true)
-          )
-        )
-        .orderBy(clients.name);
+      // Спочатку отримуємо всіх клієнтів
+      const allClients = await db.select().from(clients).orderBy(clients.name);
+      
+      // Потім додаємо primary контакти окремим запитом
+      const clientsWithContacts = await Promise.all(
+        allClients.map(async (client) => {
+          const primaryContact = await db
+            .select({
+              fullName: clientContacts.fullName,
+              email: clientContacts.email,
+              primaryPhone: clientContacts.primaryPhone,
+              position: clientContacts.position
+            })
+            .from(clientContacts)
+            .where(
+              and(
+                eq(clientContacts.clientId, client.id),
+                eq(clientContacts.isPrimary, true)
+              )
+            )
+            .limit(1);
 
-      return clientsWithPrimaryContacts;
+          return {
+            ...client,
+            primaryContactName: primaryContact[0]?.fullName || null,
+            primaryContactEmail: primaryContact[0]?.email || null,
+            primaryContactPhone: primaryContact[0]?.primaryPhone || null,
+            primaryContactPosition: primaryContact[0]?.position || null
+          };
+        })
+      );
+
+      return clientsWithContacts;
     } catch (error) {
       console.error('Error in getClients with primary contacts:', error);
       // Fallback до простого запиту без primary контакту

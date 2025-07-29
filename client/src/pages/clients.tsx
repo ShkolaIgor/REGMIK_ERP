@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
 import { ClientsXmlImport } from "@/components/ClientsXmlImport";
+import { formatUkrainianPhone } from "@/utils/phoneFormatter";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { 
@@ -494,6 +495,43 @@ export default function Clients() {
         ) : (
           <span className="text-muted-foreground text-sm">0%</span>
         );
+      }
+    },
+    {
+      key: "primaryContact",
+      label: "Контакт за замовчуванням",
+      sortable: false,
+      width: 200,
+      render: (value: any, client: any) => {
+        if (client.primaryContactName) {
+          return (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-xs">
+              <div className="font-medium text-blue-900 mb-1">
+                {client.primaryContactName}
+              </div>
+              {client.primaryContactPosition && (
+                <div className="text-blue-700 mb-1">
+                  {client.primaryContactPosition}
+                </div>
+              )}
+              <div className="space-y-1">
+                {client.primaryContactEmail && (
+                  <div className="flex items-center gap-1 text-blue-600">
+                    <Mail className="h-3 w-3" />
+                    <span className="truncate">{client.primaryContactEmail}</span>
+                  </div>
+                )}
+                {client.primaryContactPhone && (
+                  <div className="flex items-center gap-1 text-blue-600">
+                    <Phone className="h-3 w-3" />
+                    <span>{formatUkrainianPhone(client.primaryContactPhone)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+        return <span className="text-muted-foreground text-xs">Немає контакту</span>;
       }
     },
     {

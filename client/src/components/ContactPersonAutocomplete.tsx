@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { formatUkrainianPhone } from "@/utils/phoneFormatter";
 
 const contactFormSchema = z.object({
   fullName: z.string().min(1, "Ім'я обов'язкове"),
@@ -247,7 +248,7 @@ export function ContactPersonAutocomplete({
                         <div className="text-sm text-gray-500">{contact.position}</div>
                       )}
                       {contact.primaryPhone && (
-                        <div className="text-sm text-gray-500">{contact.primaryPhone}</div>
+                        <div className="text-sm text-gray-500">{formatUkrainianPhone(contact.primaryPhone)}</div>
                       )}
                     </div>
                   </div>
