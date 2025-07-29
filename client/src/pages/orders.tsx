@@ -271,9 +271,19 @@ export default function Orders() {
         
         const showGreenDot = isRecentlyUpdated || hasRecentPayment;
         
+        // Debug: логуємо прострочені замовлення
+        if (isOverdue) {
+          console.log("🔴 OVERDUE ORDER:", {
+            id: order.id,
+            orderNumber: order.orderNumber,
+            dueDate: order.dueDate,
+            isOverdue
+          });
+        }
+        
         return (
           <div className={`font-semibold text-center text-lg p-2 rounded ${getOrderNumberBgColor(order)}`}>
-            {isOverdue && <div className="text-xs text-red-600 font-bold mb-1">ПРОСТРОЧЕНО</div>}
+            {isOverdue && <div className="text-xs text-red-600 font-bold mb-1">⚠️ ПРОСТРОЧЕНО</div>}
             <div className="flex items-center justify-center gap-2">
               {showGreenDot && (
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" 
@@ -1511,16 +1521,33 @@ export default function Orders() {
     
     // Перевіряємо чи замовлення оплачене
     const paidAmount = parseFloat(order.paidAmount || '0');
-    if (paidAmount === 0) {
+    const totalAmount = parseFloat(order.totalAmount || '0');
+    
+    // Замовлення прострочене тільки якщо не повністю оплачене
+    if (paidAmount < totalAmount) {
       const dueDate = new Date(order.dueDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       dueDate.setHours(0, 0, 0, 0);
       
-      return today > dueDate;
+      const isOverdue = today > dueDate;
+      
+      // Debug: перевіряємо логіку прострочених замовлень
+      if (isOverdue) {
+        console.log("🔍 OVERDUE LOGIC:", {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          dueDate: order.dueDate,
+          paidAmount,
+          totalAmount,
+          isPastDue: today > dueDate
+        });
+      }
+      
+      return isOverdue;
     }
     
-    return false; // Оплачені замовлення не можуть бути простроченими
+    return false; // Повністю оплачені замовлення не можуть бути простроченими
   };
 
   const getOrderNumberBgColor = (order: any) => {

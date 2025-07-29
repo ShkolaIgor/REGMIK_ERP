@@ -1,0 +1,169 @@
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] apiRequest - Status update: – {url: "/api/orders/174/status", method: "PUT", data: {statusId: 1}} (queryClient.ts, line 36)
+[Log] Frontend: Making PUT request to: /api/orders/174/status (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"statusId\":1}" (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "sidebar_state=true" (queryClient.ts, line 51)
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] Frontend: Response status: 200 for PUT /api/orders/174/status (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "708", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 05:41:11 GMT", …} (queryClient.ts, line 67)
+{content-length: "708", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 05:41:11 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] apiRequest - Status update: – {url: "/api/orders/174/status", method: "PUT", data: {statusId: 10}} (queryClient.ts, line 36)
+[Log] Frontend: Making PUT request to: /api/orders/174/status (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"statusId\":10}" (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "sidebar_state=true" (queryClient.ts, line 51)
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] Frontend: Response status: 200 for PUT /api/orders/174/status (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "709", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 05:41:15 GMT", …} (queryClient.ts, line 67)
+{content-length: "709", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 05:41:15 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] apiRequest - Status update: – {url: "/api/orders/174/status", method: "PUT", data: {statusId: 10}} (queryClient.ts, line 36)
+[Log] Frontend: Making PUT request to: /api/orders/174/status (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"statusId\":10}" (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "sidebar_state=true" (queryClient.ts, line 51)
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] Frontend: Response status: 200 for PUT /api/orders/174/status (queryClient.ts, line 66)
+[Log] Frontend: Response headers: (queryClient.ts, line 67)
+Object
+
+content-length: "709"
+
+content-type: "application/json; charset=utf-8"
+
+date: "Tue, 29 Jul 2025 05:41:19 GMT"
+
+replit-cluster: "picard"
+
+x-powered-by: "Express"
+
+x-robots-tag: "none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex, none, noindex, noarchive, nofollow, nositelinkssearchbox…"
+
+Object Prototype
+[Log] DataTable Pagination Debug: (DataTable.tsx, line 228)
+Object
+
+currentPage: 1
+
+pageSize: 25
+
+shouldShowPagination: false
+
+sortedDataLength: 25
+
+totalData: 25
+
+totalPages: 1
+
+Object Prototype
+[Log] DataTable Pagination Debug: (DataTable.tsx, line 228)
+Object
+
+currentPage: 1
+
+pageSize: 25
+
+shouldShowPagination: false
+
+sortedDataLength: 25
+
+totalData: 25
+
+totalPages: 1
+
+Object Prototype
+[Log] DataTable Pagination Debug: (DataTable.tsx, line 228)
+Object
+
+currentPage: 1
+
+pageSize: 25
+
+shouldShowPagination: false
+
+sortedDataLength: 25
+
+totalData: 25
+
+totalPages: 1
+
+Object Prototype
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] Frontend: Making GET request to: /api/component-deductions/order?orderId=160 (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "sidebar_state=true" (queryClient.ts, line 51)
+[Log] Frontend: Response status: 200 for GET /api/component-deductions/order?orderId=160 (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "42", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 05:42:08 GMT", …} (queryClient.ts, line 67)
+{content-length: "42", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 05:42:08 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Error] WebSocket connection to 'wss://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/?token=W8BWau6YJF3W' failed: The network connection was lost.
+[Log] [vite] server connection lost. Polling for restart... (client, line 560)
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] apiRequest - Status update: – {url: "/api/orders/174/status", method: "PUT", data: {statusId: 1}} (queryClient.ts, line 36)
+[Log] Frontend: Making PUT request to: /api/orders/174/status (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"statusId\":1}" (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "sidebar_state=true" (queryClient.ts, line 51)
+[Log] DataTable Pagination Debug: – {totalData: 25, sortedDataLength: 25, pageSize: 25, …} (DataTable.tsx, line 228)
+{totalData: 25, sortedDataLength: 25, pageSize: 25, totalPages: 1, currentPage: 1, …}Object
+[Log] Frontend: Response status: 200 for PUT /api/orders/174/status (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "708", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 05:45:34 GMT", …} (queryClient.ts, line 67)
+{content-length: "708", content-type: "application/json; charset=utf-8", date: "Tue, 29 Jul 2025 05:45:34 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] DataTable Pagination Debug: (DataTable.tsx, line 228)
+Object
+
+currentPage: 1
+
+pageSize: 25
+
+shouldShowPagination: false
+
+sortedDataLength: 25
+
+totalData: 25
+
+totalPages: 1
+
+Object Prototype
+[Log] DataTable Pagination Debug: (DataTable.tsx, line 228)
+Object
+
+currentPage: 1
+
+pageSize: 25
+
+shouldShowPagination: false
+
+sortedDataLength: 25
+
+totalData: 25
+
+totalPages: 1
+
+Object Prototype
