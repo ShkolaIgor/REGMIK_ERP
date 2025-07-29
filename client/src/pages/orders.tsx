@@ -1441,7 +1441,11 @@ export default function Orders() {
 
   // Функція для початку редагування замовлення - МАКСИМАЛЬНО ОПТИМІЗОВАНА
   const handleEditOrder = (order: any) => {
-    console.log("handleEditOrder called with order:", order);
+    console.log("=== HANDLE EDIT ORDER ===");
+    console.log("Order object:", order);
+    console.log("Order.contactEmail:", order.contactEmail);
+    console.log("Order.contactPhone:", order.contactPhone);
+    console.log("Order.contact:", order.contact);
     
     // ПОВНЕ очищення попереднього стану для запобігання змішуванню даних  
     setEditingOrder(null);
@@ -1511,9 +1515,9 @@ export default function Orders() {
         productionApproved: order.productionApproved || false,
         productionApprovedBy: order.productionApprovedBy || "",
         productionApprovedAt: formatDate(order.productionApprovedAt),
-        // Додаємо email та телефон з контактних даних замовлення
-        customerEmail: order.contact?.email || order.contactEmail || "",
-        customerPhone: order.contact?.primaryPhone || order.contact?.phone || order.contactPhone || "",
+        // ПРІОРИТЕТ: спочатку поля замовлення, потім контактна особа
+        customerEmail: order.contactEmail || order.contact?.email || "",
+        customerPhone: order.contactPhone || order.contact?.primaryPhone || order.contact?.phone || "",
       });
 
       // Швидке встановлення клієнта з мінімальною логікою

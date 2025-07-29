@@ -1052,6 +1052,8 @@ export class DatabaseStorage implements IStorage {
       }
 
       console.log(`Order found: ${order.orderNumber} for client: ${client?.name || 'Unknown'}`);
+      console.log(`Order contactEmail: ${order.contactEmail}, contactPhone: ${order.contactPhone}`);
+      console.log(`Contact data:`, contact);
 
       // Отримуємо товари замовлення
       const itemsResult = await db.select({
@@ -1099,9 +1101,16 @@ export class DatabaseStorage implements IStorage {
         ...order,
         clientName: client?.name || null,
         clientTaxCode: client?.taxCode || null,
-        contactName: contact?.fullName || null,
-        contactEmail: contact?.email || null,
-        contactPhone: contact?.phone || null,
+        // Дані контактної особи (для fallback)
+        contact: contact ? {
+          fullName: contact.fullName,
+          email: contact.email,
+          primaryPhone: contact.primaryPhone,
+          phone: contact.primaryPhone
+        } : null,
+        // ВАЖЛИВО: contactEmail/contactPhone з orders таблиці мають вищий пріоритет
+        contactEmail: order.contactEmail || contact?.email || null,
+        contactPhone: order.contactPhone || contact?.primaryPhone || null,
         items
       };
 
