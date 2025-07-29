@@ -6182,6 +6182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clients = await storage.getClients();
       res.json({ clients });
     } catch (error) {
+      console.error('Error in /api/clients/all:', error);
       res.status(500).json({ error: "Failed to get all clients" });
     }
   });

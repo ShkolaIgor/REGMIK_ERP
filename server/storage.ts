@@ -450,7 +450,7 @@ export interface IStorage {
   getDefaultSenderSetting(): Promise<SenderSettings | null>;
 
   // Clients
-  getClients(): Promise<Client[]>;
+  getClients(): Promise<any[]>;
   getClientsPaginated(page: number, limit: number, search?: string): Promise<{
     clients: Client[];
     total: number;
