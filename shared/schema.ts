@@ -1095,6 +1095,13 @@ export const clients = pgTable("clients", {
   cityRef: varchar("city_ref", { length: 255 }), // ref міста Нової Пошти
   warehouseRef: varchar("warehouse_ref", { length: 255 }), // ref відділення Нової Пошти
   
+  // Контактна інформація клієнта
+  contactPerson: text("contact_person"), // ім'я контактної особи
+  contactPersonId: integer("contact_person_id").references(() => clientContacts.id), // зв'язок з таблицею контактів
+  phone: text("phone"), // основний телефон клієнта
+  email: text("email"), // основний email клієнта
+  website: text("website"), // веб-сайт клієнта
+  
   isActive: boolean("is_active").default(true),
   isCustomer: boolean("is_customer").default(false), // клієнт купує товари
   isSupplier: boolean("is_supplier").default(false), // клієнт постачає товари
