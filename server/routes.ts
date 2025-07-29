@@ -1033,19 +1033,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/orders/:id/status", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
       const { statusId } = req.body;
+      
+      console.log(`🔧 UPDATE STATUS: Order ${id}, statusId: ${statusId}, type: ${typeof statusId}`);
       
       if (!statusId) {
         return res.status(400).json({ error: "StatusId is required" });
       }
       
+      // Отримуємо замовлення до оновлення
+      const orderBefore = await storage.getOrder(id);
+      console.log(`🔧 BEFORE UPDATE: Order ${id}, current statusId: ${orderBefore?.statusId}`);
+      
       const order = await storage.updateOrderStatusId(id, statusId);
+      console.log(`🔧 AFTER UPDATE: Order ${id}, new statusId: ${order?.statusId}`);
+      
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
       res.json(order);
     } catch (error) {
+      console.error(`🔧 STATUS UPDATE ERROR:`, error);
       res.status(500).json({ error: "Failed to update order status" });
     }
   });

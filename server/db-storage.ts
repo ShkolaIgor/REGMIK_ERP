@@ -1370,10 +1370,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOrderStatusId(id: number, statusId: number): Promise<Order | undefined> {
+    console.log(`🔧 DB UPDATE: Updating order ${id} with statusId ${statusId} (type: ${typeof statusId})`);
+    
     const result = await db.update(orders)
       .set({ statusId })
       .where(eq(orders.id, id))
       .returning();
+    
+    console.log(`🔧 DB RESULT: Updated order:`, result[0] ? `statusId=${result[0].statusId}` : 'null');
     return result[0];
   }
 
