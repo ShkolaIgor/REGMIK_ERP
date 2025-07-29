@@ -361,7 +361,7 @@ export function DataTable({
         <thead
           className={cn(
             "border-b",
-            settings.headerFontWeight === 'bold' ? 'datatable-font-bold' : 'datatable-font-normal',
+            settings.headerFontWeight === 'bold' ? 'font-bold' : 'font-normal',
             settings.headerFontStyle === 'italic' ? 'italic' : 'not-italic'
           )}
           style={{
@@ -459,7 +459,7 @@ export function DataTable({
                     "border-b transition-all duration-300 ease-in-out",
                     (onRowClick || expandableContent) && "cursor-pointer",
                     settings.enableRowHover && "hover:shadow-lg hover:bg-blue-50/50 hover:scale-[1.005] hover:border-blue-200",
-                    settings.fontWeight === 'bold' ? 'datatable-font-bold' : 'datatable-font-normal',
+                    settings.fontWeight === 'bold' ? 'font-bold' : 'font-normal',
                     settings.fontStyle === 'italic' ? 'italic' : 'not-italic'
                   )}
                   style={{
@@ -493,7 +493,7 @@ export function DataTable({
                     className={cn(
                       "px-4 py-3",
                       settings.showVerticalLines ? "border-r last:border-r-0" : "",
-                      columnSettings.fontWeight === 'bold' ? 'datatable-font-bold' : 'datatable-font-normal',
+                      columnSettings.fontWeight === 'bold' ? 'font-bold' : 'font-normal',
                       columnSettings.fontStyle === 'italic' ? 'italic' : 'not-italic'
                     )}
                     style={{
@@ -598,7 +598,7 @@ export function DataTable({
               key={index}
               className={cn(
                 onRowClick && "cursor-pointer",
-                settings.fontWeight === 'bold' ? 'datatable-font-bold' : 'datatable-font-normal',
+                settings.fontWeight === 'bold' ? 'font-bold' : 'font-normal',
                 settings.fontStyle === 'italic' ? 'italic' : 'not-italic'
               )}
               style={{
@@ -617,7 +617,7 @@ export function DataTable({
               className={cn(
                 "cursor-pointer hover:shadow-md transition-shadow min-h-[280px] flex flex-col",
                 onRowClick && "cursor-pointer",
-                settings.fontWeight === 'bold' ? 'datatable-font-bold' : 'datatable-font-normal',
+                settings.fontWeight === 'bold' ? 'font-bold' : 'font-normal',
                 settings.fontStyle === 'italic' ? 'italic' : 'not-italic'
               )}
               style={{

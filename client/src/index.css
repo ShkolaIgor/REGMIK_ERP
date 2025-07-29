@@ -73,15 +73,13 @@
   animation: pulse-soft 2s infinite;
 }
 
-/* DataTable font weight enforcement */
-.datatable-font-bold,
-.datatable-font-bold * {
-  font-weight: bold !important;
+/* DataTable font weight enforcement - using Tailwind classes with !important */
+.font-bold {
+  font-weight: 700 !important;
 }
 
-.datatable-font-normal,
-.datatable-font-normal * {
-  font-weight: normal !important;
+.font-normal {
+  font-weight: 400 !important;
 }
 
 .animate-bounce-dots {
