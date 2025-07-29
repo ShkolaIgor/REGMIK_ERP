@@ -1,0 +1,70 @@
+index-C6yW0cYO.js:1496 ContactPersonAutocomplete onChange: {contactId: 7104, contactName: 'Сидорко Юрій'}
+index-C6yW0cYO.js:1496 Found selected contact: undefined
+index-C6yW0cYO.js:798 Warehouses: [] Filtered: [] Query: 
+index-C6yW0cYO.js:789 DataTable Pagination Debug: {mode: 'server', totalData: 25, sortedDataLength: 25, totalPages: 2071, totalItems: 51759, …}
+index-C6yW0cYO.js:1496 === FORM SUBMIT STARTED ===
+index-C6yW0cYO.js:1496 Handle submit called with data: {clientId: '7114', clientContactsId: '7104', companyId: '', orderNumber: '52747', totalAmount: '55940.00', …}
+index-C6yW0cYO.js:1496 Order items: (2) [{…}, {…}]
+index-C6yW0cYO.js:1496 Is edit mode: true
+index-C6yW0cYO.js:1496 Updating order with data: {id: 51759, order: {…}, items: Array(2)}
+index-C6yW0cYO.js:798 Warehouses: [] Filtered: [] Query: 
+index-C6yW0cYO.js:789 DataTable Pagination Debug: {mode: 'server', totalData: 25, sortedDataLength: 25, totalPages: 2071, totalItems: 51759, …}
+index-C6yW0cYO.js:798 Warehouses: [] Filtered: [] Query: 
+index-C6yW0cYO.js:789 DataTable Pagination Debug: {mode: 'server', totalData: 25, sortedDataLength: 25, totalPages: 2071, totalItems: 51759, …}
+index-C6yW0cYO.js:1496 Sending PUT request to: /api/orders/51759
+index-C6yW0cYO.js:1496 Request data: {id: 51759, order: {…}, items: Array(2)}
+index-C6yW0cYO.js:48 Frontend: Making PUT request to: /api/orders/51759
+index-C6yW0cYO.js:48 Frontend: Request headers: {Content-Type: 'application/json'}
+index-C6yW0cYO.js:48 Frontend: Request body: {"id":51759,"order":{"orderNumber":"52747","statusId":1,"totalAmount":"55940","clientId":7114,"clientContactsId":"7104","invoiceNumber":"РМ00-027804","carrierId":1,"paymentDate":"2025-07-27T21:00:00.000Z","dueDate":"2025-08-04T09:00:00.000Z"},"items":[{"productId":22022,"itemName":"Витратомір-лічильник електромагнітний ЕРС-50-R-M-0,5","quantity":1,"unitPrice":"43440","totalPrice":"43440","comment":""},{"productId":25984,"itemName":"Виносний індикатор ЕРС-І","quantity":1,"unitPrice":"12500","totalPrice":"12500","comment":""}]}
+index-C6yW0cYO.js:48 Frontend: Document cookies: rl_anonymous_id=%2272a75c14-b0a4-41b2-9c44-29597b0c1b44%22; rl_user_id=%22%22; _ga=GA1.1.865885714.1717744347; _ga_Z5YXFPYHZ8=GS1.1.1746520813.4.0.1746520813.0.0.0
+index-C6yW0cYO.js:48     PUT https://erp.regmik.ua/api/orders/51759 400
+We @ index-C6yW0cYO.js:48
+mutationFn @ index-C6yW0cYO.js:1496
+fn @ index-C6yW0cYO.js:48
+x @ index-C6yW0cYO.js:48
+start @ index-C6yW0cYO.js:48
+execute @ index-C6yW0cYO.js:48
+await in execute (async)
+mutate @ index-C6yW0cYO.js:48
+(anonymous) @ index-C6yW0cYO.js:48
+iv @ index-C6yW0cYO.js:1496
+(anonymous) @ index-C6yW0cYO.js:789
+await in (anonymous) (async)
+Uce @ index-C6yW0cYO.js:37
+Vce @ index-C6yW0cYO.js:37
+Hce @ index-C6yW0cYO.js:37
+PI @ index-C6yW0cYO.js:37
+aH @ index-C6yW0cYO.js:37
+(anonymous) @ index-C6yW0cYO.js:37
+iE @ index-C6yW0cYO.js:40
+OV @ index-C6yW0cYO.js:37
+O4 @ index-C6yW0cYO.js:37
+DO @ index-C6yW0cYO.js:37
+lde @ index-C6yW0cYO.js:37
+index-C6yW0cYO.js:48 Frontend: Response status: 400 for PUT /api/orders/51759
+index-C6yW0cYO.js:48 Frontend: Response headers: {content-length: '179', content-type: 'application/json; charset=utf-8', date: 'Tue, 29 Jul 2025 08:20:08 GMT', server: 'nginx/1.29.0', x-powered-by: 'Express'}
+index-C6yW0cYO.js:1496 Order update error: Error: 400: 
+    at $K (index-C6yW0cYO.js:48:43271)
+    at async We (index-C6yW0cYO.js:48:44574)
+    at async Object.mutationFn (index-C6yW0cYO.js:1496:30172)
+onError @ index-C6yW0cYO.js:1496
+execute @ index-C6yW0cYO.js:48
+await in execute (async)
+mutate @ index-C6yW0cYO.js:48
+(anonymous) @ index-C6yW0cYO.js:48
+iv @ index-C6yW0cYO.js:1496
+(anonymous) @ index-C6yW0cYO.js:789
+await in (anonymous) (async)
+Uce @ index-C6yW0cYO.js:37
+Vce @ index-C6yW0cYO.js:37
+Hce @ index-C6yW0cYO.js:37
+PI @ index-C6yW0cYO.js:37
+aH @ index-C6yW0cYO.js:37
+(anonymous) @ index-C6yW0cYO.js:37
+iE @ index-C6yW0cYO.js:40
+OV @ index-C6yW0cYO.js:37
+O4 @ index-C6yW0cYO.js:37
+DO @ index-C6yW0cYO.js:37
+lde @ index-C6yW0cYO.js:37
+index-C6yW0cYO.js:798 Warehouses: [] Filtered: [] Query: 
+index-C6yW0cYO.js:789 DataTable Pagination Debug: {mode: 'server', totalData: 25, sortedDataLength: 25, totalPages: 2071, totalItems: 51759, …}

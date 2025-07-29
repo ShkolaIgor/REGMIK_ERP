@@ -1067,6 +1067,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("🔧 DEBUG: Cleaned order data:", JSON.stringify(cleanedOrder, null, 2));
       
+      try {
+        const orderData = insertOrderSchemaForm.parse(cleanedOrder);
+      } catch (validationError) {
+        console.log("🔧 DEBUG: VALIDATION ERROR DETAILS:", JSON.stringify(validationError, null, 2));
+        if (validationError instanceof z.ZodError) {
+          console.log("🔧 DEBUG: Validation errors:", validationError.errors.map(err => ({
+            path: err.path,
+            message: err.message,
+            code: err.code,
+            received: err.received
+          })));
+        }
+        throw validationError;
+      }
+      
       const orderData = insertOrderSchemaForm.parse(cleanedOrder);
       
       // Передаємо дані без перетворення дат - це зробить db-storage.ts
