@@ -2092,6 +2092,7 @@ export default function Orders() {
                       </p>
                     )}
                   </div>
+                  
                   <div>
                     <Label htmlFor="clientContactsId">Контактна особа</Label>
                     <ContactPersonAutocomplete

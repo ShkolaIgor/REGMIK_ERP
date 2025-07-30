@@ -467,12 +467,12 @@ export function NovaPoshtaIntegration({
             Вибір адреси доставки
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 grid grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Пошук міста</label>
             {selectedCity ? (
               <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
-                <span className="text-green-800">Обрано: {selectedCity.Description} ({selectedCity.AreaDescription})</span>
+                <span className="text-green-800">{selectedCity.Description} ({selectedCity.AreaDescription})</span>
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -585,10 +585,11 @@ export function NovaPoshtaIntegration({
                             >
                               <div className="font-medium text-sm">
                                 №{warehouse.Number}
-                              </div>
                               <div className="text-xs text-gray-600">
                                 {warehouse.ShortAddress}
                               </div>
+                                </div>
+                              
                               {warehouse.Phone && (
                                 <div className="text-xs text-gray-500">
                                   {warehouse.Phone}
