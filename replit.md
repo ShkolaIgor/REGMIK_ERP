@@ -130,6 +130,13 @@ User has Russian-language 1C system and needs integration setup guidance.
 
 ## Recent Changes
 
+### July 30, 2025
+- ✅ **БАНКІВСЬКИЙ МОНІТОРИНГ ОПТИМІЗОВАНО** - Виправлено повторну перевірку одних і тих же листів, додано UNSEEN фільтр для обробки тільки нових повідомлень
+- ✅ **SMART EMAIL PROCESSING** - Система тепер позначає листи як прочитані тільки після успішної обробки платежів
+- ✅ **ПРОДУКТИВНІСТЬ ПОКРАЩЕНА** - Усунуто зайве навантаження на поштовий сервер через повторні перевірки архіву
+- ✅ **CONTACT EDITING COMPLETELY FIXED** - Виправлено подвійне JSON encoding в мутаціях створення та редагування контактів
+- ✅ **REACT HOOK FORM INTEGRATION** - Повністю переписано форму редагування контактів з використанням React Hook Form замість проблематичного FormData підходу
+
 ### July 29, 2025
 - ✅ **CRITICAL FILE RECOVERY COMPLETED** - Successfully repaired bank-email-service.ts after sed command damage, fixing all TypeScript errors and restoring full functionality
 - ✅ **ORDERS.TSX SYNTAX ERRORS RESOLVED** - Fixed syntax errors caused by sed command cleanup, restored proper JSX structure and type handling

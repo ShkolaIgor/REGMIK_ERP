@@ -97,7 +97,7 @@ export class BankEmailService {
   private startMonitoring(): void {
     if (this.isMonitoring) return;
     this.isMonitoring = true;
-    // Перевіряємо email кожні 5 хвилин (всі банківські повідомлення за останні дні)
+    // Перевіряємо нові email кожні 5 хвилин (тільки непрочитані повідомлення)
     this.monitoringInterval = setInterval(async () => {
       try {
         await this.checkNewEmails();
@@ -269,11 +269,11 @@ export class BankEmailService {
               reject(err);
               return;
             }
-            // Шукаємо ВСІ email від банку (без часових обмежень для повної обробки архіву)
+            // Шукаємо тільки НОВІ (непрочитані) email від банку
             const bankFromAddress = emailSettings?.bankEmailAddress || 'online@ukrsibbank.com';
             imap.search([
-              ['FROM', bankFromAddress]
-              // Видалено ['SINCE', lastWeek] щоб обробити всі банківські повідомлення
+              ['FROM', bankFromAddress],
+              'UNSEEN'  // Додано фільтр тільки для нових листів
             ], (err: any, results: any) => {
               if (err) {
                 console.error("❌ Помилка пошуку email:", err);
@@ -290,7 +290,7 @@ export class BankEmailService {
               const fetch = imap.fetch(results, { 
                 bodies: ['HEADER', 'TEXT'], // Отримуємо повні заголовки та текст
                 struct: true,
-                markSeen: false  // НЕ помічаємо як прочитаний
+                markSeen: false  // НЕ помічаємо автоматично - будемо позначати вручну після обробки
               });
               let processedCount = 0;
               fetch.on('message', (msg: any, seqno: any) => {
@@ -421,7 +421,16 @@ export class BankEmailService {
                     console.log(`  ReceivedAt: ${finalEmailDate.toISOString()}`);
                     const result = await this.processBankEmail(emailData);
                     if (result.success) {
-                      // Успішно оброблено
+                      // Успішно оброблено - позначаємо як прочитаний
+                      try {
+                        imap.addFlags(seqno, ['\\Seen'], (err: any) => {
+                          if (err) {
+                            console.error(`❌ Помилка позначення email ${seqno} як прочитаний:`, err);
+                          }
+                        });
+                      } catch (markErr) {
+                        console.error(`❌ Помилка позначення email як прочитаний:`, markErr);
+                      }
                     } else {
                       console.error(`❌ Помилка обробки платежу: ${result.message}`);
                     }
