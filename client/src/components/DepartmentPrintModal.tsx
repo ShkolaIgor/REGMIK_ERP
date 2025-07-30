@@ -238,7 +238,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <tr>
                   <th style="width: 5%">№</th>
                   <th style="width: 45%">Найменування товару</th>
-                  <! -- <th style="width: 15%">Артикул</th> -->
+                  <!-- <th style="width: 15%">Артикул</th> -->
                   <th style="width: 10%">Кількість</th>
                   <th style="width: 25%">Примітки</th>
                 </tr>
