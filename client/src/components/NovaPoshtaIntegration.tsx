@@ -584,12 +584,12 @@ export function NovaPoshtaIntegration({
                               }}
                             >
                               <div className="font-medium text-sm">
-                                №{warehouse.Number} className="text-xs text-gray-600">
-                                  {warehouse.ShortAddress}
+                                №{warehouse.Number}
                               </div>
                               <div className="text-xs text-gray-600">
                                 {warehouse.ShortAddress}
                               </div>
+
                               
                               {warehouse.Phone && (
                                 <div className="text-xs text-gray-500">
