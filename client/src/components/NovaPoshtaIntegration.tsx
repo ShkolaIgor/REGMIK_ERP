@@ -467,7 +467,7 @@ export function NovaPoshtaIntegration({
             Вибір адреси доставки
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Пошук міста</label>
             {selectedCity ? (

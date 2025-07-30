@@ -1884,7 +1884,8 @@ export default function Orders() {
                 });
               })} className="space-y-6">
                 {/* Поле компанії */}
-                <div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
                   <Label htmlFor="companyId">Компанія *</Label>
                   <div className="relative">
                     <Input
@@ -1960,6 +1961,42 @@ export default function Orders() {
                       {form.formState.errors.companyId.message}
                     </p>
                   )}
+                </div>
+                  
+                  <div>
+                    <Label htmlFor="invoiceNumber">Рахунок</Label>
+                    <Input
+                      id="invoiceNumber"
+                      {...form.register("invoiceNumber")}
+                      placeholder="Номер рахунку"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="status">Статус</Label>
+                    {!isEditMode ? (
+                      <Input
+                        value="Нове"
+                        disabled
+                        className="bg-gray-50"
+                      />
+                    ) : (
+                      <Select
+                        value={form.watch("status")}
+                        onValueChange={(value) => form.setValue("status", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Нове</SelectItem>
+                          <SelectItem value="processing">В обробці</SelectItem>
+                          <SelectItem value="completed">Завершено</SelectItem>
+                          <SelectItem value="cancelled">Скасовано</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                 </div>
 
                 {/* Інформація про клієнта */}
@@ -2098,14 +2135,8 @@ export default function Orders() {
                       onChange={(e) => form.setValue("customerPhone", e.target.value)}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="invoiceNumber">Рахунок</Label>
-                    <Input
-                      id="invoiceNumber"
-                      {...form.register("invoiceNumber")}
-                      placeholder="Номер рахунку"
-                    />
-                  </div>
+                  
+
                   <div>
                     <Label htmlFor="carrierId">Перевізник</Label>
                     <Select
@@ -2125,7 +2156,20 @@ export default function Orders() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
+
+                  {/* Трек номер (тільки для редагування) */}
+                  {isEditMode && (
+                    <div>
+                      <Label htmlFor="trackingNumber">Номер відстеження (трек)</Label>
+                      <Input
+                        id="trackingNumber"
+                        {...form.register("trackingNumber")}
+                        placeholder="Введіть номер відстеження"
+                      />
+                    </div>
+                  )}
+                    </div>
+
 
                 {/* Nova Poshta Integration */}
                 {form.watch("carrierId") && carriers?.find((c: any) => c.id === parseInt((form.watch("carrierId") || "0").toString()))?.name === "Нова Пошта" && (
@@ -2198,34 +2242,6 @@ export default function Orders() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="status">Статус</Label>
-                    {!isEditMode ? (
-                      <Input
-                        value="Нове"
-                        disabled
-                        className="bg-gray-50"
-                      />
-                    ) : (
-                      <Select
-                        value={form.watch("status")}
-                        onValueChange={(value) => form.setValue("status", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Нове</SelectItem>
-                          <SelectItem value="processing">В обробці</SelectItem>
-                          <SelectItem value="completed">Завершено</SelectItem>
-                          <SelectItem value="cancelled">Скасовано</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                </div>
-
                 {/* Дати для рахунку */}
                 <div className="grid grid-cols-3 gap-4">
                   <div>
@@ -2250,18 +2266,6 @@ export default function Orders() {
                     />
                   </div>
                 </div>
-
-                {/* Трек номер (тільки для редагування) */}
-                {isEditMode && (
-                  <div>
-                    <Label htmlFor="trackingNumber">Номер відстеження (трек)</Label>
-                    <Input
-                      id="trackingNumber"
-                      {...form.register("trackingNumber")}
-                      placeholder="Введіть номер відстеження"
-                    />
-                  </div>
-                )}
 
                 {/* Примітки */}
                 <div>
