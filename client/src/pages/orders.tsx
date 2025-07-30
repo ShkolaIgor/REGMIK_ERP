@@ -717,8 +717,6 @@ export default function Orders() {
   const totalServerRecords = ordersResponse?.total || 0;
   const totalServerPages = ordersResponse?.totalPages || 0;
 
-
-
   // Завантажуємо статуси для відображення в таблиці замовлень
   const { data: orderStatuses = [], isLoading: isLoadingStatuses } = useQuery<OrderStatus[]>({
     queryKey: ["/api/order-statuses"],
@@ -2294,144 +2292,150 @@ export default function Orders() {
                   ) : (
                     <div className="space-y-3">
                       {orderItems.map((item, index) => (
-                        <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
-                          <div className="flex-1 relative">
-                            <Input
-                              placeholder="Назва товару..."
-                              value={(() => {
-                                // Спочатку перевіряємо чи є прив'язаний товар з products
-                                if (item.productId > 0 && products) {
-                                  const product = products.find((p: any) => p.id === item.productId);
-                                  if (product) return product.name;
-                                }
-                                
-                                // Якщо прив'язаного товару немає, показуємо itemName з 1С
-                                if (item.itemName) {
-                                  return item.itemName;
-                                }
-                                
-                                // Якщо редагуємо існуюче замовлення, показуємо дані з нього
-                                if (editingOrder?.items && editingOrder.items[index]) {
-                                  const orderItem = editingOrder.items[index];
-                                  if (orderItem.itemName) {
-                                    return orderItem.itemName;
+                        <div key={index} className="space-y-3 p-3 border rounded-lg">
+                          {/* Перший рядок: товар, кількість, ціна, сума, видалення */}
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-1 relative">
+                              <Input
+                                placeholder="Назва товару..."
+                                value={(() => {
+                                  // Спочатку перевіряємо чи є прив'язаний товар з products
+                                  if (item.productId > 0 && products) {
+                                    const product = products.find((p: any) => p.id === item.productId);
+                                    if (product) return product.name;
                                   }
-                                  if (orderItem.product?.name) {
-                                    return orderItem.product.name;
+                                  
+                                  // Якщо прив'язаного товару немає, показуємо itemName з 1С
+                                  if (item.itemName) {
+                                    return item.itemName;
                                   }
-                                }
-                                
-                                return "";
-                              })()}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                // Оновлюємо itemName при введенні тексту
-                                updateOrderItem(index, "itemName", value);
-                                // Скидаємо productId якщо користувач почав вводити власну назву
-                                if (item.productId > 0) {
-                                  updateOrderItem(index, "productId", 0);
-                                }
-                                // Оновлюємо пошуковий термін для динамічного завантаження товарів
-                                setProductSearchTerm(value);
-                              }}
-                              onFocus={() => {
-                                // Показуємо випадаючий список при фокусі
-                                const dropdown = document.getElementById(`product-dropdown-${index}`);
-                                if (dropdown) dropdown.style.display = 'block';
-                                // Встановлюємо поточне значення як пошуковий термін
-                                const currentValue = item.itemName || (editingOrder?.items?.[index]?.itemName) || "";
-                                if (currentValue) {
-                                  setProductSearchTerm(currentValue);
-                                }
-                              }}
-                              onBlur={(e) => {
-                                // Приховуємо випадаючий список через короткий час (щоб дати час на клік)
-                                setTimeout(() => {
-                                  const dropdown = document.getElementById(`product-dropdown-${index}`);
-                                  if (dropdown) dropdown.style.display = 'none';
-                                }, 200);
-                              }}
-                            />
-                            
-                            {/* Випадаючий список товарів */}
-                            <div
-                              id={`product-dropdown-${index}`}
-                              className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
-                              style={{ display: 'none' }}
-                            >
-                              {products?.map((product: any) => (
-                                <div
-                                  key={product.id}
-                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                  onClick={() => {
-                                    updateOrderItem(index, "productId", product.id);
-                                    updateOrderItem(index, "itemName", product.name);
-                                    // Автозаповнення ціни з товару
-                                    if (product.retailPrice && (!item.unitPrice || item.unitPrice === "0")) {
-                                      updateOrderItem(index, "unitPrice", product.retailPrice.toString());
+                                  
+                                  // Якщо редагуємо існуюче замовлення, показуємо дані з нього
+                                  if (editingOrder?.items && editingOrder.items[index]) {
+                                    const orderItem = editingOrder.items[index];
+                                    if (orderItem.itemName) {
+                                      return orderItem.itemName;
                                     }
-                                    // Очищаємо пошук після вибору товару
-                                    setProductSearchTerm("");
+                                    if (orderItem.product?.name) {
+                                      return orderItem.product.name;
+                                    }
+                                  }
+                                  
+                                  return "";
+                                })()}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  // Оновлюємо itemName при введенні тексту
+                                  updateOrderItem(index, "itemName", value);
+                                  // Скидаємо productId якщо користувач почав вводити власну назву
+                                  if (item.productId > 0) {
+                                    updateOrderItem(index, "productId", 0);
+                                  }
+                                  // Оновлюємо пошуковий термін для динамічного завантаження товарів
+                                  setProductSearchTerm(value);
+                                }}
+                                onFocus={() => {
+                                  // Показуємо випадаючий список при фокусі
+                                  const dropdown = document.getElementById(`product-dropdown-${index}`);
+                                  if (dropdown) dropdown.style.display = 'block';
+                                  // Встановлюємо поточне значення як пошуковий термін
+                                  const currentValue = item.itemName || (editingOrder?.items?.[index]?.itemName) || "";
+                                  if (currentValue) {
+                                    setProductSearchTerm(currentValue);
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  // Приховуємо випадаючий список через короткий час (щоб дати час на клік)
+                                  setTimeout(() => {
                                     const dropdown = document.getElementById(`product-dropdown-${index}`);
                                     if (dropdown) dropdown.style.display = 'none';
-                                  }}
-                                >
-                                  <div className="font-medium">{product.name}</div>
-                                  <div className="text-sm text-gray-500">
-                                    {product.sku} • {formatCurrency(product.retailPrice)}
+                                  }, 200);
+                                }}
+                              />
+                              
+                              {/* Випадаючий список товарів */}
+                              <div
+                                id={`product-dropdown-${index}`}
+                                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+                                style={{ display: 'none' }}
+                              >
+                                {products?.map((product: any) => (
+                                  <div
+                                    key={product.id}
+                                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => {
+                                      updateOrderItem(index, "productId", product.id);
+                                      updateOrderItem(index, "itemName", product.name);
+                                      // Автозаповнення ціни з товару
+                                      if (product.retailPrice && (!item.unitPrice || item.unitPrice === "0")) {
+                                        updateOrderItem(index, "unitPrice", product.retailPrice.toString());
+                                      }
+                                      // Очищаємо пошук після вибору товару
+                                      setProductSearchTerm("");
+                                      const dropdown = document.getElementById(`product-dropdown-${index}`);
+                                      if (dropdown) dropdown.style.display = 'none';
+                                    }}
+                                  >
+                                    <div className="font-medium">{product.name}</div>
+                                    <div className="text-sm text-gray-500">
+                                      {product.sku} • {formatCurrency(product.retailPrice)}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                              {products?.length === 0 && debouncedProductSearchTerm.length >= 2 && (
-                                <div className="px-3 py-2 text-gray-500">
-                                  Товарів не знайдено
-                                </div>
-                              )}
-                              {debouncedProductSearchTerm.length > 0 && debouncedProductSearchTerm.length < 2 && (
-                                <div className="px-3 py-2 text-gray-500">
-                                  Введіть мінімум 2 символи для пошуку
-                                </div>
-                              )}
+                                ))}
+                                {products?.length === 0 && debouncedProductSearchTerm.length >= 2 && (
+                                  <div className="px-3 py-2 text-gray-500">
+                                    Товарів не знайдено
+                                  </div>
+                                )}
+                                {debouncedProductSearchTerm.length > 0 && debouncedProductSearchTerm.length < 2 && (
+                                  <div className="px-3 py-2 text-gray-500">
+                                    Введіть мінімум 2 символи для пошуку
+                                  </div>
+                                )}
+                              </div>
                             </div>
+                            
+                            <Input
+                              placeholder="Кількість"
+                              value={item.quantity}
+                              onChange={(e) => updateOrderItem(index, "quantity", e.target.value)}
+                              className="w-24"
+                            />
+                            
+                            <Input
+                              placeholder="Ціна"
+                              value={item.unitPrice}
+                              onChange={(e) => {
+                                updateOrderItem(index, "unitPrice", e.target.value);
+                              }}
+                              className="w-24"
+                            />
+                            
+                            <div className="w-24 text-sm">
+                              {(parseFloat(item.quantity) * parseFloat(item.unitPrice) || 0).toFixed(2)} ₴
+                            </div>
+                            
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeOrderItem(index)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                           
-                          <Input
-                            placeholder="Кількість"
-                            value={item.quantity}
-                            onChange={(e) => updateOrderItem(index, "quantity", e.target.value)}
-                            className="w-24"
-                          />
-                          
-                          <Input
-                            placeholder="Ціна"
-                            value={item.unitPrice}
-                            onChange={(e) => {
-                              updateOrderItem(index, "unitPrice", e.target.value);
-                            }}
-                            className="w-24"
-                          />
-                          
-                          <Input
-                            placeholder="Коментар"
-                            value={item.comment || ""}
-                            onChange={(e) => updateOrderItem(index, "comment", e.target.value)}
-                            className="w-32"
-                          />
-                          
-                          <div className="w-24 text-sm">
-                            {(parseFloat(item.quantity) * parseFloat(item.unitPrice) || 0).toFixed(2)} ₴
+                          {/* Другий рядок: коментар */}
+                          <div>
+                            <Input
+                              placeholder="Коментар"
+                              value={item.comment || ""}
+                              onChange={(e) => updateOrderItem(index, "comment", e.target.value)}
+                              className="w-full"
+                            />
                           </div>
-                          
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeOrderItem(index)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
                         </div>
-                      ))}
+                      ))})
                       
                       <div className="text-right text-lg font-semibold">
                         Загальна сума: {calculateTotal().toFixed(2)} ₴
