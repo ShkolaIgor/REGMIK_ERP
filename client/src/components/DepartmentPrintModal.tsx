@@ -179,7 +179,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           .quantity {
             text-align: center;
             font-weight: bold;
-            color: #059669;
+            <!-- color: #059669; -->
           }
           .notes-section {
             margin-top: 15px;
