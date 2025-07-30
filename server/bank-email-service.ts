@@ -253,11 +253,11 @@ export class BankEmailService {
       imapConfig.tls = bankSslEnabled;
       // Автоматичні рекомендації за портом
       if (bankEmailPort === 993 && !bankSslEnabled) {
-        console.log("⚠️ Увага: порт 993 зазвичай використовується з SSL");
+        // Порт 993 зазвичай з SSL
       } else if (bankEmailPort === 143 && bankSslEnabled) {
-        console.log("⚠️ Увага: порт 143 зазвичай використовується без SSL");
+        // Порт 143 зазвичай без SSL  
       } else if (bankEmailPort === 587) {
-        console.log("⚠️ Увага: порт 587 зазвичай для SMTP, але спробуємо IMAP");
+        // Порт 587 зазвичай для SMTP
       }
       const imap = new Imap(imapConfig);
       return new Promise((resolve, reject) => {
@@ -416,9 +416,6 @@ export class BankEmailService {
                       emailDate: emailDate || undefined, // Дата з Email заголовка (Date:) - фактична дата банківського повідомлення
                       textContent: decodedContent
                     };
-                    console.log(`  Message-ID: ${messageId}`);
-                    console.log(`  Subject: ${actualSubject}`);
-                    console.log(`  ReceivedAt: ${finalEmailDate.toISOString()}`);
                     const result = await this.processBankEmail(emailData);
                     if (result.success) {
                       // Успішно оброблено - позначаємо як прочитаний
@@ -461,8 +458,7 @@ export class BankEmailService {
           console.error("❌ Помилка IMAP з'єднання:", err);
           // Детальна інформація про помилку автентифікації
           if (err.textCode === 'AUTHENTICATIONFAILED' || err.message?.includes('Authentication failed')) {
-            console.log(`❌ Перевірте налаштування: host=${bankEmailHost}, port=${bankEmailPort}, user=${bankEmailUser}`);
-            console.log(`❌ Можлива причина: невірні credentials або заблокований доступ IMAP`);
+            // Інформація про неправильні налаштування автентифікації
           }
           reject(err);
         });
@@ -497,10 +493,7 @@ export class BankEmailService {
   }): Promise<{ success: boolean; message: string; notification?: any }> {
     try {
       const emailSettings = await storage.getEmailSettings();
-      console.log("  Email settings:", emailSettings);
-      console.log("  Bank email address:", emailSettings?.bankEmailAddress);
-      console.log("  From address:", emailContent.fromAddress);
-      console.log("  Contains check:", emailContent.fromAddress.includes(emailSettings?.bankEmailAddress || ""));
+
       // Перевіряємо чи email від банку
       if (!emailSettings?.bankEmailAddress || !emailContent.fromAddress.includes(emailSettings.bankEmailAddress)) {
         return { success: false, message: "Email не від банківської адреси" };
@@ -720,7 +713,7 @@ export class BankEmailService {
       }
       return null;
     } catch (error) {
-      console.error(`🏦 ❌ Помилка парсингу дати "${dateString}":`, error);
+
       return null;
     }
   }
@@ -836,12 +829,6 @@ export class BankEmailService {
       // Шукаємо ПДВ
       const vatMatch = emailText.match(/ПДВ.*?(\d+[,\.]\d+)/i);
       // Видалено дублікат пошуку - основний алгоритм вже перевіряє purposeMatch
-      console.log("  invoiceMatch:", invoiceMatch);
-      console.log("  invoiceNumber (final):", invoiceNumber);
-      console.log("  isFullInvoiceNumber:", isFullInvoiceNumber);
-      console.log("  partialInvoiceNumber:", partialInvoiceNumber);
-      console.log("  dateMatch:", dateMatch);
-      console.log("  vatMatch:", vatMatch);
       // FINAL FIX: Якщо correspondentMatch не спрацював, витягуємо з додаткових регексів
       if (!correspondentMatch && invoiceMatch?.input) {
         const fullText = invoiceMatch.input;
@@ -1001,7 +988,7 @@ export class BankEmailService {
       }
       // РОЗШИРЕНИЙ ПОШУК для часткових номерів або коли основний пошук не дав результатів
       if (!order) {
-        console.log("🔍 🎯 РОЗШИРЕНИЙ ПОШУК замовлення за комплексними критеріями...");
+
         // Використовуємо частковий номер з paymentInfo якщо є
         let partialNumber = paymentInfo.partialInvoiceNumber || paymentInfo.invoiceNumber;
         // Якщо номер має формат РМ00-, витягуємо числову частину
@@ -1009,28 +996,27 @@ export class BankEmailService {
           const match = partialNumber.match(/РМ00-(\d+)/);
           if (match) {
             partialNumber = match[1];
-            console.log(`🔍 📋 Витягуємо числову частину з ${partialNumber}: ${partialNumber}`);
+
           }
         }
         // Створюємо об'єкт для розширеного пошуку
         const searchCriteria: any = {};
         if (partialNumber) {
           searchCriteria.partialInvoiceNumber = partialNumber;
-          console.log(`🔍 🎯 Додаємо частковий номер до пошуку: ${partialNumber}`);
+
         }
         if (paymentInfo.invoiceDate) {
           searchCriteria.invoiceDate = paymentInfo.invoiceDate;
-          console.log(`🔍 📅 Додаємо дату рахунку: ${paymentInfo.invoiceDate}`);
         }
         if (paymentInfo.correspondent) {
           searchCriteria.correspondent = paymentInfo.correspondent;
-          console.log(`🔍 👤 Додаємо клієнта: ${paymentInfo.correspondent}`);
+
         }
         if (paymentInfo.amount) {
           searchCriteria.amount = paymentInfo.amount;
-          console.log(`🔍 💰 Додаємо суму: ${paymentInfo.amount} UAH`);
+
         }
-        console.log(`🔍 🎯 Критерії розширеного пошуку:`, searchCriteria);
+
         const foundOrders = await storage.findOrdersByPaymentInfo(searchCriteria);
         if (foundOrders.length > 0) {
           // Фільтруємо результати за датою
@@ -1038,19 +1024,16 @@ export class BankEmailService {
             const orderDate = new Date(ord.createdAt);
             return orderDate >= sixMonthsAgo;
           });
-          console.log(`🔍 ✅ Знайдено ${foundOrders.length} замовлень за розширеним пошуком, ${recentOrders.length} підходять за датою`);
+
           if (recentOrders.length > 0) {
             // ПРІОРИТИЗАЦІЯ: Точне співпадіння суми має найвищий пріоритет
             if (paymentInfo.amount && recentOrders.length > 1) {
               const paymentAmount = parseFloat(paymentInfo.amount.toString());
-              console.log(`🔍 💰 Шукаємо серед ${recentOrders.length} підходящих замовлень з точним співпадінням суми ${paymentAmount}`);
+
               for (const foundOrder of recentOrders) {
                 const orderTotal = parseFloat(foundOrder.totalAmount?.toString() || '0');
-                const orderDate = new Date(foundOrder.createdAt);
-                console.log(`🔍 💰 Перевіряємо замовлення ${foundOrder.invoiceNumber}: ${orderTotal} UAH, дата ${orderDate.toISOString().split('T')[0]}`);
                 if (orderTotal === paymentAmount) {
                   order = foundOrder;
-                  console.log(`🔍✅ PERFECT MATCH! ${foundOrder.invoiceNumber} = ${paymentAmount} UAH, дата підходить`);
                   break;
                 }
               }
@@ -1058,22 +1041,19 @@ export class BankEmailService {
             // Якщо точного співпадіння суми немає, беремо перше найближче з підходящих
             if (!order) {
               order = recentOrders[0];
-              const orderDate = new Date(order.createdAt);
-              console.log(`🔍 📋 Взято найкраще з підходящих результатів: ${order.invoiceNumber}, дата ${orderDate.toISOString().split('T')[0]}`);
             }
             searchDetails += `, розширений пошук: ${recentOrders.length} підходящих з ${foundOrders.length} загальних`;
           } else {
-            console.log(`🔍 ❌ Усі ${foundOrders.length} знайдених замовлень старше 6 місяців`);
+
             searchDetails += `, розширений пошук: ${foundOrders.length} замовлень знайдено, але всі старше 6 місяців`;
           }
         } else {
-          console.log(`🔍 ❌ Розширений пошук не дав результатів для критеріїв:`, searchCriteria);
+
         }
       }
       // FALLBACK ЛОГІКА: Якщо замовлення не знайдено за номером рахунку, шукаємо за кореспондентом та сумою
       if (!order && paymentInfo.correspondent && paymentInfo.amount) {
-        console.log("🔄 FALLBACK: Пошук останнього замовлення за кореспондентом та сумою...");
-        console.log(`🔄 Критерії: кореспондент="${paymentInfo.correspondent}", сума=${paymentInfo.amount}`);
+
         try {
           // Шукаємо останнє замовлення з точним співпадінням суми та кореспондента, новіше 6 місяців
           const fallbackOrders = await storage.query(`
@@ -1087,8 +1067,7 @@ export class BankEmailService {
           if (fallbackOrders.length > 0) {
             order = fallbackOrders[0]; // Беремо найновіше замовлення
             const orderDate = new Date(order.created_at);
-            console.log(`🔄✅ FALLBACK УСПІШНИЙ: Знайдено замовлення #${order.id} (${order.invoice_number || order.invoiceNumber}) для клієнта "${order.client_name}"`);
-            console.log(`🔄 Деталі: сума ${order.total_amount || order.totalAmount} UAH, дата ${orderDate.toISOString().split('T')[0]}`);
+
             searchDetails += `, fallback пошук за кореспондентом та сумою (новіше 6 місяців)`;
             // Конвертуємо snake_case до camelCase для сумісності
             if (order.invoice_number && !order.invoiceNumber) {
@@ -1098,7 +1077,7 @@ export class BankEmailService {
               order.totalAmount = order.total_amount;
             }
           } else {
-            console.log(`🔄❌ FALLBACK: Не знайдено замовлень для кореспондента="${paymentInfo.correspondent}" та суми=${paymentInfo.amount} новіших за 6 місяців`);
+
             searchDetails += `, fallback пошук: не знайдено підходящих замовлень новіших за 6 місяців`;
           }
         } catch (fallbackError) {
@@ -1108,10 +1087,7 @@ export class BankEmailService {
         }
       }
       if (!order) {
-        console.log(`🔄 DEBUG: Перевіряємо умови для fallback логіки:`);
-        console.log(`  - order знайдено: ${!!order}`);
-        console.log(`  - correspondent є: ${!!paymentInfo.correspondent} ("${paymentInfo.correspondent}")`);
-        console.log(`  - amount є: ${!!paymentInfo.amount} (${paymentInfo.amount})`);
+
         const errorMsg = `Замовлення не знайдено. ${searchDetails}`;
         return { success: false, message: errorMsg };
       }
