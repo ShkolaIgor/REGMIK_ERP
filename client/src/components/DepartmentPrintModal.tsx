@@ -238,7 +238,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <tr>
                   <th style="width: 5%">№</th>
                   <th style="width: 45%">Найменування товару</th>
-                  <th style="width: 15%">Артикул</th>
+                  <! -- <th style="width: 15%">Артикул</th> -->
                   <th style="width: 10%">Кількість</th>
                   <th style="width: 25%">Примітки</th>
                 </tr>
@@ -249,11 +249,11 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                     <td style="text-align: center;">${index + 1}</td>
                     <td>
                       <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                      ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
+                      <!-- ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''} -->
                     </td>
-                    <td style="text-align: center; font-family: monospace;">
+                    <!-- <td style="text-align: center; font-family: monospace;">
                       ${item.productSku || '-'}
-                    </td>
+                    </td> -->
                     <td class="quantity">${item.quantity} шт.</td>
                     <td style="font-size: 10px;">
                       ${item.notes || '-'}
@@ -275,7 +275,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <tr>
                   <th style="width: 5%">№</th>
                   <th style="width: 45%">Найменування товару</th>
-                  <th style="width: 15%">Артикул</th>
+                  <!-- <th style="width: 15%">Артикул</th> -->
                   <th style="width: 10%">Кількість</th>
                   <th style="width: 25%">Примітки</th>
                 </tr>
@@ -286,11 +286,11 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                     <td style="text-align: center;">${index + 1}</td>
                     <td>
                       <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                      ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
+                      <!-- ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''} -->
                     </td>
-                    <td style="text-align: center; font-family: monospace;">
+                    <!-- <td style="text-align: center; font-family: monospace;">
                       ${item.productSku || '-'}
-                    </td>
+                    </td> -->
                     <td class="quantity">${item.quantity} шт.</td>
                     <td style="font-size: 10px;">
                       ${item.notes || '-'}
@@ -309,9 +309,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           </div>
         ` : ''}
 
-        <div class="footer">
+        <!--<div class="footer">
           Система REGMIK ERP
-        </div>
+        </div>-->
       </body>
       </html>
     `;
@@ -448,7 +448,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             <tr>
               <th style="width: 5%">№</th>
               <th style="width: 45%">Найменування товару</th>
-              <th style="width: 15%">Артикул</th>
+              <!-- <th style="width: 15%">Артикул</th> -->
               <th style="width: 10%">Кількість</th>
               <th style="width: 25%">Примітки</th>
             </tr>
@@ -459,10 +459,10 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <td style="text-align: center;">${index + 1}</td>
                 <td>
                   <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                  ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
-                <td style="text-align: center; font-family: monospace;">
+                  <!-- ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''} -->
+                <!-- <td style="text-align: center; font-family: monospace;">
                   ${item.productSku || '-'}
-                </td>
+                </td> -->
                 <td class="quantity">${item.quantity} шт.</td>
                 <td style="font-size: 10px;">
                   ${item.notes || '-'}
