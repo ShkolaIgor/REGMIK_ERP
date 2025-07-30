@@ -464,7 +464,7 @@ export function NovaPoshtaIntegration({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            Вибір адреси доставки
+            Адреса доставки
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
