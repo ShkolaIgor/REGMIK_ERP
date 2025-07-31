@@ -1494,8 +1494,7 @@ export class DatabaseStorage implements IStorage {
           cc.email as contact_email,
           cc.primary_phone as contact_phone,
           cc.secondary_phone as contact_secondary_phone,
-          carr.name as carrier_name,
-          carr.tracking_url as carrier_tracking_url
+          carr.name as carrier_name
         FROM orders o
         LEFT JOIN clients c ON o.client_id = c.id
         LEFT JOIN client_contacts cc ON o.client_contacts_id = cc.id
@@ -1635,7 +1634,6 @@ export class DatabaseStorage implements IStorage {
           } : null,
           carrier: order.carrier_name ? {
             name: order.carrier_name,
-            trackingUrl: order.carrier_tracking_url,
             cityName: novaPoshtaCityName
           } : null,
           company: null
