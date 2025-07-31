@@ -12821,27 +12821,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Test automatic category selection
-  app.get('/api/debug/category-auto-select/:productName', async (req, res) => {
-    try {
-      const { productName } = req.params;
-      const categoryId = await storage.findCategoryByProductName(productName);
-      
-      res.json({
-        success: true,
-        productName,
-        selectedCategoryId: categoryId,
-        logic: {
-          productPrefix: productName.substring(0, 4).toLowerCase(),
-          message: categoryId ? 'Category found by name matching' : 'No matching category found'
-        }
-      });
-    } catch (error) {
-      console.error('Category auto-select test error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
   // Test endpoint for full invoice matching (how invoices actually work)
   app.get("/api/test-invoice-matching/:componentName", async (req, res) => {
     try {
