@@ -736,7 +736,7 @@ export default function Orders() {
 
   const { data: activeCarriers = [] } = useQuery<any[]>({
     queryKey: ["/api/carriers/active"],
-    // Завантажуємо тільки активних перевізників для вибору в нових замовленнях
+    // Завантажуємо тільки активних перевізників для селекторів у формах
   });
 
   const { data: defaultCarrier } = useQuery<any>({
