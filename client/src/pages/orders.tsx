@@ -850,36 +850,51 @@ export default function Orders() {
 
     let filledCount = 0;
     const client = clientDeliveryData.client;
+    console.log('DEBUG: Filling delivery data for client:', client);
 
     // Автозаповнення перевізника з client.carrierId або з clientDeliveryData.carrier
     if (clientDeliveryData.carrier) {
+      console.log('DEBUG: Setting carrierId from clientDeliveryData.carrier:', clientDeliveryData.carrier.id);
       form.setValue("carrierId", clientDeliveryData.carrier.id.toString());
       filledCount++;
     } else if (client.carrierId) {
+      console.log('DEBUG: Setting carrierId from client.carrierId:', client.carrierId);
       form.setValue("carrierId", client.carrierId.toString());
       filledCount++;
+    } else {
+      console.log('DEBUG: No carrierId available');
     }
 
     // Автозаповнення міста Nova Poshta з client.cityRef
     if (clientDeliveryData.city) {
+      console.log('DEBUG: Setting city from clientDeliveryData.city:', clientDeliveryData.city);
       form.setValue("recipientCityRef", clientDeliveryData.city.ref);
       form.setValue("recipientCityName", clientDeliveryData.city.name || clientDeliveryData.city.description || "");
       filledCount++;
     } else if (client.cityRef) {
+      console.log('DEBUG: Setting cityRef from client.cityRef:', client.cityRef);
       form.setValue("recipientCityRef", client.cityRef);
       form.setValue("recipientCityName", "Місто (з профілю клієнта)");
       filledCount++;
+    } else {
+      console.log('DEBUG: No cityRef available');
     }
 
     // Автозаповнення відділення Nova Poshta з client.warehouseRef
     if (clientDeliveryData.warehouse) {
+      console.log('DEBUG: Setting warehouse from clientDeliveryData.warehouse:', clientDeliveryData.warehouse);
       form.setValue("recipientWarehouseRef", clientDeliveryData.warehouse.ref);
       form.setValue("recipientWarehouseAddress", clientDeliveryData.warehouse.description || clientDeliveryData.warehouse.address || "");
       filledCount++;
     } else if (client.warehouseRef) {
+      console.log('DEBUG: Setting warehouseRef from client.warehouseRef:', client.warehouseRef);
       form.setValue("recipientWarehouseRef", client.warehouseRef);
       filledCount++;
+    } else {
+      console.log('DEBUG: No warehouseRef available');
     }
+
+    console.log('DEBUG: Total filled fields:', filledCount);
 
     if (filledCount > 0) {
       toast({
