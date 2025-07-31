@@ -628,6 +628,7 @@ const insertOrderSchemaBase = createInsertSchema(orders).omit({
   createdAt: true
 }).extend({
   orderNumber: z.string().optional(), // дозволяємо автоматичну генерацію
+  totalAmount: z.string().optional(), // може бути розраховано автоматично
   // Дозволяємо рядки для дат (будуть перетворені на Date в transform)
   paymentDate: z.union([z.string(), z.date()]).optional().nullable(),
   dueDate: z.union([z.string(), z.date()]).optional().nullable(),
@@ -647,7 +648,7 @@ export const insertOrderSchema = insertOrderSchemaBase.transform((data) => ({
 
 // Схема для форм з додатковими полями
 export const insertOrderSchemaForm = insertOrderSchemaBase.extend({
-  statusId: z.number().int().positive("Статус обов'язковий"),
+  statusId: z.number().int().positive().optional(),
   clientContactsId: z.number().int().positive().optional(),
   orderNumber: z.string().optional(), // дозволяємо автоматичну генерацію
   // Nova Poshta поля (опціональні)
