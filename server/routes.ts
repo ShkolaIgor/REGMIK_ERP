@@ -4050,7 +4050,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const addresses = await storage.getCustomerAddresses();
       res.json(addresses);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to get customer addresses' });
+      console.error('Error in customer-addresses endpoint:', error);
+      res.status(500).json({ error: 'Failed to get customer addresses', details: error.message });
     }
   });
 

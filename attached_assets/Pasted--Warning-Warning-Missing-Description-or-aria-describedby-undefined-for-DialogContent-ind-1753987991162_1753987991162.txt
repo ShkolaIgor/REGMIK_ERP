@@ -1,0 +1,190 @@
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-TkTWXnmO.js, line 782)
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: undefined, recipientCityName: undefined, recipientWarehouseRef: undefined, …} (index-TkTWXnmO.js, line 1576)
+{recipientCityRef: undefined, recipientCityName: undefined, recipientWarehouseRef: undefined, recipientWarehouseAddress: undefined}Object
+[Log] Warehouses: (5) (index-TkTWXnmO.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] NovaPoshtaIntegration useEffect triggered: – {initialCityRef: undefined, initialWarehouseRef: undefined, selectedCityRef: undefined, …} (index-TkTWXnmO.js, line 808)
+{initialCityRef: undefined, initialWarehouseRef: undefined, selectedCityRef: undefined, selectedWarehouseRef: undefined}Object
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-TkTWXnmO.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-TkTWXnmO.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] NovaPoshtaIntegration useEffect triggered: – {initialCityRef: "", initialWarehouseRef: "", selectedCityRef: undefined, …} (index-TkTWXnmO.js, line 808)
+{initialCityRef: "", initialWarehouseRef: "", selectedCityRef: undefined, selectedWarehouseRef: undefined}Object
+[Error] Failed to load resource: the server responded with a status of 500 () (customer-addresses, line 0)
+[Log] Order details: – {id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", …} (index-TkTWXnmO.js, line 808)
+{id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", clientId: 9143, clientContactsId: null, …}Object
+[Error] Failed to load resource: the server responded with a status of 500 () (customer-addresses, line 0)
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-TkTWXnmO.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-TkTWXnmO.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-TkTWXnmO.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-TkTWXnmO.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Order details: – {id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", …} (index-TkTWXnmO.js, line 808)
+{id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", clientId: 9143, clientContactsId: null, …}Object
+[Log] All categories: – [Object, Object, Object, …] (19) (index-TkTWXnmO.js, line 808)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (19)
+[Log] Processing item: – {id: 91520, orderId: 51800, productId: 25413, …} (index-TkTWXnmO.js, line 808)
+{id: 91520, orderId: 51800, productId: 25413, quantity: 1, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91521, orderId: 51800, productId: 24947, …} (index-TkTWXnmO.js, line 808)
+{id: 91521, orderId: 51800, productId: 24947, quantity: 3, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91522, orderId: 51800, productId: 14384, …} (index-TkTWXnmO.js, line 808)
+{id: 91522, orderId: 51800, productId: 14384, quantity: 2, unitPrice: "902.67", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91523, orderId: 51800, productId: 25414, …} (index-TkTWXnmO.js, line 808)
+{id: 91523, orderId: 51800, productId: 25414, quantity: 1, unitPrice: "882.36", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91524, orderId: 51800, productId: 25564, …} (index-TkTWXnmO.js, line 808)
+{id: 91524, orderId: 51800, productId: 25564, quantity: 1, unitPrice: "882.36", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91525, orderId: 51800, productId: 15880, …} (index-TkTWXnmO.js, line 808)
+{id: 91525, orderId: 51800, productId: 15880, quantity: 3, unitPrice: "399.60", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91526, orderId: 51800, productId: 15571, …} (index-TkTWXnmO.js, line 808)
+{id: 91526, orderId: 51800, productId: 15571, quantity: 1, unitPrice: "643.50", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91527, orderId: 51800, productId: 19363, …} (index-TkTWXnmO.js, line 808)
+{id: 91527, orderId: 51800, productId: 19363, quantity: 1, unitPrice: "670.50", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Generated description: – "Датчики температури, Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-TkTWXnmO.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-TkTWXnmO.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] All categories: – [Object, Object, Object, …] (19) (index-TkTWXnmO.js, line 808)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (19)
+[Log] Processing item: – {id: 91520, orderId: 51800, productId: 25413, …} (index-TkTWXnmO.js, line 808)
+{id: 91520, orderId: 51800, productId: 25413, quantity: 1, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91521, orderId: 51800, productId: 24947, …} (index-TkTWXnmO.js, line 808)
+{id: 91521, orderId: 51800, productId: 24947, quantity: 3, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91522, orderId: 51800, productId: 14384, …} (index-TkTWXnmO.js, line 808)
+{id: 91522, orderId: 51800, productId: 14384, quantity: 2, unitPrice: "902.67", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91523, orderId: 51800, productId: 25414, …} (index-TkTWXnmO.js, line 808)
+{id: 91523, orderId: 51800, productId: 25414, quantity: 1, unitPrice: "882.36", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91524, orderId: 51800, productId: 25564, …} (index-TkTWXnmO.js, line 808)
+{id: 91524, orderId: 51800, productId: 25564, quantity: 1, unitPrice: "882.36", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91525, orderId: 51800, productId: 15880, …} (index-TkTWXnmO.js, line 808)
+{id: 91525, orderId: 51800, productId: 15880, quantity: 3, unitPrice: "399.60", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91526, orderId: 51800, productId: 15571, …} (index-TkTWXnmO.js, line 808)
+{id: 91526, orderId: 51800, productId: 15571, quantity: 1, unitPrice: "643.50", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91527, orderId: 51800, productId: 19363, …} (index-TkTWXnmO.js, line 808)
+{id: 91527, orderId: 51800, productId: 19363, quantity: 1, unitPrice: "670.50", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Generated description: – "Датчики температури, Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Warehouses: (5) (index-TkTWXnmO.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-TkTWXnmO.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-TkTWXnmO.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] SETTING CITY FROM DATA: – "4682677b-9e68-11e9-898c-005056b24375" – "Довжик" (index-TkTWXnmO.js, line 1576)
+[Log] Form values after fill: – {carrierId: "1", recipientCityRef: "4682677b-9e68-11e9-898c-005056b24375", recipientCityName: "Довжик", …} (index-TkTWXnmO.js, line 1576)
+{carrierId: "1", recipientCityRef: "4682677b-9e68-11e9-898c-005056b24375", recipientCityName: "Довжик", recipientWarehouseRef: "dc98ae50-a3e4-11e9-b790-005056b24375", recipientWarehouseAddress: "Пункт приймання-видачі (до 30 кг): вул. Адміністративна, 3"}Object
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "4682677b-9e68-11e9-898c-005056b24375", recipientCityName: "Довжик", recipientWarehouseRef: "dc98ae50-a3e4-11e9-b790-005056b24375", …} (index-TkTWXnmO.js, line 1576)
+{recipientCityRef: "4682677b-9e68-11e9-898c-005056b24375", recipientCityName: "Довжик", recipientWarehouseRef: "dc98ae50-a3e4-11e9-b790-005056b24375", recipientWarehouseAddress: "Пункт приймання-видачі (до 30 кг): вул. Адміністративна, 3"}Object
+[Log] Warehouses: (5) (index-TkTWXnmO.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] NovaPoshtaIntegration useEffect triggered: – {initialCityRef: "4682677b-9e68-11e9-898c-005056b24375", initialWarehouseRef: "dc98ae50-a3e4-11e9-b790-005056b24375", selectedCityRef: undefined, …} (index-TkTWXnmO.js, line 808)
+{initialCityRef: "4682677b-9e68-11e9-898c-005056b24375", initialWarehouseRef: "dc98ae50-a3e4-11e9-b790-005056b24375", selectedCityRef: undefined, selectedWarehouseRef: undefined}Object
+[Log] LOADING INITIAL CITY FOR REF: – "4682677b-9e68-11e9-898c-005056b24375" (index-TkTWXnmO.js, line 808)
+[Log] LOADING INITIAL WAREHOUSE FOR REF: – "dc98ae50-a3e4-11e9-b790-005056b24375" (index-TkTWXnmO.js, line 808)
+[Error] Failed to load resource: the server responded with a status of 500 () (customer-addresses, line 0)
+[Log] DB Cities response for ref: – [Object] (1) (index-TkTWXnmO.js, line 808)
+[Object]Array (1)
+[Log] FOUND CITY IN DB: – {Ref: "4682677b-9e68-11e9-898c-005056b24375", Description: undefined, DescriptionRu: undefined, …} (index-TkTWXnmO.js, line 808)
+{Ref: "4682677b-9e68-11e9-898c-005056b24375", Description: undefined, DescriptionRu: undefined, AreaDescription: "", AreaDescriptionRu: "", …}Object
+[Log] DB Warehouses response for ref: – [Object] (1) (index-TkTWXnmO.js, line 808)
+[Object]Array (1)
+[Log] FOUND WAREHOUSE IN DB: – {id: 33498, ref: "dc98ae50-a3e4-11e9-b790-005056b24375", city_ref: "4682677b-9e68-11e9-898c-005056b24375", …} (index-TkTWXnmO.js, line 808)
+{id: 33498, ref: "dc98ae50-a3e4-11e9-b790-005056b24375", city_ref: "4682677b-9e68-11e9-898c-005056b24375", description: "Пункт приймання-видачі (до 30 кг): вул. Адміністративна, 3", description_ru: "Пункт приема-выдачи (до 30 кг): ул. Административная, 3", …}Object
+[Error] TypeError: undefined is not an object (evaluating 'p.length') — index-TkTWXnmO.js:808:8820
+	pA (index-TkTWXnmO.js:40:167)
+	(anonymous function) (index-TkTWXnmO.js:40:391)
+	r8 (index-TkTWXnmO.js:38:15561)
+	v8 (index-TkTWXnmO.js:40:32081)
+	yK (index-TkTWXnmO.js:40:31500)
+	zue (index-TkTWXnmO.js:40:31050)
+	Vue (index-TkTWXnmO.js:40:40963)
+	vm (index-TkTWXnmO.js:40:40316)
+	bK (index-TkTWXnmO.js:40:35216)
+	j (index-TkTWXnmO.js:25:1566)
+	E (index-TkTWXnmO.js:25:1925)
+[Error] TypeError: undefined is not an object (evaluating 'p.length')
+	Vue (index-TkTWXnmO.js:40:41249)
+	vm (index-TkTWXnmO.js:40:40316)
+	bK (index-TkTWXnmO.js:40:35216)
+	j (index-TkTWXnmO.js:25:1566)
+	E (index-TkTWXnmO.js:25:1925)
+[Log] Order details: – {id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", …} (index-TkTWXnmO.js, line 808)
+{id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", clientId: 9143, clientContactsId: null, …}Object
+[Log] All categories: – [Object, Object, Object, …] (19) (index-TkTWXnmO.js, line 808)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (19)
+[Log] Processing item: – {id: 91520, orderId: 51800, productId: 25413, …} (index-TkTWXnmO.js, line 808)
+{id: 91520, orderId: 51800, productId: 25413, quantity: 1, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91521, orderId: 51800, productId: 24947, …} (index-TkTWXnmO.js, line 808)
+{id: 91521, orderId: 51800, productId: 24947, quantity: 3, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91522, orderId: 51800, productId: 14384, …} (index-TkTWXnmO.js, line 808)
+{id: 91522, orderId: 51800, productId: 14384, quantity: 2, unitPrice: "902.67", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91523, orderId: 51800, productId: 25414, …} (index-TkTWXnmO.js, line 808)
+{id: 91523, orderId: 51800, productId: 25414, quantity: 1, unitPrice: "882.36", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91524, orderId: 51800, productId: 25564, …} (index-TkTWXnmO.js, line 808)
+{id: 91524, orderId: 51800, productId: 25564, quantity: 1, unitPrice: "882.36", …}Object
+[Log] Added category: – "Датчики температури" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91525, orderId: 51800, productId: 15880, …} (index-TkTWXnmO.js, line 808)
+{id: 91525, orderId: 51800, productId: 15880, quantity: 3, unitPrice: "399.60", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91526, orderId: 51800, productId: 15571, …} (index-TkTWXnmO.js, line 808)
+{id: 91526, orderId: 51800, productId: 15571, quantity: 1, unitPrice: "643.50", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Processing item: – {id: 91527, orderId: 51800, productId: 19363, …} (index-TkTWXnmO.js, line 808)
+{id: 91527, orderId: 51800, productId: 19363, quantity: 1, unitPrice: "670.50", …}Object
+[Log] Added category: – "Гільзи захисні" (index-TkTWXnmO.js, line 808)
+[Log] Generated description: – "Датчики температури, Гільзи захисні" (index-TkTWXnmO.js, line 808)

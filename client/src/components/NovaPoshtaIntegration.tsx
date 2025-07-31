@@ -182,19 +182,19 @@ export function NovaPoshtaIntegration({
             const dbCity = dbCities[0];
             const city: City = {
               Ref: dbCity.ref,
-              Description: dbCity.description,
-              DescriptionRu: dbCity.description_ru || dbCity.description,
-              AreaDescription: dbCity.area_description || '',
-              AreaDescriptionRu: dbCity.area_description_ru || dbCity.area_description || '',
-              RegionDescription: dbCity.region_description || '',
-              RegionDescriptionRu: dbCity.region_description_ru || dbCity.region_description || '',
-              SettlementTypeDescription: dbCity.settlement_type_description || '',
-              DeliveryCity: dbCity.delivery_city || '1',
-              Warehouses: dbCity.warehouses || '1'
+              Description: dbCity.description || dbCity.Description || `Місто (${dbCity.ref})`,
+              DescriptionRu: dbCity.description_ru || dbCity.DescriptionRu || dbCity.description || dbCity.Description || `Город (${dbCity.ref})`,
+              AreaDescription: dbCity.area_description || dbCity.AreaDescription || '',
+              AreaDescriptionRu: dbCity.area_description_ru || dbCity.AreaDescriptionRu || dbCity.area_description || dbCity.AreaDescription || '',
+              RegionDescription: dbCity.region_description || dbCity.RegionDescription || '',
+              RegionDescriptionRu: dbCity.region_description_ru || dbCity.RegionDescriptionRu || dbCity.region_description || dbCity.RegionDescription || '',
+              SettlementTypeDescription: dbCity.settlement_type_description || dbCity.SettlementTypeDescription || '',
+              DeliveryCity: dbCity.delivery_city || dbCity.DeliveryCity || '1',
+              Warehouses: dbCity.warehouses || dbCity.Warehouses || '1'
             };
             console.log('FOUND CITY IN DB:', city);
             setSelectedCity(city);
-            setCityQuery(city.Description);
+            setCityQuery(city.Description || `Місто (${city.Ref})`);
           } else {
             // Якщо не знайдено в базі, пробуємо API
             fetch(`/api/nova-poshta/cities?search=`)
