@@ -1338,6 +1338,14 @@ export class DatabaseStorage implements IStorage {
 
       console.log("🔧 DEBUG: Final orderData being saved:", JSON.stringify(orderData, null, 2));
       console.log("🔧 DEBUG: Contact fields in orderData - Email:", orderData.contactEmail, "Phone:", orderData.contactPhone);
+      console.log("🔧 DEBUG: Nova Poshta fields in orderData:", {
+        recipientCityRef: orderData.recipientCityRef,
+        recipientCityName: orderData.recipientCityName,
+        recipientWarehouseRef: orderData.recipientWarehouseRef,
+        recipientWarehouseAddress: orderData.recipientWarehouseAddress,
+        shippingCost: orderData.shippingCost,
+        estimatedDelivery: orderData.estimatedDelivery,
+      });
       
       const orderResult = await db.update(orders)
         .set(orderData)
