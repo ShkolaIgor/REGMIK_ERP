@@ -1,0 +1,428 @@
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-B-fv14Me.js, line 782)
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-B-fv14Me.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-B-fv14Me.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-B-fv14Me.js, line 808)
+[Log] Warehouses loading: – false (index-B-fv14Me.js, line 808)
+[Log] NovaPoshtaIntegration useEffect triggered: – {initialCityRef: "", initialWarehouseRef: "", selectedCityRef: undefined, …} (index-B-fv14Me.js, line 808)
+{initialCityRef: "", initialWarehouseRef: "", selectedCityRef: undefined, selectedWarehouseRef: undefined}Object
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-B-fv14Me.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-B-fv14Me.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-B-fv14Me.js, line 808)
+[Log] Warehouses loading: – false (index-B-fv14Me.js, line 808)
+[Log] Order details: – {id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", …} (index-B-fv14Me.js, line 808)
+{id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", clientId: 9143, clientContactsId: null, …}Object
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-B-fv14Me.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-B-fv14Me.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-B-fv14Me.js, line 808)
+[Log] Warehouses loading: – false (index-B-fv14Me.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-B-fv14Me.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-B-fv14Me.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-B-fv14Me.js, line 808)
+[Log] Warehouses loading: – false (index-B-fv14Me.js, line 808)
+[Log] All categories: – [Object, Object, Object, …] (19) (index-B-fv14Me.js, line 808)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (19)
+[Log] Processing item: – {id: 91544, orderId: 51800, productId: 25413, …} (index-B-fv14Me.js, line 808)
+{id: 91544, orderId: 51800, productId: 25413, quantity: 1, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-B-fv14Me.js, line 808)
+[Log] Processing item: – {id: 91545, orderId: 51800, productId: 24947, …} (index-B-fv14Me.js, line 808)
+{id: 91545, orderId: 51800, productId: 24947, quantity: 3, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-B-fv14Me.js, line 808)
+[Log] Processing item: (index-B-fv14Me.js, line 808)
+Object
+
+id: 91546
+
+itemCode: null
+
+itemName: "ТСП-002 Pt1000-В3 D8 L160-40 М20х1,5 (-40..500)"
+
+orderId: 51800
+
+product: {id: 14384, name: "ТСП-002 Pt1000-В3 D8 L160-40 М20х1,5 (-40..500)", sku: "15209", description: "", barcode: null, …}
+
+productId: 14384
+
+quantity: 2
+
+totalPrice: "1805.34"
+
+unit: "шт"
+
+unitPrice: "902.67"
+
+Object Prototype
+[Log] Added category: – "Датчики температури" (index-B-fv14Me.js, line 808)
+[Log] Processing item: (index-B-fv14Me.js, line 808)
+Object
+
+id: 91547
+
+itemCode: null
+
+itemName: "ТСП-002 Pt1000-В3 D8 L400-40 М20х1,5 (-40..270)"
+
+orderId: 51800
+
+product: {id: 25414, name: "ТСП-002 Pt1000-В3 D8 L400-40 М20х1,5 (-40..270)", sku: "26287", description: "", barcode: null, …}
+
+productId: 25414
+
+quantity: 1
+
+totalPrice: "882.36"
+
+unit: "шт"
+
+unitPrice: "882.36"
+
+Object Prototype
+[Log] Added category: – "Датчики температури" (index-B-fv14Me.js, line 808)
+[Log] Processing item: (index-B-fv14Me.js, line 808)
+Object
+
+id: 91548
+
+itemCode: null
+
+itemName: "ТСП-002 Pt1000-В3 D8 L500-40 М20х1,5 (-40..270)"
+
+orderId: 51800
+
+product: {id: 25564, name: "ТСП-002 Pt1000-В3 D8 L500-40 М20х1,5 (-40..270)", sku: "26437", description: "", barcode: null, …}
+
+productId: 25564
+
+quantity: 1
+
+totalPrice: "882.36"
+
+unit: "шт"
+
+unitPrice: "882.36"
+
+Object Prototype
+[Log] Added category: – "Датчики температури" (index-B-fv14Me.js, line 808)
+[Log] Processing item: (index-B-fv14Me.js, line 808)
+Object
+
+id: 91549
+
+itemCode: null
+
+itemName: "ГПП-ГЗ-003.14.9.80.М20х1,5.14.27.М20х1,5"
+
+orderId: 51800
+
+product: {id: 15880, name: "ГПП-ГЗ-003.14.9.80.М20х1,5.14.27.М20х1,5", sku: "16731", description: "", barcode: null, …}
+
+productId: 15880
+
+quantity: 3
+
+totalPrice: "1198.80"
+
+unit: "шт"
+
+unitPrice: "399.60"
+
+Object Prototype
+[Log] Added category: – "Гільзи захисні" (index-B-fv14Me.js, line 808)
+[Log] Processing item: (index-B-fv14Me.js, line 808)
+Object
+
+id: 91550
+
+itemCode: null
+
+itemName: "ГПП-ГЗ-003.14.9.400.М20х1,5.14.27.М20х1,5"
+
+orderId: 51800
+
+product: {id: 15571, name: "ГПП-ГЗ-003.14.9.400.М20х1,5.14.27.М20х1,5", sku: "16418", description: "", barcode: null, …}
+
+productId: 15571
+
+quantity: 1
+
+totalPrice: "643.50"
+
+unit: "шт"
+
+unitPrice: "643.50"
+
+Object Prototype
+[Log] Added category: – "Гільзи захисні" (index-B-fv14Me.js, line 808)
+[Log] Processing item: (index-B-fv14Me.js, line 808)
+Object
+
+id: 91551
+
+itemCode: null
+
+itemName: "ГПП-ГЗ-003.14.9.500.М20х1,5.14.27.М20х1,5"
+
+orderId: 51800
+
+product: {id: 19363, name: "ГПП-ГЗ-003.14.9.500.М20х1,5.14.27.М20х1,5", sku: "20225", description: "", barcode: null, …}
+
+productId: 19363
+
+quantity: 1
+
+totalPrice: "670.50"
+
+unit: "шт"
+
+unitPrice: "670.50"
+
+Object Prototype
+[Log] Added category: – "Гільзи захисні" (index-B-fv14Me.js, line 808)
+[Log] Generated description: – "Датчики температури, Гільзи захисні" (index-B-fv14Me.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: (index-B-fv14Me.js, line 1576)
+Object
+
+recipientCityName: ""
+
+recipientCityRef: ""
+
+recipientWarehouseAddress: ""
+
+recipientWarehouseRef: ""
+
+Object Prototype
+[Log] Warehouses: (5) (index-B-fv14Me.js, line 808)
+Array (0)
+No Properties
+
+Array Prototype
+"Filtered:"
+Array (0)
+No Properties
+
+Array Prototype
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-B-fv14Me.js, line 808)
+[Log] Warehouses loading: – false (index-B-fv14Me.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: (index-B-fv14Me.js, line 1576)
+Object
+
+recipientCityName: ""
+
+recipientCityRef: ""
+
+recipientWarehouseAddress: ""
+
+recipientWarehouseRef: ""
+
+Object Prototype
+[Log] Warehouses: (5) (index-B-fv14Me.js, line 808)
+Array (0)
+No Properties
+
+Array Prototype
+
+at()
+
+concat(value, ...)
+
+constructor: function()
+
+copyWithin(targetIndex, startIndex, [endIndex=length])
+
+entries()
+
+every(callback, [thisArg])
+
+fill(value, [startIndex=0], [endIndex=length])
+
+filter(callback, [thisArg])
+
+find(callback, [thisArg])
+
+findIndex(callback, [thisArg])
+
+findLast(callback, [thisArg])
+
+findLastIndex(callback, [thisArg])
+
+flat()
+
+flatMap()
+
+forEach(callback, [thisArg])
+
+includes(searchValue, [startIndex=0])
+
+indexOf(searchValue, [startIndex=0])
+
+join([separator=","])
+
+keys()
+
+lastIndexOf(searchValue, [startIndex=length])
+
+length: 0
+
+map(callback, [thisArg])
+
+pop()
+
+push(value, ...)
+
+reduce(callback, [initialValue])
+
+reduceRight(callback, [initialValue])
+
+reverse()
+
+shift()
+
+slice([startIndex=0], [endIndex=length])
+
+some(callback, [thisArg])
+
+sort([compareFunction])
+
+splice(startIndex, [deleteCount=0], ...itemsToAdd)
+
+toLocaleString()
+
+toReversed()
+
+toSorted()
+
+toSpliced()
+
+toString()
+
+unshift()
+
+values()
+
+with()
+
+Symbol(Symbol.iterator)()
+
+Symbol(Symbol.unscopables): {at: true, copyWithin: true, entries: true, fill: true, find: true, …}
+
+Object Prototype
+"Filtered:"
+Array (0)
+No Properties
+
+Array Prototype
+
+at()
+
+concat(value, ...)
+
+constructor: function()
+
+copyWithin(targetIndex, startIndex, [endIndex=length])
+
+entries()
+
+every(callback, [thisArg])
+
+fill(value, [startIndex=0], [endIndex=length])
+
+filter(callback, [thisArg])
+
+find(callback, [thisArg])
+
+findIndex(callback, [thisArg])
+
+findLast(callback, [thisArg])
+
+findLastIndex(callback, [thisArg])
+
+flat()
+
+flatMap()
+
+forEach(callback, [thisArg])
+
+includes(searchValue, [startIndex=0])
+
+indexOf(searchValue, [startIndex=0])
+
+join([separator=","])
+
+keys()
+
+lastIndexOf(searchValue, [startIndex=length])
+
+length: 0
+
+map(callback, [thisArg])
+
+pop()
+
+push(value, ...)
+
+reduce(callback, [initialValue])
+
+reduceRight(callback, [initialValue])
+
+reverse()
+
+shift()
+
+slice([startIndex=0], [endIndex=length])
+
+some(callback, [thisArg])
+
+sort([compareFunction])
+
+splice(startIndex, [deleteCount=0], ...itemsToAdd)
+
+toLocaleString()
+
+toReversed()
+
+toSorted()
+
+toSpliced()
+
+toString()
+
+unshift()
+
+values()
+
+with()
+
+Symbol(Symbol.iterator)()
+
+Symbol(Symbol.unscopables): {at: true, copyWithin: true, entries: true, fill: true, find: true, …}
+
+Object Prototype
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-B-fv14Me.js, line 808)
+[Log] Warehouses loading: – false (index-B-fv14Me.js, line 808)

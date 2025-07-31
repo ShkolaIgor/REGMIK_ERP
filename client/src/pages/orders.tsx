@@ -1864,6 +1864,15 @@ export default function Orders() {
   };
 
   const handleSubmit = (data: OrderFormData) => {
+    console.log("🔧 DEBUG: Form data received:", data);
+    console.log("🔧 DEBUG: Nova Poshta fields from form:", {
+      recipientCityRef: data.recipientCityRef,
+      recipientCityName: data.recipientCityName,
+      recipientWarehouseRef: data.recipientWarehouseRef,
+      recipientWarehouseAddress: data.recipientWarehouseAddress,
+      shippingCost: data.shippingCost,
+      estimatedDelivery: data.estimatedDelivery,
+    });
     
     // Якщо діалог закритий, не продовжуємо валідацію
     if (!isDialogOpen) {
@@ -1936,6 +1945,13 @@ export default function Orders() {
         // Додаємо email та телефон
         ...(data.customerEmail && data.customerEmail !== '' && { contactEmail: data.customerEmail }),
         ...(data.customerPhone && data.customerPhone !== '' && { contactPhone: data.customerPhone }),
+        // Додаємо Nova Poshta поля
+        ...(data.recipientCityRef && data.recipientCityRef !== '' && { recipientCityRef: data.recipientCityRef }),
+        ...(data.recipientCityName && data.recipientCityName !== '' && { recipientCityName: data.recipientCityName }),
+        ...(data.recipientWarehouseRef && data.recipientWarehouseRef !== '' && { recipientWarehouseRef: data.recipientWarehouseRef }),
+        ...(data.recipientWarehouseAddress && data.recipientWarehouseAddress !== '' && { recipientWarehouseAddress: data.recipientWarehouseAddress }),
+        ...(data.shippingCost && data.shippingCost !== '' && { shippingCost: data.shippingCost }),
+        ...(data.estimatedDelivery && data.estimatedDelivery !== '' && { estimatedDelivery: data.estimatedDelivery }),
       },
       items: orderItems.map(item => ({
         productId: item.productId > 0 ? item.productId : null,

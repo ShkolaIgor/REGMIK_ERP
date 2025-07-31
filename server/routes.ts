@@ -1096,7 +1096,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientId: order.clientId && order.clientId !== '' ? parseInt(order.clientId) : undefined,
         carrierId: order.carrierId && order.carrierId !== '' ? parseInt(order.carrierId) : undefined,
         clientContactsId: order.clientContactsId && order.clientContactsId !== '' ? parseInt(order.clientContactsId) : undefined,
+        // Зберігаємо Nova Poshta поля як рядки (не перетворюємо в числа)
+        recipientCityRef: order.recipientCityRef || null,
+        recipientCityName: order.recipientCityName || null,
+        recipientWarehouseRef: order.recipientWarehouseRef || null,
+        recipientWarehouseAddress: order.recipientWarehouseAddress || null,
+        shippingCost: order.shippingCost || null,
+        estimatedDelivery: order.estimatedDelivery || null,
       };
+      
+      console.log("🔧 DEBUG: Nova Poshta fields in order:", {
+        recipientCityRef: order.recipientCityRef,
+        recipientCityName: order.recipientCityName,
+        recipientWarehouseRef: order.recipientWarehouseRef,
+        recipientWarehouseAddress: order.recipientWarehouseAddress,
+        shippingCost: order.shippingCost,
+        estimatedDelivery: order.estimatedDelivery,
+      });
       
       console.log("🔧 DEBUG: Cleaned order data:", JSON.stringify(cleanedOrder, null, 2));
       
