@@ -2166,16 +2166,7 @@ export default function Orders() {
                       value={(() => {
                         const currentCarrierId = form.watch("carrierId");
                         if (!currentCarrierId || currentCarrierId === "") return "none";
-                        // Перевіряємо чи існує перевізник в списку для показу
-                        const carriersToShow = [...(activeCarriers || [])];
-                        if (isEditMode && carriers && carriers.length > 0) {
-                          const currentCarrier = carriers.find((c: any) => c.id.toString() === currentCarrierId);
-                          if (currentCarrier && !currentCarrier.isActive) {
-                            carriersToShow.push(currentCarrier);
-                          }
-                        }
-                        const carrierExists = carriersToShow.find((c: any) => c.id.toString() === currentCarrierId);
-                        return carrierExists ? currentCarrierId : "none";
+                        return currentCarrierId;
                       })()}
                       onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
                     >
