@@ -2154,11 +2154,25 @@ export default function Orders() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
-                        {(isEditMode ? carriers : activeCarriers)?.map((carrier: any) => (
-                          <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                            {carrier.name}{!carrier.isActive ? ' (неактивний)' : ''}
-                          </SelectItem>
-                        ))}
+                        {(() => {
+                          // Завжди показуємо активних перевізників
+                          let carriersToShow = [...(activeCarriers || [])];
+                          
+                          // При редагуванні додаємо поточний вибраний перевізник якщо він неактивний
+                          if (isEditMode && form.watch("carrierId")) {
+                            const currentCarrierId = form.watch("carrierId");
+                            const currentCarrier = carriers?.find((c: any) => c.id === currentCarrierId);
+                            if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id === currentCarrierId)) {
+                              carriersToShow.push(currentCarrier);
+                            }
+                          }
+                          
+                          return carriersToShow.map((carrier: any) => (
+                            <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                              {carrier.name}{!carrier.isActive ? ' (неактивний)' : ''}
+                            </SelectItem>
+                          ));
+                        })()}
                       </SelectContent>
                     </Select>
                   </div>
