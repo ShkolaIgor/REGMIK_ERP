@@ -619,8 +619,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Warehouses
   app.get("/api/warehouses", async (req, res) => {
     try {
+      const { ref } = req.query;
       const warehouses = await storage.getWarehouses();
-      res.json(warehouses);
+      
+      // Якщо передано ref параметр, фільтруємо склади за ref
+      if (ref && typeof ref === 'string') {
+        const filteredWarehouses = warehouses.filter(w => w.ref === ref);
+        res.json(filteredWarehouses);
+      } else {
+        res.json(warehouses);
+      }
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch warehouses" });
     }
@@ -689,6 +697,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete warehouse" });
+    }
+  });
+
+  // Nova Poshta warehouses from database
+  app.get("/api/nova-poshta-warehouses", async (req, res) => {
+    try {
+      const { ref } = req.query;
+      
+      if (ref && typeof ref === 'string') {
+        // Пошук конкретного складу за ref
+        const result = await pool.query(
+          'SELECT * FROM nova_poshta_warehouses WHERE ref = $1 AND is_active = true',
+          [ref]
+        );
+        res.json(result.rows);
+      } else {
+        // Повернути всі активні склади
+        const result = await pool.query(
+          'SELECT * FROM nova_poshta_warehouses WHERE is_active = true LIMIT 100'
+        );
+        res.json(result.rows);
+      }
+    } catch (error) {
+      console.error('Error fetching Nova Poshta warehouses:', error);
+      res.status(500).json({ error: "Failed to fetch Nova Poshta warehouses" });
     }
   });
 

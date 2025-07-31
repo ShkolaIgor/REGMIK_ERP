@@ -181,15 +181,39 @@ export function NovaPoshtaIntegration({
     
     if (initialWarehouseRef) {
       console.log('INITIAL WAREHOUSE REF RECEIVED:', initialWarehouseRef);
-      // Знайти склад за ref
+      // Спочатку спробувати знайти склад в API Nova Poshta
       fetch(`/api/nova-poshta/warehouses?city=${initialCityRef}`)
         .then(res => res.json())
         .then(warehouses => {
           const warehouse = warehouses.find((w: Warehouse) => w.Ref === initialWarehouseRef);
           if (warehouse) {
-            console.log('FOUND WAREHOUSE FOR REF:', warehouse);
+            console.log('FOUND WAREHOUSE FOR REF via API:', warehouse);
             setSelectedWarehouse(warehouse);
             setWarehouseQuery(warehouse.Description);
+          } else {
+            // Fallback: пошук складу безпосередньо в базі даних Nova Poshta
+            console.log('Warehouse not found via API, trying database...');
+            fetch(`/api/nova-poshta-warehouses?ref=${initialWarehouseRef}`)
+              .then(res => res.json())
+              .then(dbWarehouses => {
+                if (dbWarehouses.length > 0) {
+                  const dbWarehouse = dbWarehouses[0];
+                  console.log('FOUND WAREHOUSE FOR REF via DB:', dbWarehouse);
+                  // Конвертуємо формат бази даних до формату API
+                  const warehouse: Warehouse = {
+                    Ref: dbWarehouse.ref,
+                    Number: dbWarehouse.number || '',
+                    Description: dbWarehouse.description,
+                    ShortAddress: dbWarehouse.short_address || dbWarehouse.description,
+                    Phone: dbWarehouse.phone || '',
+                    Schedule: dbWarehouse.schedule || {},
+                    CityRef: dbWarehouse.city_ref
+                  };
+                  setSelectedWarehouse(warehouse);
+                  setWarehouseQuery(warehouse.Description);
+                }
+              })
+              .catch(console.error);
           }
         })
         .catch(console.error);
