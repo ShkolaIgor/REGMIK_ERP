@@ -831,7 +831,7 @@ export default function Orders() {
       const response = await fetch(`/api/clients/${clientId}/delivery-settings`);
       if (response.ok) {
         const deliverySettings = await response.json();
-        console.log('FRONTEND DEBUG - Received delivery settings:', deliverySettings);
+
         setClientDeliveryData(deliverySettings);
       } else {
         setClientDeliveryData(null);
@@ -867,7 +867,7 @@ export default function Orders() {
       filledCount++;
     } else if (client.cityRef) {
       form.setValue("recipientCityRef", client.cityRef);
-      // Примітка: назва міста не доступна, тому що база Nova Poshta порожня
+      form.setValue("recipientCityName", "Місто (з профілю клієнта)");
       filledCount++;
     }
 

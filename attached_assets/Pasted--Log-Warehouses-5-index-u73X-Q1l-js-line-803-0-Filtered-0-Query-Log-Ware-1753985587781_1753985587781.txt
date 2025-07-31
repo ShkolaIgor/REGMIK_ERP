@@ -1,0 +1,217 @@
+[Log] Warehouses: (5) (index-u73X_Q1l.js, line 803)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (index-u73X_Q1l.js, line 803)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Error] Failed to load resource: the server responded with a status of 500 () (customer-addresses, line 0)
+[Log] Warehouses: (5) (index-u73X_Q1l.js, line 803)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Order details: – {id: 51801, orderSequenceNumber: 51801, orderNumber: "52800", …} (index-u73X_Q1l.js, line 803)
+{id: 51801, orderSequenceNumber: 51801, orderNumber: "52800", clientId: 3902, clientContactsId: null, …}Object
+[Log] All categories: – [Object, Object, Object, …] (19) (index-u73X_Q1l.js, line 803)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (19)
+[Log] Processing item: – {id: 91487, orderId: 51801, productId: 13356, …} (index-u73X_Q1l.js, line 803)
+{id: 91487, orderId: 51801, productId: 13356, quantity: 6, unitPrice: "1050.00", …}Object
+[Log] Added category: – "Датчики температури" (index-u73X_Q1l.js, line 803)
+[Log] Generated description: – "Датчики температури" (index-u73X_Q1l.js, line 803)
+[Log] Warehouses: (5) (index-u73X_Q1l.js, line 803)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (index-u73X_Q1l.js, line 803)
+Array (0)
+No Properties
+
+Array Prototype
+
+at()
+
+concat(value, ...)
+
+constructor: function()
+
+copyWithin(targetIndex, startIndex, [endIndex=length])
+
+entries()
+
+every(callback, [thisArg])
+
+fill(value, [startIndex=0], [endIndex=length])
+
+filter(callback, [thisArg])
+
+find(callback, [thisArg])
+
+findIndex(callback, [thisArg])
+
+findLast(callback, [thisArg])
+
+findLastIndex(callback, [thisArg])
+
+flat()
+
+flatMap()
+
+forEach(callback, [thisArg])
+
+includes(searchValue, [startIndex=0])
+
+indexOf(searchValue, [startIndex=0])
+
+join([separator=","])
+
+keys()
+
+lastIndexOf(searchValue, [startIndex=length])
+
+length: 0
+
+map(callback, [thisArg])
+
+pop()
+
+push(value, ...)
+
+reduce(callback, [initialValue])
+
+reduceRight(callback, [initialValue])
+
+reverse()
+
+shift()
+
+slice([startIndex=0], [endIndex=length])
+
+some(callback, [thisArg])
+
+sort([compareFunction])
+
+splice(startIndex, [deleteCount=0], ...itemsToAdd)
+
+toLocaleString()
+
+toReversed()
+
+toSorted()
+
+toSpliced()
+
+toString()
+
+unshift()
+
+values()
+
+with()
+
+Symbol(Symbol.iterator)()
+
+Symbol(Symbol.unscopables): {at: true, copyWithin: true, entries: true, fill: true, find: true, …}
+
+Object Prototype
+"Filtered:"
+Array (0)
+No Properties
+
+Array Prototype
+
+at()
+
+concat(value, ...)
+
+constructor: function()
+
+copyWithin(targetIndex, startIndex, [endIndex=length])
+
+entries()
+
+every(callback, [thisArg])
+
+fill(value, [startIndex=0], [endIndex=length])
+
+filter(callback, [thisArg])
+
+find(callback, [thisArg])
+
+findIndex(callback, [thisArg])
+
+findLast(callback, [thisArg])
+
+findLastIndex(callback, [thisArg])
+
+flat()
+
+flatMap()
+
+forEach(callback, [thisArg])
+
+includes(searchValue, [startIndex=0])
+
+indexOf(searchValue, [startIndex=0])
+
+join([separator=","])
+
+keys()
+
+lastIndexOf(searchValue, [startIndex=length])
+
+length: 0
+
+map(callback, [thisArg])
+
+pop()
+
+push(value, ...)
+
+reduce(callback, [initialValue])
+
+reduceRight(callback, [initialValue])
+
+reverse()
+
+shift()
+
+slice([startIndex=0], [endIndex=length])
+
+some(callback, [thisArg])
+
+sort([compareFunction])
+
+splice(startIndex, [deleteCount=0], ...itemsToAdd)
+
+toLocaleString()
+
+toReversed()
+
+toSorted()
+
+toSpliced()
+
+toString()
+
+unshift()
+
+values()
+
+with()
+
+Symbol(Symbol.iterator)()
+
+Symbol(Symbol.unscopables): {at: true, copyWithin: true, entries: true, fill: true, find: true, …}
+
+Object Prototype
+"Query:"
+""
