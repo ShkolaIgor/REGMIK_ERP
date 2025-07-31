@@ -1472,22 +1472,34 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderWithDepartments(id: number): Promise<any> {
     try {
-      // Отримуємо основні дані замовлення через прямий SQL
+      // Отримуємо основні дані замовлення через прямий SQL з додатковими полями
       const orderQuery = `
         SELECT 
           o.id,
           o.order_number,
           o.invoice_number,
           o.client_id,
+          o.client_contacts_id,
+          o.carrier_id,
           o.status,
           o.total_amount,
           o.due_date,
           o.shipped_date,
           o.notes,
           o.created_at,
-          c.name as client_name
+          o.tracking_number,
+          c.name as client_name,
+          c.tax_code as client_tax_code,
+          cc.full_name as contact_name,
+          cc.email as contact_email,
+          cc.primary_phone as contact_phone,
+          cc.secondary_phone as contact_secondary_phone,
+          carr.name as carrier_name,
+          carr.tracking_url as carrier_tracking_url
         FROM orders o
         LEFT JOIN clients c ON o.client_id = c.id
+        LEFT JOIN client_contacts cc ON o.client_contacts_id = cc.id
+        LEFT JOIN carriers carr ON o.carrier_id = carr.id
         WHERE o.id = $1
       `;
 
@@ -1586,6 +1598,17 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
+      // Отримуємо місто Нової пошти за tracking номером якщо є
+      let novaPoshtaCityName = null;
+      if (order.tracking_number && order.carrier_name?.toLowerCase().includes('нова пошта')) {
+        try {
+          // Можемо додати пошук міста за tracking номером, поки що залишаємо null
+          novaPoshtaCityName = null;
+        } catch (error) {
+          console.log('Could not fetch Nova Poshta city info:', error);
+        }
+      }
+
       return {
         order: {
           id: order.id,
@@ -1598,9 +1621,22 @@ export class DatabaseStorage implements IStorage {
           shippedDate: order.shipped_date,
           notes: order.notes,
           createdAt: order.created_at,
+          trackingNumber: order.tracking_number,
           client: order.client_name ? {
             name: order.client_name,
+            taxCode: order.client_tax_code, // ЄДРПОУ
             phone: null
+          } : null,
+          contactPerson: order.contact_name ? {
+            name: order.contact_name,
+            email: order.contact_email,
+            phone: order.contact_phone,
+            secondaryPhone: order.contact_secondary_phone
+          } : null,
+          carrier: order.carrier_name ? {
+            name: order.carrier_name,
+            trackingUrl: order.carrier_tracking_url,
+            cityName: novaPoshtaCityName
           } : null,
           company: null
         },

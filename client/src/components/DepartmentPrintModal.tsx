@@ -35,9 +35,22 @@ interface DepartmentPrintData {
     shippedDate?: string;
     notes?: string;
     createdAt: string;
+    trackingNumber?: string;
     client?: {
       name: string;
+      taxCode?: string; // ЄДРПОУ
       phone?: string;
+    };
+    contactPerson?: {
+      name: string;
+      email?: string;
+      phone?: string;
+      secondaryPhone?: string;
+    };
+    carrier?: {
+      name: string;
+      trackingUrl?: string;
+      cityName?: string;
     };
     company?: {
       name: string;
@@ -225,6 +238,41 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             <div class="info-group">
               <span class="label">👤 Клієнт:</span> ${order.client.name}
             </div>
+            ${order.client.taxCode ? `
+              <div class="info-group">
+                <span class="label">🏢 ЄДРПОУ:</span> ${order.client.taxCode}
+              </div>
+            ` : ''}
+          ` : ''}
+          ${order.contactPerson ? `
+            <div class="info-group">
+              <span class="label">📞 Контактна особа:</span> ${order.contactPerson.name}
+            </div>
+            ${order.contactPerson.phone ? `
+              <div class="info-group">
+                <span class="label">📱 Телефон:</span> ${order.contactPerson.phone}
+              </div>
+            ` : ''}
+            ${order.contactPerson.email ? `
+              <div class="info-group">
+                <span class="label">📧 Email:</span> ${order.contactPerson.email}
+              </div>
+            ` : ''}
+          ` : ''}
+          ${order.carrier ? `
+            <div class="info-group">
+              <span class="label">🚚 Перевізник:</span> ${order.carrier.name}
+            </div>
+            ${order.trackingNumber ? `
+              <div class="info-group">
+                <span class="label">📦 ТТН:</span> ${order.trackingNumber}
+              </div>
+            ` : ''}
+            ${order.carrier.cityName ? `
+              <div class="info-group">
+                <span class="label">🏪 Місто доставки:</span> ${order.carrier.cityName}
+              </div>
+            ` : ''}
           ` : ''}
         </div>
 
@@ -440,6 +488,41 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             <div class="info-group">
               <span class="label">👤 Клієнт:</span> ${order.client.name}
             </div>
+            ${order.client.taxCode ? `
+              <div class="info-group">
+                <span class="label">🏢 ЄДРПОУ:</span> ${order.client.taxCode}
+              </div>
+            ` : ''}
+          ` : ''}
+          ${order.contactPerson ? `
+            <div class="info-group">
+              <span class="label">📞 Контактна особа:</span> ${order.contactPerson.name}
+            </div>
+            ${order.contactPerson.phone ? `
+              <div class="info-group">
+                <span class="label">📱 Телефон:</span> ${order.contactPerson.phone}
+              </div>
+            ` : ''}
+            ${order.contactPerson.email ? `
+              <div class="info-group">
+                <span class="label">📧 Email:</span> ${order.contactPerson.email}
+              </div>
+            ` : ''}
+          ` : ''}
+          ${order.carrier ? `
+            <div class="info-group">
+              <span class="label">🚚 Перевізник:</span> ${order.carrier.name}
+            </div>
+            ${order.trackingNumber ? `
+              <div class="info-group">
+                <span class="label">📦 ТТН:</span> ${order.trackingNumber}
+              </div>
+            ` : ''}
+            ${order.carrier.cityName ? `
+              <div class="info-group">
+                <span class="label">🏪 Місто доставки:</span> ${order.carrier.cityName}
+              </div>
+            ` : ''}
           ` : ''}
         </div>
 
