@@ -503,6 +503,49 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  // Helper function для автоматичного вибору категорії за назвою товару
+  async findCategoryByProductName(productName: string): Promise<number | null> {
+    try {
+      if (!productName || productName.length < 4) {
+        return null;
+      }
+
+      // Отримуємо всі категорії
+      const allCategories = await db.select().from(categories);
+      
+      // Порівнюємо перші 4 символи назви товару з назвами категорій
+      const productPrefix = productName.substring(0, 4).toLowerCase();
+      
+      // Шукаємо точний збіг перших 4 символів
+      const matchedCategory = allCategories.find(category => {
+        const categoryPrefix = category.name.substring(0, 4).toLowerCase();
+        return categoryPrefix === productPrefix;
+      });
+      
+      if (matchedCategory) {
+        console.log(`🎯 Знайдено категорію для товару "${productName}": "${matchedCategory.name}" (перші 4 символи: "${productPrefix}")`);
+        return matchedCategory.id;
+      }
+      
+      // Якщо точний збіг не знайдено, шукаємо часткові збіги
+      const partialMatch = allCategories.find(category => {
+        const categoryPrefix = category.name.substring(0, 4).toLowerCase();
+        return productPrefix.includes(categoryPrefix) || categoryPrefix.includes(productPrefix);
+      });
+      
+      if (partialMatch) {
+        console.log(`🎯 Знайдено часткову відповідність категорії для товару "${productName}": "${partialMatch.name}"`);
+        return partialMatch.id;
+      }
+      
+      console.log(`❌ Категорія для товару "${productName}" не знайдена (перші 4 символи: "${productPrefix}")`);
+      return null;
+    } catch (error) {
+      console.error('Помилка пошуку категорії за назвою товару:', error);
+      return null;
+    }
+  }
+
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     console.log(`🛠️ createProduct() отримав дані:`, JSON.stringify(insertProduct, null, 2));
     const result = await db.insert(products).values(insertProduct).returning();
@@ -12872,13 +12915,16 @@ export class DatabaseStorage implements IStorage {
       } else if (foundComponents.length > 0) {
         // Створюємо товар з компонента
         const component = testComponentQuery[0];
+        // Автоматично визначаємо категорію за назвою товару
+        const autoSelectedCategoryId = await this.findCategoryByProductName(component.name);
+        
         const newProduct = await db.insert(products).values({
           name: component.name,
           sku: component.sku || `COMP-${component.id}`,
-            category_id: 1, // Default category
+            category_id: autoSelectedCategoryId || 1, // Автоматично обрана категорія або default
             retail_price: component.cost_price || 0,
             cost_price: component.cost_price || 0,
-            description: component.description || '',
+            description: `${component.description || ''}${autoSelectedCategoryId ? ' (категорія обрана автоматично)' : ''}`,
             is_active: true,
             created_at: new Date(),
             updated_at: new Date()
@@ -12890,13 +12936,16 @@ export class DatabaseStorage implements IStorage {
           console.log(`❌ НІ ТОВАР НІ КОМПОНЕНТ НЕ ЗНАЙДЕНІ. Створюємо новий товар.`);
           
           // Створюємо новий товар
+          // Автоматично визначаємо категорію за назвою товару
+          const autoSelectedCategoryId = await this.findCategoryByProductName(itemName);
+          
           const newProduct = await db.insert(products).values({
             name: itemName,
             sku: `1C-${Date.now()}`,
-            category_id: 1, // Default category
+            category_id: autoSelectedCategoryId || 1, // Автоматично обрана категорія або default
             retail_price: item.price || 0,
             cost_price: item.price || 0,
-            description: `Імпортовано з 1С рахунку ${invoice.number}`,
+            description: `Імпортовано з 1С рахунку ${invoice.number}${autoSelectedCategoryId ? ' (категорія обрана автоматично)' : ''}`,
             is_active: true,
             created_at: new Date(),
             updated_at: new Date()
@@ -14430,13 +14479,16 @@ export class DatabaseStorage implements IStorage {
                 // Автоматично створюємо товар, якщо його не знайдено
                 console.log(`🆕 Webhook: Створюємо новий товар "${itemName}"`);
                 try {
+                  // Автоматично визначаємо категорію за назвою товару
+                  const autoSelectedCategoryId = await this.findCategoryByProductName(itemName);
+                  
                   const newProduct = await db.insert(products).values({
                     name: itemName,
                     sku: position.itemCode || position.КодТовара || `AUTO-${Date.now()}`,
-                    description: `Автоматично створено з 1С: ${itemName}`,
+                    description: `Автоматично створено з 1С: ${itemName}${autoSelectedCategoryId ? ` (категорія обрана автоматично)` : ''}`,
                     costPrice: position.unitPrice || position.Цена || 0,
                     retailPrice: position.unitPrice || position.Цена || 0,
-                    categoryId: null, // Буде потрібно налаштувати категорії пізніше
+                    categoryId: autoSelectedCategoryId, // Автоматично обрана категорія або null
                     isActive: true,
                     createdAt: new Date()
                   }).returning();
@@ -14620,13 +14672,16 @@ export class DatabaseStorage implements IStorage {
                 // Автоматично створюємо товар при оновленні, якщо його не знайдено
                 console.log(`🆕 Webhook: Оновлення - створюємо новий товар "${itemName}"`);
                 try {
+                  // Автоматично визначаємо категорію за назвою товару
+                  const autoSelectedCategoryId = await this.findCategoryByProductName(itemName);
+                  
                   const newProduct = await db.insert(products).values({
                     name: itemName,
                     sku: position.itemCode || position.КодТовара || `AUTO-${Date.now()}`,
-                    description: `Автоматично створено з 1С: ${itemName}`,
+                    description: `Автоматично створено з 1С: ${itemName}${autoSelectedCategoryId ? ` (категорія обрана автоматично)` : ''}`,
                     costPrice: position.unitPrice || position.Цена || 0,
                     retailPrice: position.unitPrice || position.Цена || 0,
-                    categoryId: null, // Буде потрібно налаштувати категорії пізніше
+                    categoryId: autoSelectedCategoryId, // Автоматично обрана категорія або null
                     isActive: true,
                     createdAt: new Date()
                   }).returning();
