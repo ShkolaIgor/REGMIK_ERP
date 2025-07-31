@@ -651,12 +651,12 @@ export const insertOrderSchemaForm = insertOrderSchemaBase.extend({
   statusId: z.number().int().positive().optional(),
   clientContactsId: z.number().int().positive().optional(),
   orderNumber: z.string().optional(), // дозволяємо автоматичну генерацію
-  // Nova Poshta поля (опціональні)
-  recipientCityRef: z.string().optional(),
-  recipientCityName: z.string().optional(),
-  recipientWarehouseRef: z.string().optional(),
-  recipientWarehouseAddress: z.string().optional(),
-  shippingCost: z.string().optional(),
+  // Nova Poshta поля (опціональні або null)
+  recipientCityRef: z.string().optional().nullable(),
+  recipientCityName: z.string().optional().nullable(),
+  recipientWarehouseRef: z.string().optional().nullable(),
+  recipientWarehouseAddress: z.string().optional().nullable(),
+  shippingCost: z.string().optional().nullable(),
   estimatedDelivery: z.union([z.string(), z.date()]).optional().nullable(),
 }).transform((data) => ({
   ...data,
