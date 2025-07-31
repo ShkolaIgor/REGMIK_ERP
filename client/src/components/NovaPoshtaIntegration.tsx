@@ -163,50 +163,83 @@ export function NovaPoshtaIntegration({
 
   // Встановлення початкових значень міста і складу
   useEffect(() => {
-    console.log('NovaPoshtaIntegration initialCityRef:', initialCityRef, 'initialWarehouseRef:', initialWarehouseRef);
+    console.log('NovaPoshtaIntegration useEffect triggered:', {
+      initialCityRef,
+      initialWarehouseRef,
+      selectedCityRef: selectedCity?.Ref,
+      selectedWarehouseRef: selectedWarehouse?.Ref
+    });
     
     if (initialCityRef && initialCityRef !== selectedCity?.Ref) {
-      console.log('INITIAL CITY REF RECEIVED:', initialCityRef);
-      // Знайти місто за ref в базі даних
-      fetch(`/api/nova-poshta/cities?search=`)
+      console.log('LOADING INITIAL CITY FOR REF:', initialCityRef);
+      
+      // Спочатку пробуємо знайти в базі даних
+      fetch(`/api/nova-poshta-cities?ref=${initialCityRef}`)
         .then(res => res.json())
-        .then(cities => {
-          const city = cities.find((c: City) => c.Ref === initialCityRef);
-          if (city) {
-            console.log('FOUND CITY FOR REF:', city);
+        .then(dbCities => {
+          console.log('DB Cities response for ref:', dbCities);
+          if (dbCities.length > 0) {
+            const dbCity = dbCities[0];
+            const city: City = {
+              Ref: dbCity.ref,
+              Description: dbCity.description,
+              DescriptionRu: dbCity.description_ru || dbCity.description,
+              AreaDescription: dbCity.area_description || '',
+              AreaDescriptionRu: dbCity.area_description_ru || dbCity.area_description || '',
+              RegionDescription: dbCity.region_description || '',
+              RegionDescriptionRu: dbCity.region_description_ru || dbCity.region_description || '',
+              SettlementTypeDescription: dbCity.settlement_type_description || '',
+              DeliveryCity: dbCity.delivery_city || '1',
+              Warehouses: dbCity.warehouses || '1'
+            };
+            console.log('FOUND CITY IN DB:', city);
             setSelectedCity(city);
             setCityQuery(city.Description);
           } else {
-            // Створити фіктивне місто з даних
-            console.log('Creating virtual city for ref:', initialCityRef);
-            const virtualCity: City = {
-              Ref: initialCityRef,
-              Description: "Довжик", // З логів видно що це Довжик
-              DescriptionRu: "Должик",
-              AreaDescription: "Сумська",
-              AreaDescriptionRu: "Сумская",
-              RegionDescription: "Сумська область",
-              RegionDescriptionRu: "Сумская область",
-              SettlementTypeDescription: "село",
-              DeliveryCity: "1",
-              Warehouses: "1"
-            };
-            setSelectedCity(virtualCity);
-            setCityQuery(virtualCity.Description);
+            // Якщо не знайдено в базі, пробуємо API
+            fetch(`/api/nova-poshta/cities?search=`)
+              .then(res => res.json())
+              .then(cities => {
+                const city = cities.find((c: City) => c.Ref === initialCityRef);
+                if (city) {
+                  console.log('FOUND CITY IN API:', city);
+                  setSelectedCity(city);
+                  setCityQuery(city.Description);
+                } else {
+                  console.log('CITY NOT FOUND, creating fallback for ref:', initialCityRef);
+                  const virtualCity: City = {
+                    Ref: initialCityRef,
+                    Description: `Місто (${initialCityRef})`,
+                    DescriptionRu: `Город (${initialCityRef})`,
+                    AreaDescription: "",
+                    AreaDescriptionRu: "",
+                    RegionDescription: "",
+                    RegionDescriptionRu: "",
+                    SettlementTypeDescription: "",
+                    DeliveryCity: "1",
+                    Warehouses: "1"
+                  };
+                  setSelectedCity(virtualCity);
+                  setCityQuery(virtualCity.Description);
+                }
+              })
+              .catch(console.error);
           }
         })
         .catch(console.error);
     }
     
     if (initialWarehouseRef && initialWarehouseRef !== selectedWarehouse?.Ref) {
-      console.log('INITIAL WAREHOUSE REF RECEIVED:', initialWarehouseRef);
+      console.log('LOADING INITIAL WAREHOUSE FOR REF:', initialWarehouseRef);
+      
       // Пошук складу безпосередньо в базі даних Nova Poshta
       fetch(`/api/nova-poshta-warehouses?ref=${initialWarehouseRef}`)
         .then(res => res.json())
         .then(dbWarehouses => {
+          console.log('DB Warehouses response for ref:', dbWarehouses);
           if (dbWarehouses.length > 0) {
             const dbWarehouse = dbWarehouses[0];
-            console.log('FOUND WAREHOUSE FOR REF via DB:', dbWarehouse);
+            console.log('FOUND WAREHOUSE IN DB:', dbWarehouse);
             // Конвертуємо формат бази даних до формату API
             const warehouse: Warehouse = {
               Ref: dbWarehouse.ref,
@@ -219,20 +252,33 @@ export function NovaPoshtaIntegration({
             };
             setSelectedWarehouse(warehouse);
             setWarehouseQuery(warehouse.Description);
-          } else {
-            // Створити фіктивний склад з даних
-            console.log('Creating virtual warehouse for ref:', initialWarehouseRef);
-            const virtualWarehouse: Warehouse = {
-              Ref: initialWarehouseRef,
-              Number: "3", 
-              Description: "Пункт приймання-видачі (до 30 кг): вул. Адміністративна, 3",
-              ShortAddress: "вул. Адміністративна, 3",
-              Phone: "",
-              Schedule: {},
-              CityRef: initialCityRef || ""
-            };
-            setSelectedWarehouse(virtualWarehouse);
-            setWarehouseQuery(virtualWarehouse.Description);
+          } else if (initialCityRef) {
+            // Якщо склад не знайдений, пробуємо завантажити склади для міста
+            console.log('WAREHOUSE NOT FOUND IN DB, trying to load warehouses for city:', initialCityRef);
+            fetch(`/api/nova-poshta/warehouses?cityRef=${initialCityRef}`)
+              .then(res => res.json())
+              .then(warehouses => {
+                const warehouse = warehouses.find((w: Warehouse) => w.Ref === initialWarehouseRef);
+                if (warehouse) {
+                  console.log('FOUND WAREHOUSE IN API:', warehouse);
+                  setSelectedWarehouse(warehouse);
+                  setWarehouseQuery(warehouse.Description);
+                } else {
+                  console.log('WAREHOUSE NOT FOUND, creating fallback for ref:', initialWarehouseRef);
+                  const virtualWarehouse: Warehouse = {
+                    Ref: initialWarehouseRef,
+                    Number: "1", 
+                    Description: `Відділення (${initialWarehouseRef})`,
+                    ShortAddress: `Відділення (${initialWarehouseRef})`,
+                    Phone: "",
+                    Schedule: {},
+                    CityRef: initialCityRef || ""
+                  };
+                  setSelectedWarehouse(virtualWarehouse);
+                  setWarehouseQuery(virtualWarehouse.Description);
+                }
+              })
+              .catch(console.error);
           }
         })
         .catch(console.error);

@@ -3708,6 +3708,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Nova Poshta database search for cities by ref
+  app.get("/api/nova-poshta-cities", async (req, res) => {
+    try {
+      const { ref } = req.query;
+      
+      if (ref) {
+        // Пошук конкретного міста за ref
+        const result = await pool.query(
+          'SELECT * FROM nova_poshta_cities WHERE ref = $1 LIMIT 1',
+          [ref]
+        );
+        res.json(result.rows);
+      } else {
+        // Повернути всі міста
+        const result = await pool.query(
+          'SELECT * FROM nova_poshta_cities LIMIT 1000'
+        );
+        res.json(result.rows);
+      }
+    } catch (error) {
+      console.error('Error fetching cities from database:', error);
+      res.status(500).json({ error: "Failed to fetch cities from database" });
+    }
+  });
+
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
     const { q } = req.query;
