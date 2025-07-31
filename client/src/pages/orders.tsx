@@ -2375,6 +2375,7 @@ export default function Orders() {
                       recipientWarehouseAddress: form.watch("recipientWarehouseAddress")
                     })}
                     <NovaPoshtaIntegration
+                      key={`${form.watch("recipientCityRef")}-${form.watch("recipientWarehouseRef")}`}
                       onAddressSelect={(address, cityRef, warehouseRef) => {
                         // Зберігаємо адресу в примітках замовлення та в окремих полях
                         const currentNotes = form.watch("notes") || "";
