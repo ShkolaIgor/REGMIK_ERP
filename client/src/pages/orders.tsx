@@ -2155,6 +2155,12 @@ export default function Orders() {
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
                         {(() => {
+                          // DEBUG: Тимчасове логування для діагностики
+                          console.log('activeCarriers:', activeCarriers);
+                          console.log('carriers:', carriers);
+                          console.log('isEditMode:', isEditMode);
+                          console.log('carrierId:', form.watch("carrierId"));
+                          
                           // Завжди показуємо активних перевізників
                           let carriersToShow = [...(activeCarriers || [])];
                           
@@ -2166,6 +2172,8 @@ export default function Orders() {
                               carriersToShow.push(currentCarrier);
                             }
                           }
+                          
+                          console.log('carriersToShow:', carriersToShow);
                           
                           return carriersToShow.map((carrier: any) => (
                             <SelectItem key={carrier.id} value={carrier.id.toString()}>
