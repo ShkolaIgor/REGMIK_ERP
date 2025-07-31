@@ -736,6 +736,9 @@ export default function Orders() {
 
   const { data: activeCarriers = [] } = useQuery<any[]>({
     queryKey: ["/api/carriers/active"],
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     // Завантажуємо тільки активних перевізників для селекторів у формах
   });
 
@@ -743,6 +746,14 @@ export default function Orders() {
     queryKey: ["/api/carriers/default"],
     // Завантажуємо перевізника за замовчуванням для автозаповнення форми
   });
+
+  // Примусово оновлюємо кеш перевізників при відкритті форми
+  useEffect(() => {
+    if (isDialogOpen) {
+      queryClient.invalidateQueries({ queryKey: ["/api/carriers/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/carriers"] });
+    }
+  }, [isDialogOpen, queryClient]);
 
   // Стабільне оновлення серверної пагінації при зміні фільтрів
   useEffect(() => {
@@ -2155,6 +2166,10 @@ export default function Orders() {
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
                         {(() => {
+                          // DEBUG: Показати поточні дані
+                          console.log('ACTIVE CARRIERS API RESPONSE:', activeCarriers);
+                          console.log('ALL CARRIERS API RESPONSE:', carriers);
+                          
                           // Завжди показуємо активних перевізників
                           let carriersToShow = [...(activeCarriers || [])];
                           
@@ -2166,6 +2181,8 @@ export default function Orders() {
                               carriersToShow.push(currentCarrier);
                             }
                           }
+                          
+                          console.log('CARRIERS TO SHOW:', carriersToShow);
                           
                           return carriersToShow.map((carrier: any) => (
                             <SelectItem key={carrier.id} value={carrier.id.toString()}>
