@@ -94,6 +94,8 @@ interface NovaPoshtaIntegrationProps {
   recipientPhone?: string;
   initialCityRef?: string;
   initialWarehouseRef?: string;
+  initialCityName?: string;
+  initialWarehouseAddress?: string;
 }
 
 export function NovaPoshtaIntegration({
@@ -111,7 +113,9 @@ export function NovaPoshtaIntegration({
   recipientName: externalRecipientName,
   recipientPhone: externalRecipientPhone,
   initialCityRef,
-  initialWarehouseRef
+  initialWarehouseRef,
+  initialCityName,
+  initialWarehouseAddress
 }: NovaPoshtaIntegrationProps) {
   const [cityQuery, setCityQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
@@ -173,21 +177,28 @@ export function NovaPoshtaIntegration({
     if (initialCityRef && initialCityRef !== selectedCity?.Ref) {
       console.log('LOADING INITIAL CITY FOR REF:', initialCityRef);
       
-      // Якщо це віртуальна назва міста, створюємо fallback об'єкт
-      if (initialCityRef.startsWith('db5c897c-391c-11dd-90d9-001a92567626')) {
+      // Створюємо віртуальний об'єкт міста для будь-якого збереженого ref-а
+      if (initialCityRef && initialCityRef !== 'undefined') {
+        const cityName = (() => {
+          // Спеціальні ref-и з відомими назвами
+          if (initialCityRef === 'db5c897c-391c-11dd-90d9-001a92567626') return "Київ";
+          // Інакше використовуємо передану назву або загальну
+          return initialCityName || "Збережене місто";
+        })();
+        
         const virtualCity: City = {
           Ref: initialCityRef,
-          Description: "Київ",
-          DescriptionRu: "Киев",
-          AreaDescription: "Київська область",
-          AreaDescriptionRu: "Киевская область", 
-          RegionDescription: "Київський регіон",
-          RegionDescriptionRu: "Киевский регион",
+          Description: cityName,
+          DescriptionRu: cityName,
+          AreaDescription: "Збережена область",
+          AreaDescriptionRu: "Сохраненная область", 
+          RegionDescription: "Збережений регіон",
+          RegionDescriptionRu: "Сохраненный регион",
           SettlementTypeDescription: "місто",
           DeliveryCity: "1",
           Warehouses: "1"
         };
-        console.log('CREATED VIRTUAL CITY FOR KYIV:', virtualCity);
+        console.log('CREATED VIRTUAL CITY:', virtualCity);
         setSelectedCity(virtualCity);
         setCityQuery(virtualCity.Description);
         return;
@@ -253,18 +264,25 @@ export function NovaPoshtaIntegration({
     if (initialWarehouseRef && initialWarehouseRef !== selectedWarehouse?.Ref) {
       console.log('LOADING INITIAL WAREHOUSE FOR REF:', initialWarehouseRef);
       
-      // Якщо це відомий ref складу, створюємо fallback об'єкт
-      if (initialWarehouseRef === '1e31d8de-6beb-11e6-a2d7-001a92567626') {
+      // Створюємо віртуальний об'єкт складу для будь-якого збереженого ref-а
+      if (initialWarehouseRef && initialWarehouseRef !== 'undefined') {
+        const warehouseAddress = (() => {
+          // Спеціальні ref-и з відомими адресами
+          if (initialWarehouseRef === '1e31d8de-6beb-11e6-a2d7-001a92567626') return "Відділення №5 (вул. Хрещатик, 5)";
+          // Інакше використовуємо передану адресу або загальну
+          return initialWarehouseAddress || "Збережене відділення";
+        })();
+        
         const virtualWarehouse: Warehouse = {
           Ref: initialWarehouseRef,
-          Number: "5",
-          Description: "Відділення №5 (вул. Хрещатик, 5)",
-          ShortAddress: "вул. Хрещатик, 5",
+          Number: "1",
+          Description: warehouseAddress,
+          ShortAddress: warehouseAddress,
           Phone: "0800509001",
           Schedule: {},
-          CityRef: "db5c897c-391c-11dd-90d9-001a92567626"
+          CityRef: selectedCity?.Ref || initialCityRef || ""
         };
-        console.log('CREATED VIRTUAL WAREHOUSE FOR KYIV:', virtualWarehouse);
+        console.log('CREATED VIRTUAL WAREHOUSE:', virtualWarehouse);
         setSelectedWarehouse(virtualWarehouse);
         setWarehouseQuery(virtualWarehouse.Description);
         return;

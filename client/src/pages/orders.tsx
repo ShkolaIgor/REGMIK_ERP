@@ -2467,6 +2467,8 @@ export default function Orders() {
                       declaredValue={form.watch("totalAmount")}
                       initialCityRef={form.watch("recipientCityRef")}
                       initialWarehouseRef={form.watch("recipientWarehouseRef")}
+                      initialCityName={form.watch("recipientCityName")}
+                      initialWarehouseAddress={form.watch("recipientWarehouseAddress")}
                     />
                   </div>
                 )}
