@@ -819,15 +819,58 @@ export default function Orders() {
   // Запит для пошуку клієнтів з debounce
   const [debouncedSearchValue, setDebouncedSearchValue] = useState("");
 
-  // Завантаження даних доставки при зміні клієнта
-  useEffect(() => {
-    const selectedClientId = form.watch("clientId");
-    if (selectedClientId && selectedClientId !== '') {
-      loadClientDeliveryData(selectedClientId);
-    } else {
+  // Завантаження даних доставки клієнта для показування стану кнопки
+  const loadClientDeliveryData = async (clientId: string) => {
+    if (!clientId) {
       setClientDeliveryData(null);
+      return;
     }
-  }, [form.watch("clientId")]);
+
+    setLoadingDeliveryData(true);
+    try {
+      const response = await fetch(`/api/clients/${clientId}/delivery-settings`);
+      if (response.ok) {
+        const deliverySettings = await response.json();
+        setClientDeliveryData(deliverySettings);
+      } else {
+        setClientDeliveryData(null);
+      }
+    } catch (error) {
+      console.error("Помилка завантаження даних доставки:", error);
+      setClientDeliveryData(null);
+    } finally {
+      setLoadingDeliveryData(false);
+    }
+  };
+
+  // Ручне автозаповнення даних доставки
+  const handleManualDeliveryFill = () => {
+    if (!clientDeliveryData) return;
+
+    // Автозаповнення перевізника
+    if (clientDeliveryData.carrier) {
+      form.setValue("carrierId", clientDeliveryData.carrier.id.toString());
+    }
+
+    // Автозаповнення міста Nova Poshta
+    if (clientDeliveryData.city) {
+      form.setValue("recipientCityRef", clientDeliveryData.city.ref);
+      form.setValue("recipientCityName", clientDeliveryData.city.name || "");
+    }
+
+    // Автозаповнення відділення Nova Poshta
+    if (clientDeliveryData.warehouse) {
+      form.setValue("recipientWarehouseRef", clientDeliveryData.warehouse.ref);
+      form.setValue("recipientWarehouseAddress", clientDeliveryData.warehouse.address || "");
+    }
+
+    toast({
+      title: "Дані доставки заповнені",
+      description: "Інформація про доставку завантажена з профілю клієнта",
+    });
+  };
+
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -885,6 +928,16 @@ export default function Orders() {
       notes: "",
     },
   });
+
+  // Завантаження даних доставки при зміні клієнта
+  useEffect(() => {
+    const selectedClientId = form.watch("clientId");
+    if (selectedClientId && selectedClientId !== '') {
+      loadClientDeliveryData(selectedClientId);
+    } else {
+      setClientDeliveryData(null);
+    }
+  }, [form.watch("clientId")]);
 
   // Оновлюємо список контактів при зміні даних
   useEffect(() => {
@@ -1764,57 +1817,6 @@ export default function Orders() {
 
   const handleCreateNewClient = (formData: any) => {
     createClientMutation.mutate(formData);
-  };
-
-  // Завантаження даних доставки клієнта для показування стану кнопки
-  const loadClientDeliveryData = async (clientId: string) => {
-    if (!clientId) {
-      setClientDeliveryData(null);
-      return;
-    }
-
-    setLoadingDeliveryData(true);
-    try {
-      const response = await fetch(`/api/clients/${clientId}/delivery-settings`);
-      if (response.ok) {
-        const deliverySettings = await response.json();
-        setClientDeliveryData(deliverySettings);
-      } else {
-        setClientDeliveryData(null);
-      }
-    } catch (error) {
-      console.error("Помилка завантаження даних доставки:", error);
-      setClientDeliveryData(null);
-    } finally {
-      setLoadingDeliveryData(false);
-    }
-  };
-
-  // Ручне автозаповнення даних доставки
-  const handleManualDeliveryFill = () => {
-    if (!clientDeliveryData) return;
-
-    // Автозаповнення перевізника
-    if (clientDeliveryData.carrier) {
-      form.setValue("carrierId", clientDeliveryData.carrier.id.toString());
-    }
-
-    // Автозаповнення міста Nova Poshta
-    if (clientDeliveryData.city) {
-      form.setValue("recipientCityRef", clientDeliveryData.city.ref);
-      form.setValue("recipientCityName", clientDeliveryData.city.name || "");
-    }
-
-    // Автозаповнення відділення Nova Poshta
-    if (clientDeliveryData.warehouse) {
-      form.setValue("recipientWarehouseRef", clientDeliveryData.warehouse.ref);
-      form.setValue("recipientWarehouseAddress", clientDeliveryData.warehouse.address || "");
-    }
-
-    toast({
-      title: "Дані доставки заповнені",
-      description: "Інформація про доставку завантажена з профілю клієнта",
-    });
   };
 
   const handleSubmit = (data: OrderFormData) => {
