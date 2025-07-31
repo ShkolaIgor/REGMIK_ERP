@@ -1531,6 +1531,9 @@ export default function Orders() {
         customerEmail: order.contactEmail || order.contact?.email || "",
         customerPhone: order.contactPhone || order.contact?.primaryPhone || order.contact?.phone || "",
       });
+      
+      console.log('HANDLE EDIT ORDER - original carrierId:', order.carrierId, typeof order.carrierId);
+      console.log('HANDLE EDIT ORDER - set carrierId to form:', order.carrierId || undefined);
 
       // Швидке встановлення клієнта з мінімальною логікою
       if (order.clientId) {
@@ -2181,8 +2184,8 @@ export default function Orders() {
                           let carriersToShow = [...(activeCarriers || [])];
                           
                           // При редагуванні додаємо поточний вибраний перевізник якщо він неактивний
-                          if (isEditMode && currentCarrierId) {
-                            const currentCarrier = carriers?.find((c: any) => c.id === currentCarrierId);
+                          if (isEditMode && currentCarrierId && !isNaN(currentCarrierId) && carriers && carriers.length > 0) {
+                            const currentCarrier = carriers.find((c: any) => c.id === currentCarrierId);
                             console.log('CURRENT CARRIER found:', currentCarrier);
                             if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id === currentCarrierId)) {
                               carriersToShow.push(currentCarrier);

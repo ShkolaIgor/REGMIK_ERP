@@ -1,0 +1,636 @@
+[Log] ACTIVE CARRIERS API RESPONSE: – [Object, Object, Object] (3) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object]Array (3)
+[Log] ALL CARRIERS API RESPONSE: – [Object, Object, Object, …] (18) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (18)
+[Log] CARRIERS TO SHOW: – [Object, Object, Object] (3) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object]Array (3)
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-BV-BZJtc.js, line 777)
+[Log] ACTIVE CARRIERS API RESPONSE: – [Object, Object, Object] (3) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object]Array (3)
+[Log] ALL CARRIERS API RESPONSE: – [Object, Object, Object, …] (18) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (18)
+[Log] CARRIERS TO SHOW: – [Object, Object, Object, …] (4) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object, Object]Array (4)
+[Log] ACTIVE CARRIERS API RESPONSE: – [Object, Object, Object] (3) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object]Array (3)
+[Log] ALL CARRIERS API RESPONSE: – [Object, Object, Object, …] (18) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (18)
+[Log] CARRIERS TO SHOW: – [Object, Object, Object] (3) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object]Array (3)
+[Log] ACTIVE CARRIERS API RESPONSE: – [Object, Object, Object] (3) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object]Array (3)
+[Log] ALL CARRIERS API RESPONSE: – [Object, Object, Object, …] (18) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (18)
+[Log] CARRIERS TO SHOW: – [Object, Object, Object] (3) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object]Array (3)
+[Log] ACTIVE CARRIERS API RESPONSE: – [Object, Object, Object] (3) (index-BV-BZJtc.js, line 1571)
+[Object, Object, Object]Array (3)
+[Log] ALL CARRIERS API RESPONSE: (index-BV-BZJtc.js, line 1571)
+Array (18)
+0
+{id: 5, name: "-", alternativeNames: null, contactPerson: "", email: "", …}
+1
+{id: 14, name: "-", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 15, name: "--", alternativeNames: null, contactPerson: "", email: "", …}
+3
+{id: 12, name: "--", alternativeNames: null, contactPerson: "", email: "", …}
+4
+{id: 2, name: "Автолюкс", alternativeNames: null, contactPerson: "", email: "", …}
+5
+{id: 4, name: "Делівери", alternativeNames: null, contactPerson: "", email: "", …}
+6
+{id: 11, name: "Доставка", alternativeNames: null, contactPerson: "", email: "", …}
+7
+{id: 17, name: "Євроекспрес", alternativeNames: null, contactPerson: "", email: "", …}
+8
+{id: 16, name: "Інтайм", alternativeNames: null, contactPerson: "", email: "", …}
+9
+{id: 13, name: "Маршрутка", alternativeNames: null, contactPerson: "", email: "", …}
+10
+{id: 7, name: "Міст-експрес", alternativeNames: null, contactPerson: "", email: "", …}
+11
+{id: 3, name: "Нічний експрес", alternativeNames: null, contactPerson: "", email: "", …}
+12
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+13
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+14
+{id: 6, name: "САТ", alternativeNames: null, contactPerson: "", email: "", …}
+15
+{id: 8, name: "Спецпошта", alternativeNames: null, contactPerson: "", email: "", …}
+16
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+17
+{id: 18, name: "ExMoto", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] CARRIERS TO SHOW: (index-BV-BZJtc.js, line 1571)
+Array (3)
+0
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+1
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] ACTIVE CARRIERS API RESPONSE: (index-BV-BZJtc.js, line 1571)
+Array (3)
+0
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+1
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] ALL CARRIERS API RESPONSE: (index-BV-BZJtc.js, line 1571)
+Array (18)
+0
+{id: 5, name: "-", alternativeNames: null, contactPerson: "", email: "", …}
+1
+{id: 14, name: "-", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 15, name: "--", alternativeNames: null, contactPerson: "", email: "", …}
+3
+{id: 12, name: "--", alternativeNames: null, contactPerson: "", email: "", …}
+4
+{id: 2, name: "Автолюкс", alternativeNames: null, contactPerson: "", email: "", …}
+5
+{id: 4, name: "Делівери", alternativeNames: null, contactPerson: "", email: "", …}
+6
+{id: 11, name: "Доставка", alternativeNames: null, contactPerson: "", email: "", …}
+7
+{id: 17, name: "Євроекспрес", alternativeNames: null, contactPerson: "", email: "", …}
+8
+{id: 16, name: "Інтайм", alternativeNames: null, contactPerson: "", email: "", …}
+9
+{id: 13, name: "Маршрутка", alternativeNames: null, contactPerson: "", email: "", …}
+10
+{id: 7, name: "Міст-експрес", alternativeNames: null, contactPerson: "", email: "", …}
+11
+{id: 3, name: "Нічний експрес", alternativeNames: null, contactPerson: "", email: "", …}
+12
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+13
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+14
+{id: 6, name: "САТ", alternativeNames: null, contactPerson: "", email: "", …}
+15
+{id: 8, name: "Спецпошта", alternativeNames: null, contactPerson: "", email: "", …}
+16
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+17
+{id: 18, name: "ExMoto", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] CARRIERS TO SHOW: (index-BV-BZJtc.js, line 1571)
+Array (3)
+0
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+1
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] ACTIVE CARRIERS API RESPONSE: (index-BV-BZJtc.js, line 1571)
+Array (3)
+0
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+1
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] ALL CARRIERS API RESPONSE: (index-BV-BZJtc.js, line 1571)
+Array (18)
+0
+{id: 5, name: "-", alternativeNames: null, contactPerson: "", email: "", …}
+1
+{id: 14, name: "-", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 15, name: "--", alternativeNames: null, contactPerson: "", email: "", …}
+3
+{id: 12, name: "--", alternativeNames: null, contactPerson: "", email: "", …}
+4
+{id: 2, name: "Автолюкс", alternativeNames: null, contactPerson: "", email: "", …}
+5
+{id: 4, name: "Делівери", alternativeNames: null, contactPerson: "", email: "", …}
+6
+{id: 11, name: "Доставка", alternativeNames: null, contactPerson: "", email: "", …}
+7
+{id: 17, name: "Євроекспрес", alternativeNames: null, contactPerson: "", email: "", …}
+8
+{id: 16, name: "Інтайм", alternativeNames: null, contactPerson: "", email: "", …}
+9
+{id: 13, name: "Маршрутка", alternativeNames: null, contactPerson: "", email: "", …}
+10
+{id: 7, name: "Міст-експрес", alternativeNames: null, contactPerson: "", email: "", …}
+11
+{id: 3, name: "Нічний експрес", alternativeNames: null, contactPerson: "", email: "", …}
+12
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+13
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+14
+{id: 6, name: "САТ", alternativeNames: null, contactPerson: "", email: "", …}
+15
+{id: 8, name: "Спецпошта", alternativeNames: null, contactPerson: "", email: "", …}
+16
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+17
+{id: 18, name: "ExMoto", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] CARRIERS TO SHOW: (index-BV-BZJtc.js, line 1571)
+Array (3)
+0
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+1
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] ACTIVE CARRIERS API RESPONSE: (index-BV-BZJtc.js, line 1571)
+Array (3)
+0
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+1
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] ALL CARRIERS API RESPONSE: (index-BV-BZJtc.js, line 1571)
+Array (18)
+0
+{id: 5, name: "-", alternativeNames: null, contactPerson: "", email: "", …}
+1
+{id: 14, name: "-", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 15, name: "--", alternativeNames: null, contactPerson: "", email: "", …}
+3
+{id: 12, name: "--", alternativeNames: null, contactPerson: "", email: "", …}
+4
+{id: 2, name: "Автолюкс", alternativeNames: null, contactPerson: "", email: "", …}
+5
+{id: 4, name: "Делівери", alternativeNames: null, contactPerson: "", email: "", …}
+6
+{id: 11, name: "Доставка", alternativeNames: null, contactPerson: "", email: "", …}
+7
+{id: 17, name: "Євроекспрес", alternativeNames: null, contactPerson: "", email: "", …}
+8
+{id: 16, name: "Інтайм", alternativeNames: null, contactPerson: "", email: "", …}
+9
+{id: 13, name: "Маршрутка", alternativeNames: null, contactPerson: "", email: "", …}
+10
+{id: 7, name: "Міст-експрес", alternativeNames: null, contactPerson: "", email: "", …}
+11
+{id: 3, name: "Нічний експрес", alternativeNames: null, contactPerson: "", email: "", …}
+12
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+13
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+14
+{id: 6, name: "САТ", alternativeNames: null, contactPerson: "", email: "", …}
+15
+{id: 8, name: "Спецпошта", alternativeNames: null, contactPerson: "", email: "", …}
+16
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+17
+{id: 18, name: "ExMoto", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+[Log] CARRIERS TO SHOW: (index-BV-BZJtc.js, line 1571)
+Array (3)
+0
+{id: 1, name: "Нова Пошта", alternativeNames: ["Nova Poshta"], contactPerson: "", email: "", …}
+1
+{id: 10, name: "Самовивіз", alternativeNames: null, contactPerson: "", email: "", …}
+2
+{id: 9, name: "Укрпошта", alternativeNames: null, contactPerson: "", email: "", …}
+
+Array Prototype
+
+at()
+
+concat(value, ...)
+
+constructor: function()
+
+copyWithin(targetIndex, startIndex, [endIndex=length])
+
+entries()
+
+every(callback, [thisArg])
+
+fill(value, [startIndex=0], [endIndex=length])
+
+filter(callback, [thisArg])
+
+find(callback, [thisArg])
+
+findIndex(callback, [thisArg])
+
+findLast(callback, [thisArg])
+
+findLastIndex(callback, [thisArg])
+
+flat()
+
+flatMap()
+
+forEach(callback, [thisArg])
+
+includes(searchValue, [startIndex=0])
+
+indexOf(searchValue, [startIndex=0])
+
+join([separator=","])
+
+keys()
+
+lastIndexOf(searchValue, [startIndex=length])
+
+length: 0
+
+map(callback, [thisArg])
+
+pop()
+
+push(value, ...)
+
+reduce(callback, [initialValue])
+
+reduceRight(callback, [initialValue])
+
+reverse()
+
+shift()
+
+slice([startIndex=0], [endIndex=length])
+
+some(callback, [thisArg])
+
+sort([compareFunction])
+
+splice(startIndex, [deleteCount=0], ...itemsToAdd)
+
+toLocaleString()
+
+toReversed()
+
+toSorted()
+
+toSpliced()
+
+toString()
+
+unshift()
+
+values()
+
+with()
+
+Symbol(Symbol.iterator)()
+
+Symbol(Symbol.unscopables): {at: true, copyWithin: true, entries: true, fill: true, find: true, …}
+
+Object Prototype
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] FINAL CARRIERS TO SHOW: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] FINAL CARRIERS TO SHOW: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] FINAL CARRIERS TO SHOW: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – ["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", …] (18) (index-Bad304-K.js, line 1571)
+["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", "12: -- (inactive)", "2: Автолюкс (inactive)", "4: Делівери (inactive)", "11: Доставка (inactive)", "17: Євроекспрес (inactive)", "16: Інтайм (inactive)", "13: Маршрутка (inactive)", …]Array (18)
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – ["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", …] (18) (index-Bad304-K.js, line 1571)
+["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", "12: -- (inactive)", "2: Автолюкс (inactive)", "4: Делівери (inactive)", "11: Доставка (inactive)", "17: Євроекспрес (inactive)", "16: Інтайм (inactive)", "13: Маршрутка (inactive)", …]Array (18)
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – ["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", …] (18) (index-Bad304-K.js, line 1571)
+["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", "12: -- (inactive)", "2: Автолюкс (inactive)", "4: Делівери (inactive)", "11: Доставка (inactive)", "17: Євроекспрес (inactive)", "16: Інтайм (inactive)", "13: Маршрутка (inactive)", …]Array (18)
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – ["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", …] (18) (index-Bad304-K.js, line 1571)
+["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", "12: -- (inactive)", "2: Автолюкс (inactive)", "4: Делівери (inactive)", "11: Доставка (inactive)", "17: Євроекспрес (inactive)", "16: Інтайм (inactive)", "13: Маршрутка (inactive)", …]Array (18)
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – ["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", …] (18) (index-Bad304-K.js, line 1571)
+["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", "12: -- (inactive)", "2: Автолюкс (inactive)", "4: Делівери (inactive)", "11: Доставка (inactive)", "17: Євроекспрес (inactive)", "16: Інтайм (inactive)", "13: Маршрутка (inactive)", …]Array (18)
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – false (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – ["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", …] (18) (index-Bad304-K.js, line 1571)
+["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", "12: -- (inactive)", "2: Автолюкс (inactive)", "4: Делівери (inactive)", "11: Доставка (inactive)", "17: Євроекспрес (inactive)", "16: Інтайм (inactive)", "13: Маршрутка (inactive)", …]Array (18)
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – undefined – "undefined" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – ["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", …] (18) (index-Bad304-K.js, line 1571)
+["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", "12: -- (inactive)", "2: Автолюкс (inactive)", "4: Делівери (inactive)", "11: Доставка (inactive)", "17: Євроекспрес (inactive)", "16: Інтайм (inactive)", "13: Маршрутка (inactive)", …]Array (18)
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] CLEARING CARRIERS CACHE... (index-Bad304-K.js, line 1571)
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Bad304-K.js, line 777)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – 8 – "number" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] CURRENT CARRIER found: – undefined (index-Bad304-K.js, line 1571)
+[Log] FINAL CARRIERS TO SHOW: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – NaN – "number" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] FINAL CARRIERS TO SHOW: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – NaN – "number" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] FINAL CARRIERS TO SHOW: – [] (0) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – NaN – "number" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: (index-Bad304-K.js, line 1571)
+Array (18)
+0
+"5: - (inactive)"
+1
+"14: - (inactive)"
+2
+"15: -- (inactive)"
+3
+"12: -- (inactive)"
+4
+"2: Автолюкс (inactive)"
+5
+"4: Делівери (inactive)"
+6
+"11: Доставка (inactive)"
+7
+"17: Євроекспрес (inactive)"
+8
+"16: Інтайм (inactive)"
+9
+"13: Маршрутка (inactive)"
+10
+"7: Міст-експрес (inactive)"
+11
+"3: Нічний експрес (inactive)"
+12
+"1: Нова Пошта (active)"
+13
+"10: Самовивіз (active)"
+14
+"6: САТ (inactive)"
+15
+"8: Спецпошта (inactive)"
+16
+"9: Укрпошта (active)"
+17
+"18: ExMoto (inactive)"
+
+Array Prototype
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – NaN – "number" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: – ["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", …] (18) (index-Bad304-K.js, line 1571)
+["5: - (inactive)", "14: - (inactive)", "15: -- (inactive)", "12: -- (inactive)", "2: Автолюкс (inactive)", "4: Делівери (inactive)", "11: Доставка (inactive)", "17: Євроекспрес (inactive)", "16: Інтайм (inactive)", "13: Маршрутка (inactive)", …]Array (18)
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – NaN – "number" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: (index-Bad304-K.js, line 1571)
+Array (18)
+0
+"5: - (inactive)"
+1
+"14: - (inactive)"
+2
+"15: -- (inactive)"
+3
+"12: -- (inactive)"
+4
+"2: Автолюкс (inactive)"
+5
+"4: Делівери (inactive)"
+6
+"11: Доставка (inactive)"
+7
+"17: Євроекспрес (inactive)"
+8
+"16: Інтайм (inactive)"
+9
+"13: Маршрутка (inactive)"
+10
+"7: Міст-експрес (inactive)"
+11
+"3: Нічний експрес (inactive)"
+12
+"1: Нова Пошта (active)"
+13
+"10: Самовивіз (active)"
+14
+"6: САТ (inactive)"
+15
+"8: Спецпошта (inactive)"
+16
+"9: Укрпошта (active)"
+17
+"18: ExMoto (inactive)"
+
+Array Prototype
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – NaN – "number" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: (index-Bad304-K.js, line 1571)
+Array (18)
+0
+"5: - (inactive)"
+1
+"14: - (inactive)"
+2
+"15: -- (inactive)"
+3
+"12: -- (inactive)"
+4
+"2: Автолюкс (inactive)"
+5
+"4: Делівери (inactive)"
+6
+"11: Доставка (inactive)"
+7
+"17: Євроекспрес (inactive)"
+8
+"16: Інтайм (inactive)"
+9
+"13: Маршрутка (inactive)"
+10
+"7: Міст-експрес (inactive)"
+11
+"3: Нічний експрес (inactive)"
+12
+"1: Нова Пошта (active)"
+13
+"10: Самовивіз (active)"
+14
+"6: САТ (inactive)"
+15
+"8: Спецпошта (inactive)"
+16
+"9: Укрпошта (active)"
+17
+"18: ExMoto (inactive)"
+
+Array Prototype
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
+[Log] === CARRIER DEBUG INFO === (index-Bad304-K.js, line 1571)
+[Log] FORM carrierId: – NaN – "number" (index-Bad304-K.js, line 1571)
+[Log] isEditMode: – true (index-Bad304-K.js, line 1571)
+[Log] ACTIVE CARRIERS API: – ["1: Нова Пошта", "10: Самовивіз", "9: Укрпошта"] (3) (index-Bad304-K.js, line 1571)
+[Log] ALL CARRIERS API: (index-Bad304-K.js, line 1571)
+Array (18)
+0
+"5: - (inactive)"
+1
+"14: - (inactive)"
+2
+"15: -- (inactive)"
+3
+"12: -- (inactive)"
+4
+"2: Автолюкс (inactive)"
+5
+"4: Делівери (inactive)"
+6
+"11: Доставка (inactive)"
+7
+"17: Євроекспрес (inactive)"
+8
+"16: Інтайм (inactive)"
+9
+"13: Маршрутка (inactive)"
+10
+"7: Міст-експрес (inactive)"
+11
+"3: Нічний експрес (inactive)"
+12
+"1: Нова Пошта (active)"
+13
+"10: Самовивіз (active)"
+14
+"6: САТ (inactive)"
+15
+"8: Спецпошта (inactive)"
+16
+"9: Укрпошта (active)"
+17
+"18: ExMoto (inactive)"
+
+Array Prototype
+[Log] FINAL CARRIERS TO SHOW: – ["1: Нова Пошта (active)", "10: Самовивіз (active)", "9: Укрпошта (active)"] (3) (index-Bad304-K.js, line 1571)
+[Log] === END CARRIER DEBUG === (index-Bad304-K.js, line 1571)
