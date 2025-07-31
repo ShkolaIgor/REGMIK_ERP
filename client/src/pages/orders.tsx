@@ -750,6 +750,9 @@ export default function Orders() {
   // Примусово оновлюємо кеш перевізників при відкритті форми
   useEffect(() => {
     if (isDialogOpen) {
+      console.log('CLEARING CARRIERS CACHE...');
+      queryClient.removeQueries({ queryKey: ["/api/carriers/active"] });
+      queryClient.removeQueries({ queryKey: ["/api/carriers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/carriers/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/carriers"] });
     }
@@ -2166,23 +2169,29 @@ export default function Orders() {
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
                         {(() => {
-                          // DEBUG: Показати поточні дані
-                          console.log('ACTIVE CARRIERS API RESPONSE:', activeCarriers);
-                          console.log('ALL CARRIERS API RESPONSE:', carriers);
+                          // DEBUG: Показати поточні дані та carrierId
+                          const currentCarrierId = form.watch("carrierId");
+                          console.log('=== CARRIER DEBUG INFO ===');
+                          console.log('FORM carrierId:', currentCarrierId, typeof currentCarrierId);
+                          console.log('isEditMode:', isEditMode);
+                          console.log('ACTIVE CARRIERS API:', activeCarriers?.map(c => `${c.id}: ${c.name}`));
+                          console.log('ALL CARRIERS API:', carriers?.map(c => `${c.id}: ${c.name} (${c.isActive ? 'active' : 'inactive'})`));
                           
                           // Завжди показуємо активних перевізників
                           let carriersToShow = [...(activeCarriers || [])];
                           
                           // При редагуванні додаємо поточний вибраний перевізник якщо він неактивний
-                          if (isEditMode && form.watch("carrierId")) {
-                            const currentCarrierId = form.watch("carrierId");
+                          if (isEditMode && currentCarrierId) {
                             const currentCarrier = carriers?.find((c: any) => c.id === currentCarrierId);
+                            console.log('CURRENT CARRIER found:', currentCarrier);
                             if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id === currentCarrierId)) {
                               carriersToShow.push(currentCarrier);
+                              console.log('ADDED inactive carrier to show:', currentCarrier.name);
                             }
                           }
                           
-                          console.log('CARRIERS TO SHOW:', carriersToShow);
+                          console.log('FINAL CARRIERS TO SHOW:', carriersToShow?.map(c => `${c.id}: ${c.name} (${c.isActive ? 'active' : 'inactive'})`));
+                          console.log('=== END CARRIER DEBUG ===');
                           
                           return carriersToShow.map((carrier: any) => (
                             <SelectItem key={carrier.id} value={carrier.id.toString()}>
