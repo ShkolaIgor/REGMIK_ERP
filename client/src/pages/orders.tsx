@@ -133,7 +133,7 @@ const orderSchema = z.object({
   orderNumber: z.string().optional(), // Автоматично генерується
   totalAmount: z.string().optional(), // Автоматично розраховується
   invoiceNumber: z.string().optional(),
-  carrierId: z.number().optional().nullable(),
+  carrierId: z.number().optional(),
   status: z.string().default("pending"),
   statusId: z.number().optional(),
   notes: z.string().optional(),
@@ -1508,7 +1508,7 @@ export default function Orders() {
         shippedDate: formatDate(order.shippedDate),
         trackingNumber: order.trackingNumber || "",
         invoiceNumber: order.invoiceNumber || "",
-        carrierId: order.carrierId || null,
+        carrierId: order.carrierId || undefined,
         statusId: order.statusId || undefined,
         productionApproved: order.productionApproved || false,
         productionApprovedBy: order.productionApprovedBy || "",
@@ -1783,7 +1783,7 @@ export default function Orders() {
         ...(data.clientContactsId && String(data.clientContactsId) !== '' && { clientContactsId: typeof data.clientContactsId === 'string' ? parseInt(data.clientContactsId) : data.clientContactsId }),
         ...(data.companyId && data.companyId !== '' && { companyId: parseInt(data.companyId) }),
         ...(data.invoiceNumber && data.invoiceNumber !== '' && { invoiceNumber: data.invoiceNumber }),
-        ...(data.carrierId && String(data.carrierId) !== '' && data.carrierId !== null && { carrierId: typeof data.carrierId === 'string' ? parseInt(data.carrierId) : data.carrierId }),
+        ...(data.carrierId && { carrierId: data.carrierId }),
         ...(data.notes && data.notes !== '' && { notes: data.notes }),
         ...(data.paymentDate && data.paymentDate !== '' && { paymentDate: parseDateForServer(data.paymentDate) }),
         ...(data.dueDate && data.dueDate !== '' && { dueDate: parseDateForServer(data.dueDate) }),
@@ -2147,7 +2147,7 @@ export default function Orders() {
                     <Label htmlFor="carrierId">Перевізник</Label>
                     <Select
                       value={form.watch("carrierId") ? form.watch("carrierId")?.toString() : "none"}
-                      onValueChange={(value) => form.setValue("carrierId", value === "none" ? null : parseInt(value))}
+                      onValueChange={(value) => form.setValue("carrierId", value === "none" ? undefined : parseInt(value))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Оберіть перевізника" />
@@ -2155,12 +2155,6 @@ export default function Orders() {
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
                         {(() => {
-                          // DEBUG: Тимчасове логування для діагностики
-                          console.log('activeCarriers:', activeCarriers);
-                          console.log('carriers:', carriers);
-                          console.log('isEditMode:', isEditMode);
-                          console.log('carrierId:', form.watch("carrierId"));
-                          
                           // Завжди показуємо активних перевізників
                           let carriersToShow = [...(activeCarriers || [])];
                           
@@ -2172,8 +2166,6 @@ export default function Orders() {
                               carriersToShow.push(currentCarrier);
                             }
                           }
-                          
-                          console.log('carriersToShow:', carriersToShow);
                           
                           return carriersToShow.map((carrier: any) => (
                             <SelectItem key={carrier.id} value={carrier.id.toString()}>
