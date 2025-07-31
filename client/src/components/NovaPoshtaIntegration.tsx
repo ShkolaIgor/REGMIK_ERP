@@ -92,6 +92,8 @@ interface NovaPoshtaIntegrationProps {
   declaredValue?: string;
   recipientName?: string;
   recipientPhone?: string;
+  initialCityRef?: string;
+  initialWarehouseRef?: string;
 }
 
 export function NovaPoshtaIntegration({
@@ -107,7 +109,9 @@ export function NovaPoshtaIntegration({
   height: externalHeight,
   declaredValue: externalDeclaredValue,
   recipientName: externalRecipientName,
-  recipientPhone: externalRecipientPhone
+  recipientPhone: externalRecipientPhone,
+  initialCityRef,
+  initialWarehouseRef
 }: NovaPoshtaIntegrationProps) {
   const [cityQuery, setCityQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
@@ -156,6 +160,41 @@ export function NovaPoshtaIntegration({
       setRecipientPhone(externalRecipientPhone);
     }
   }, [externalRecipientName, externalRecipientPhone]);
+
+  // Встановлення початкових значень міста і складу
+  useEffect(() => {
+    if (initialCityRef) {
+      console.log('INITIAL CITY REF RECEIVED:', initialCityRef);
+      // Знайти місто за ref
+      fetch(`/api/nova-poshta/cities?search=${initialCityRef}`)
+        .then(res => res.json())
+        .then(cities => {
+          const city = cities.find((c: City) => c.Ref === initialCityRef);
+          if (city) {
+            console.log('FOUND CITY FOR REF:', city);
+            setSelectedCity(city);
+            setCityQuery(city.Description);
+          }
+        })
+        .catch(console.error);
+    }
+    
+    if (initialWarehouseRef) {
+      console.log('INITIAL WAREHOUSE REF RECEIVED:', initialWarehouseRef);
+      // Знайти склад за ref
+      fetch(`/api/nova-poshta/warehouses?city=${initialCityRef}`)
+        .then(res => res.json())
+        .then(warehouses => {
+          const warehouse = warehouses.find((w: Warehouse) => w.Ref === initialWarehouseRef);
+          if (warehouse) {
+            console.log('FOUND WAREHOUSE FOR REF:', warehouse);
+            setSelectedWarehouse(warehouse);
+            setWarehouseQuery(warehouse.Description);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [initialCityRef, initialWarehouseRef]);
 
   // Функція для завантаження опису замовлення
   const loadOrderDescription = async () => {

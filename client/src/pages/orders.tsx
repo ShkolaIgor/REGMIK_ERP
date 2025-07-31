@@ -862,10 +862,12 @@ export default function Orders() {
 
     // Автозаповнення міста Nova Poshta
     if (clientDeliveryData.city) {
+      console.log('SETTING CITY FROM DATA:', clientDeliveryData.city.ref, clientDeliveryData.city.name);
       form.setValue("recipientCityRef", clientDeliveryData.city.ref);
       form.setValue("recipientCityName", clientDeliveryData.city.name || clientDeliveryData.city.description || "");
       filledCount++;
     } else if (client.cityRef) {
+      console.log('SETTING CITY FROM CLIENT:', client.cityRef);
       form.setValue("recipientCityRef", client.cityRef);
       form.setValue("recipientCityName", "Місто (з профілю клієнта)");
       filledCount++;
@@ -2366,6 +2368,12 @@ export default function Orders() {
                 {/* Nova Poshta Integration */}
                 {form.watch("carrierId") && carriers?.find((c: any) => c.id.toString() === form.watch("carrierId"))?.name === "Нова Пошта" && (
                   <div className="mt-6">
+                    {console.log('NOVA POSHTA FORM VALUES:', {
+                      recipientCityRef: form.watch("recipientCityRef"),
+                      recipientCityName: form.watch("recipientCityName"),
+                      recipientWarehouseRef: form.watch("recipientWarehouseRef"),
+                      recipientWarehouseAddress: form.watch("recipientWarehouseAddress")
+                    })}
                     <NovaPoshtaIntegration
                       onAddressSelect={(address, cityRef, warehouseRef) => {
                         // Зберігаємо адресу в примітках замовлення та в окремих полях
@@ -2430,6 +2438,8 @@ export default function Orders() {
                         return "1.0";
                       })()}
                       declaredValue={form.watch("totalAmount")}
+                      initialCityRef={form.watch("recipientCityRef")}
+                      initialWarehouseRef={form.watch("recipientWarehouseRef")}
                     />
                   </div>
                 )}
