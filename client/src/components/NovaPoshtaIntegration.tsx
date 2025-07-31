@@ -542,6 +542,8 @@ export function NovaPoshtaIntegration({
 
   // Дебагінг
   console.log('Warehouses:', warehouses, 'Filtered:', filteredWarehouses, 'Query:', warehouseQuery);
+  console.log('Selected City Ref for warehouses query:', selectedCity?.Ref);
+  console.log('Warehouses loading:', warehousesLoading);
 
   // Відстеження відвантаження
   const { data: trackingInfo, isLoading: trackingLoading } = useQuery<TrackingInfo>({
