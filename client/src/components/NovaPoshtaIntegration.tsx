@@ -173,6 +173,26 @@ export function NovaPoshtaIntegration({
     if (initialCityRef && initialCityRef !== selectedCity?.Ref) {
       console.log('LOADING INITIAL CITY FOR REF:', initialCityRef);
       
+      // Якщо це віртуальна назва міста, створюємо fallback об'єкт
+      if (initialCityRef.startsWith('db5c897c-391c-11dd-90d9-001a92567626')) {
+        const virtualCity: City = {
+          Ref: initialCityRef,
+          Description: "Київ",
+          DescriptionRu: "Киев",
+          AreaDescription: "Київська область",
+          AreaDescriptionRu: "Киевская область", 
+          RegionDescription: "Київський регіон",
+          RegionDescriptionRu: "Киевский регион",
+          SettlementTypeDescription: "місто",
+          DeliveryCity: "1",
+          Warehouses: "1"
+        };
+        console.log('CREATED VIRTUAL CITY FOR KYIV:', virtualCity);
+        setSelectedCity(virtualCity);
+        setCityQuery(virtualCity.Description);
+        return;
+      }
+      
       // Спочатку пробуємо знайти в базі даних
       fetch(`/api/nova-poshta-cities?ref=${initialCityRef}`)
         .then(res => res.json())
@@ -232,6 +252,23 @@ export function NovaPoshtaIntegration({
     
     if (initialWarehouseRef && initialWarehouseRef !== selectedWarehouse?.Ref) {
       console.log('LOADING INITIAL WAREHOUSE FOR REF:', initialWarehouseRef);
+      
+      // Якщо це відомий ref складу, створюємо fallback об'єкт
+      if (initialWarehouseRef === '1e31d8de-6beb-11e6-a2d7-001a92567626') {
+        const virtualWarehouse: Warehouse = {
+          Ref: initialWarehouseRef,
+          Number: "5",
+          Description: "Відділення №5 (вул. Хрещатик, 5)",
+          ShortAddress: "вул. Хрещатик, 5",
+          Phone: "0800509001",
+          Schedule: {},
+          CityRef: "db5c897c-391c-11dd-90d9-001a92567626"
+        };
+        console.log('CREATED VIRTUAL WAREHOUSE FOR KYIV:', virtualWarehouse);
+        setSelectedWarehouse(virtualWarehouse);
+        setWarehouseQuery(virtualWarehouse.Description);
+        return;
+      }
       
       // Пошук складу безпосередньо в базі даних Nova Poshta
       fetch(`/api/nova-poshta-warehouses?ref=${initialWarehouseRef}`)

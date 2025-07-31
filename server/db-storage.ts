@@ -4546,7 +4546,6 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select({
         id: customerAddresses.id,
-        customerName: customerAddresses.customerName,
         customerPhone: customerAddresses.customerPhone,
         recipientName: customerAddresses.recipientName,
         recipientPhone: customerAddresses.recipientPhone,
