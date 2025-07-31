@@ -72,6 +72,7 @@ export default function Carriers() {
     syncTime: "",
     syncInterval: 24,
     autoSync: false,
+    isActive: true,
   });
 
   const { toast } = useToast();
@@ -199,9 +200,10 @@ export default function Carriers() {
       serviceType: "",
       rating: 5,
       apiKey: "",
-      autoUpdateEnabled: false,
-      updateTime: "06:00",
-      updateDays: "1,2,3,4,5",
+      syncTime: "",
+      syncInterval: 24,
+      autoSync: false,
+      isActive: true,
     });
     setEditingCarrier(null);
   };
@@ -211,12 +213,10 @@ export default function Carriers() {
     const data = {
       ...formData,
       rating: Number(formData.rating),
+      syncInterval: Number(formData.syncInterval),
       alternativeNames: formData.alternativeNames ? 
         formData.alternativeNames.split(',').map(name => name.trim()).filter(name => name) : 
         null,
-      autoUpdateEnabled: formData.autoUpdateEnabled || false,
-      updateTime: formData.updateTime || "06:00",
-      updateDays: formData.updateDays || "1,2,3,4,5",
     };
 
     if (editingCarrier) {
@@ -239,9 +239,10 @@ export default function Carriers() {
       serviceType: carrier.serviceType || "",
       rating: carrier.rating || 5,
       apiKey: carrier.apiKey || "",
-      autoUpdateEnabled: (carrier as any).autoUpdateEnabled || false,
-      updateTime: (carrier as any).updateTime || "06:00", 
-      updateDays: (carrier as any).updateDays || "1,2,3,4,5",
+      syncTime: carrier.syncTime || "",
+      syncInterval: carrier.syncInterval || 24,
+      autoSync: carrier.autoSync || false,
+      isActive: carrier.isActive,
     });
     setIsDialogOpen(true);
   };
@@ -397,79 +398,59 @@ export default function Carriers() {
                   />
                 </div>
                 
-                {/* Налаштування Nova Poshta - показувати тільки для Nova Poshta з API ключем */}
-                {formData.apiKey && (formData.name?.toLowerCase().includes('nova') || 
-                  formData.name?.toLowerCase().includes('нова') ||
-                  (formData.alternativeNames && formData.alternativeNames.split(',').some((name: string) => 
-                    name.trim().toLowerCase().includes('nova') || name.trim().toLowerCase().includes('нова')
-                  ))) && (
+                {/* Чекбокс для активації перевізника */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isActive"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked === true })}
+                  />
+                  <Label htmlFor="isActive">Активний перевізник</Label>
+                  <p className="text-xs text-gray-500 ml-2">
+                    Неактивні перевізники не відображаються у списках для вибору
+                  </p>
+                </div>
+                
+                {/* Налаштування синхронізації для перевізників з API ключем */}
+                {formData.apiKey && (
                   <div className="col-span-2">
                     <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
-                      <h4 className="font-medium text-blue-900">Налаштування автоматичного оновлення Nova Poshta</h4>
+                      <h4 className="font-medium text-blue-900">Налаштування синхронізації</h4>
                       
                       <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="autoUpdateEnabled"
-                          checked={formData.autoUpdateEnabled || false}
-                          onChange={(e) => setFormData({ ...formData, autoUpdateEnabled: e.target.checked })}
-                          className="rounded"
+                        <Checkbox
+                          id="autoSync"
+                          checked={formData.autoSync}
+                          onCheckedChange={(checked) => setFormData({ ...formData, autoSync: checked === true })}
                         />
-                        <Label htmlFor="autoUpdateEnabled">Увімкнути автоматичне оновлення даних</Label>
+                        <Label htmlFor="autoSync">Увімкнути автоматичну синхронізацію</Label>
                       </div>
 
-                      {formData.autoUpdateEnabled && (
-                        <>
-                          <div>
-                            <Label htmlFor="updateTime">Час оновлення (години:хвилини)</Label>
-                            <Input
-                              id="updateTime"
-                              type="time"
-                              value={formData.updateTime || "06:00"}
-                              onChange={(e) => setFormData({ ...formData, updateTime: e.target.value })}
-                            />
-                            <p className="text-sm text-gray-600 mt-1">Вкажіть час у форматі 24 години (наприклад: 06:00)</p>
-                          </div>
+                      <div>
+                        <Label htmlFor="syncTime">Час синхронізації (години:хвилини)</Label>
+                        <Input
+                          id="syncTime"
+                          type="time"
+                          value={formData.syncTime}
+                          onChange={(e) => setFormData({ ...formData, syncTime: e.target.value })}
+                          placeholder="06:00"
+                        />
+                        <p className="text-sm text-gray-600 mt-1">Вкажіть час для автоматичної синхронізації</p>
+                      </div>
 
-                          <div>
-                            <Label>Дні тижня для оновлення</Label>
-                            <div className="flex space-x-2 mt-2">
-                              {[
-                                { value: '1', label: 'Пн' },
-                                { value: '2', label: 'Вт' },
-                                { value: '3', label: 'Ср' },
-                                { value: '4', label: 'Чт' },
-                                { value: '5', label: 'Пт' },
-                                { value: '6', label: 'Сб' },
-                                { value: '7', label: 'Нд' }
-                              ].map((day) => {
-                                const selectedDays = formData.updateDays ? formData.updateDays.split(',') : ['1','2','3','4','5'];
-                                const isSelected = selectedDays.includes(day.value);
-                                
-                                return (
-                                  <Button
-                                    key={day.value}
-                                    type="button"
-                                    variant={isSelected ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => {
-                                      const currentDays = formData.updateDays ? formData.updateDays.split(',') : ['1','2','3','4','5'];
-                                      const newDays = isSelected 
-                                        ? currentDays.filter(d => d !== day.value)
-                                        : [...currentDays, day.value];
-                                      setFormData({ ...formData, updateDays: newDays.sort().join(',') });
-                                    }}
-                                    className="w-10 h-8"
-                                  >
-                                    {day.label}
-                                  </Button>
-                                );
-                              })}
-                            </div>
-                            <p className="text-sm text-gray-600 mt-1">Оберіть дні тижня для автоматичного оновлення</p>
-                          </div>
-                        </>
-                      )}
+                      <div>
+                        <Label htmlFor="syncInterval">Інтервал синхронізації (години)</Label>
+                        <Input
+                          id="syncInterval"
+                          type="number"
+                          min="1"
+                          max="168"
+                          value={formData.syncInterval}
+                          onChange={(e) => setFormData({ ...formData, syncInterval: Number(e.target.value) })}
+                          placeholder="24"
+                        />
+                        <p className="text-sm text-gray-600 mt-1">Інтервал між синхронізаціями в годинах (1-168)</p>
+                      </div>
                     </div>
                   </div>
                 )}
