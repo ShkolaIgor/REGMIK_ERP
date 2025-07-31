@@ -14319,5 +14319,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test auto-categorization API
+  app.get("/api/test-auto-category/:productName", async (req, res) => {
+    try {
+      const productName = req.params.productName;
+      if (!productName) {
+        return res.status(400).json({ error: "Product name is required" });
+      }
+
+      const suggestedCategoryId = await storage.findCategoryBySimilarProductName(productName);
+      
+      res.json({
+        success: true,
+        productName,
+        suggestedCategoryId,
+        message: suggestedCategoryId 
+          ? `Знайдено схожу категорію з ID: ${suggestedCategoryId}` 
+          : 'Категорію не знайдено, буде встановлено null',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: `Помилка тестування автокатегорій: ${error instanceof Error ? error.message : String(error)}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   return httpServer;
 }

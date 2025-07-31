@@ -2797,6 +2797,71 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Автоматичне визначення категорії для нових товарів
+  async findCategoryBySimilarProductName(productName: string): Promise<number | null> {
+    try {
+      if (!productName || productName.length < 4) {
+        return null;
+      }
+
+      // Беремо перші 4+ символи назви продукту для пошуку
+      const searchPrefix = productName.substring(0, Math.min(productName.length, 10)).trim();
+      
+      // Пошук товарів з схожими назвами (перші 4+ символи співпадають)
+      const similarProducts = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          categoryId: products.categoryId
+        })
+        .from(products)
+        .where(
+          and(
+            sql`LEFT(${products.name}, ${Math.max(4, searchPrefix.length)}) = LEFT(${searchPrefix}, ${Math.max(4, searchPrefix.length)})`,
+            isNotNull(products.categoryId)
+          )
+        )
+        .limit(5);
+
+      if (similarProducts.length > 0) {
+        // Якщо знайдено схожі товари, беремо категорію першого знайденого
+        const foundProduct = similarProducts[0];
+        console.log(`🎯 Автокатегорія: Знайдено схожий товар "${foundProduct.name}" для нового товару "${productName}"`);
+        console.log(`📂 Автокатегорія: Встановлюємо категорію ID: ${foundProduct.categoryId}`);
+        return foundProduct.categoryId;
+      }
+
+      // Альтернативний пошук: часткове співпадіння з LIKE
+      const partialMatchProducts = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          categoryId: products.categoryId
+        })
+        .from(products)
+        .where(
+          and(
+            sql`${products.name} ILIKE ${`${searchPrefix.substring(0, 4)}%`}`,
+            isNotNull(products.categoryId)
+          )
+        )
+        .limit(3);
+
+      if (partialMatchProducts.length > 0) {
+        const foundProduct = partialMatchProducts[0];
+        console.log(`🔍 Автокатегорія: Знайдено частково схожий товар "${foundProduct.name}" для нового товару "${productName}"`);
+        console.log(`📂 Автокатегорія: Встановлюємо категорію ID: ${foundProduct.categoryId}`);
+        return foundProduct.categoryId;
+      }
+
+      console.log(`❌ Автокатегорія: Не знайдено схожих товарів для "${productName}"`);
+      return null;
+    } catch (error) {
+      console.error('Помилка визначення категорії за схожістю:', error);
+      return null;
+    }
+  }
+
   // Assembly Operations
   async getAssemblyOperations(): Promise<(AssemblyOperation & { product: Product; warehouse: Warehouse; items: (AssemblyOperationItem & { component: Product })[] })[]> {
     try {
@@ -14430,13 +14495,16 @@ export class DatabaseStorage implements IStorage {
                 // Автоматично створюємо товар, якщо його не знайдено
                 console.log(`🆕 Webhook: Створюємо новий товар "${itemName}"`);
                 try {
+                  // Автоматично визначаємо категорію на основі схожості назв
+                  const suggestedCategoryId = await this.findCategoryBySimilarProductName(itemName);
+                  
                   const newProduct = await db.insert(products).values({
                     name: itemName,
                     sku: position.itemCode || position.КодТовара || `AUTO-${Date.now()}`,
                     description: `Автоматично створено з 1С: ${itemName}`,
                     costPrice: position.unitPrice || position.Цена || 0,
                     retailPrice: position.unitPrice || position.Цена || 0,
-                    categoryId: null, // Буде потрібно налаштувати категорії пізніше
+                    categoryId: suggestedCategoryId, // Автоматично встановлена категорія
                     isActive: true,
                     createdAt: new Date()
                   }).returning();
@@ -14620,13 +14688,16 @@ export class DatabaseStorage implements IStorage {
                 // Автоматично створюємо товар при оновленні, якщо його не знайдено
                 console.log(`🆕 Webhook: Оновлення - створюємо новий товар "${itemName}"`);
                 try {
+                  // Автоматично визначаємо категорію на основі схожості назв
+                  const suggestedCategoryId = await this.findCategoryBySimilarProductName(itemName);
+                  
                   const newProduct = await db.insert(products).values({
                     name: itemName,
                     sku: position.itemCode || position.КодТовара || `AUTO-${Date.now()}`,
                     description: `Автоматично створено з 1С: ${itemName}`,
                     costPrice: position.unitPrice || position.Цена || 0,
                     retailPrice: position.unitPrice || position.Цена || 0,
-                    categoryId: null, // Буде потрібно налаштувати категорії пізніше
+                    categoryId: suggestedCategoryId, // Автоматично встановлена категорія
                     isActive: true,
                     createdAt: new Date()
                   }).returning();
