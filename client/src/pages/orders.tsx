@@ -251,6 +251,11 @@ function CarrierSelectSafe({
 }
 
 export default function Orders() {
+  // Основні hooks першими
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // State змінні
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState(""); // Пошук відновлено
@@ -287,10 +292,6 @@ export default function Orders() {
   // Пагінація
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(25);
-
-  
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Обробник зміни пошуку
   const handleSearchChange = (value: string) => {
