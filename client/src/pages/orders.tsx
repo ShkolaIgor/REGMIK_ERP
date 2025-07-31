@@ -530,7 +530,7 @@ export default function Orders() {
             )}
             {carrier && (
               <div className="text-xs text-gray-600">
-                🚚 {carrier.name}
+                🚚 {carrier.name || 'Назва не завантажена'}
               </div>
             )}
             {!carrier && order.carrierId && (
@@ -1783,7 +1783,7 @@ export default function Orders() {
         ...(data.clientContactsId && String(data.clientContactsId) !== '' && { clientContactsId: typeof data.clientContactsId === 'string' ? parseInt(data.clientContactsId) : data.clientContactsId }),
         ...(data.companyId && data.companyId !== '' && { companyId: parseInt(data.companyId) }),
         ...(data.invoiceNumber && data.invoiceNumber !== '' && { invoiceNumber: data.invoiceNumber }),
-        ...(data.carrierId && data.carrierId !== '' && data.carrierId !== null && { carrierId: parseInt(data.carrierId) }),
+        ...(data.carrierId && String(data.carrierId) !== '' && data.carrierId !== null && { carrierId: typeof data.carrierId === 'string' ? parseInt(data.carrierId) : data.carrierId }),
         ...(data.notes && data.notes !== '' && { notes: data.notes }),
         ...(data.paymentDate && data.paymentDate !== '' && { paymentDate: parseDateForServer(data.paymentDate) }),
         ...(data.dueDate && data.dueDate !== '' && { dueDate: parseDateForServer(data.dueDate) }),
@@ -2169,7 +2169,7 @@ export default function Orders() {
                           
                           return carriersToShow.map((carrier: any) => (
                             <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                              {carrier.name}{!carrier.isActive ? ' (неактивний)' : ''}
+                              {carrier.name || `Перевізник ${carrier.id}`}{!carrier.isActive ? ' (неактивний)' : ''}
                             </SelectItem>
                           ));
                         })()}
