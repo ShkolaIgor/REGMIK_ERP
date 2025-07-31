@@ -181,20 +181,21 @@ export function NovaPoshtaIntegration({
           if (dbCities.length > 0) {
             const dbCity = dbCities[0];
             const city: City = {
-              Ref: dbCity.ref,
-              Description: dbCity.description || dbCity.Description || `Місто (${dbCity.ref})`,
-              DescriptionRu: dbCity.description_ru || dbCity.DescriptionRu || dbCity.description || dbCity.Description || `Город (${dbCity.ref})`,
-              AreaDescription: dbCity.area_description || dbCity.AreaDescription || '',
-              AreaDescriptionRu: dbCity.area_description_ru || dbCity.AreaDescriptionRu || dbCity.area_description || dbCity.AreaDescription || '',
-              RegionDescription: dbCity.region_description || dbCity.RegionDescription || '',
-              RegionDescriptionRu: dbCity.region_description_ru || dbCity.RegionDescriptionRu || dbCity.region_description || dbCity.RegionDescription || '',
-              SettlementTypeDescription: dbCity.settlement_type_description || dbCity.SettlementTypeDescription || '',
-              DeliveryCity: dbCity.delivery_city || dbCity.DeliveryCity || '1',
-              Warehouses: dbCity.warehouses || dbCity.Warehouses || '1'
+              Ref: dbCity.Ref || dbCity.ref || initialCityRef,
+              Description: dbCity.Description || dbCity.description || `Місто (${dbCity.Ref || dbCity.ref || initialCityRef})`,
+              DescriptionRu: dbCity.DescriptionRu || dbCity.description_ru || dbCity.Description || dbCity.description || `Город (${dbCity.Ref || dbCity.ref || initialCityRef})`,
+              AreaDescription: dbCity.AreaDescription || dbCity.area_description || '',
+              AreaDescriptionRu: dbCity.AreaDescriptionRu || dbCity.area_description_ru || dbCity.AreaDescription || dbCity.area_description || '',
+              RegionDescription: dbCity.RegionDescription || dbCity.region_description || '',
+              RegionDescriptionRu: dbCity.RegionDescriptionRu || dbCity.region_description_ru || dbCity.RegionDescription || dbCity.region_description || '',
+              SettlementTypeDescription: dbCity.SettlementTypeDescription || dbCity.settlement_type_description || '',
+              DeliveryCity: dbCity.DeliveryCity || dbCity.delivery_city || '1',
+              Warehouses: dbCity.Warehouses || dbCity.warehouses || '1'
             };
             console.log('FOUND CITY IN DB:', city);
             setSelectedCity(city);
-            setCityQuery(city.Description || `Місто (${city.Ref})`);
+            const cityName = city.Description || `Місто (${city.Ref})`;
+            setCityQuery(cityName);
           } else {
             // Якщо не знайдено в базі, пробуємо API
             fetch(`/api/nova-poshta/cities?search=`)
@@ -244,14 +245,15 @@ export function NovaPoshtaIntegration({
             const warehouse: Warehouse = {
               Ref: dbWarehouse.ref,
               Number: dbWarehouse.number || '',
-              Description: dbWarehouse.description,
-              ShortAddress: dbWarehouse.short_address || dbWarehouse.description,
+              Description: dbWarehouse.description || `Відділення (${dbWarehouse.ref})`,
+              ShortAddress: dbWarehouse.short_address || dbWarehouse.description || `Відділення (${dbWarehouse.ref})`,
               Phone: dbWarehouse.phone || '',
               Schedule: dbWarehouse.schedule || {},
               CityRef: dbWarehouse.city_ref
             };
             setSelectedWarehouse(warehouse);
-            setWarehouseQuery(warehouse.Description);
+            const warehouseName = warehouse.Description || `Відділення (${warehouse.Ref})`;
+            setWarehouseQuery(warehouseName);
           } else if (initialCityRef) {
             // Якщо склад не знайдений, пробуємо завантажити склади для міста
             console.log('WAREHOUSE NOT FOUND IN DB, trying to load warehouses for city:', initialCityRef);
