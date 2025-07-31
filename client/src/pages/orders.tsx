@@ -1717,6 +1717,33 @@ export default function Orders() {
       } catch (error) {
         console.error("Помилка завантаження primary контакту:", error);
       }
+
+      // Автозаповнення даних доставки з клієнтського профілю
+      try {
+        const deliveryResponse = await fetch(`/api/clients/${clientId}/delivery-settings`);
+        if (deliveryResponse.ok) {
+          const deliverySettings = await deliveryResponse.json();
+          
+          if (!isEditMode) {
+            // Автозаповнення перевізника
+            if (deliverySettings.carrier) {
+              form.setValue("carrierId", deliverySettings.carrier.id.toString());
+            }
+
+            // Автозаповнення міста Nova Poshta
+            if (deliverySettings.city) {
+              form.setValue("cityRef", deliverySettings.city.ref);
+            }
+
+            // Автозаповнення відділення Nova Poshta
+            if (deliverySettings.warehouse) {
+              form.setValue("warehouseRef", deliverySettings.warehouse.ref);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Помилка завантаження даних доставки:", error);
+      }
       
     } else {
     }

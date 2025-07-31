@@ -5977,6 +5977,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client delivery settings API for order auto-fill
+  app.get("/api/clients/:id/delivery-settings", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.id);
+      const clientWithSettings = await storage.getClientDeliverySettings(clientId);
+      if (!clientWithSettings) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      res.json(clientWithSettings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get client delivery settings" });
+    }
+  });
+
   // Client Mail API
   app.get("/api/client-mail", async (req, res) => {
     try {

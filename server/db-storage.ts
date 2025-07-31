@@ -7522,6 +7522,50 @@ export class DatabaseStorage implements IStorage {
     return client;
   }
 
+  async getClientDeliverySettings(clientId: number): Promise<{
+    client: Client;
+    carrier?: Carrier;
+    city?: any;
+    warehouse?: any;
+  } | undefined> {
+    const client = await this.getClient(clientId);
+    if (!client) return undefined;
+
+    let carrier, city, warehouse;
+
+    // Get carrier if exists
+    if (client.carrierId) {
+      carrier = await this.getCarrier(client.carrierId);
+    }
+
+    // Get Nova Poshta city if exists
+    if (client.cityRef) {
+      const [cityData] = await db
+        .select()
+        .from(novaPoshtaCities)
+        .where(eq(novaPoshtaCities.ref, client.cityRef))
+        .limit(1);
+      city = cityData;
+    }
+
+    // Get Nova Poshta warehouse if exists
+    if (client.warehouseRef) {
+      const [warehouseData] = await db
+        .select()
+        .from(novaPoshtaWarehouses)
+        .where(eq(novaPoshtaWarehouses.ref, client.warehouseRef))
+        .limit(1);
+      warehouse = warehouseData;
+    }
+
+    return {
+      client,
+      carrier,
+      city,
+      warehouse
+    };
+  }
+
   async updateClient(id: number, updates: any): Promise<any> {
     const [client] = await db
       .update(clients)

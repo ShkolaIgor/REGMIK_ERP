@@ -474,6 +474,12 @@ export interface IStorage {
   }): Promise<Client>;
   getClientByExternalId(externalId: string): Promise<Client | undefined>;
   getClientByTaxCode(taxCode: string): Promise<Client | undefined>;
+  getClientDeliverySettings(clientId: number): Promise<{
+    client: Client;
+    carrier?: Carrier;
+    city?: any;
+    warehouse?: any;
+  } | undefined>;
 
   // Client Contacts
   getClientContacts(): Promise<ClientContact[]>;
@@ -2510,6 +2516,28 @@ export class MemStorage implements IStorage {
 
   async deletePayment(id: number): Promise<boolean> {
     throw new Error("MemStorage не підтримує видалення платежів");
+  }
+
+  async getClientDeliverySettings(clientId: number): Promise<{
+    client: Client;
+    carrier?: Carrier;
+    city?: any;
+    warehouse?: any;
+  } | undefined> {
+    const client = this.clients.get(clientId);
+    if (!client) return undefined;
+
+    let carrier;
+    if (client.carrierId) {
+      carrier = this.carriers.get(client.carrierId);
+    }
+
+    return {
+      client,
+      carrier,
+      city: null,
+      warehouse: null
+    };
   }
 }
 
