@@ -1623,6 +1623,13 @@ export default function Orders() {
         // ПРІОРИТЕТ: спочатку поля замовлення, потім контактна особа
         customerEmail: order.contactEmail || order.contact?.email || "",
         customerPhone: order.contactPhone || order.contact?.primaryPhone || order.contact?.phone || "",
+        // Nova Poshta дані доставки
+        recipientCityRef: order.recipientCityRef || "",
+        recipientCityName: order.recipientCityName || "",
+        recipientWarehouseRef: order.recipientWarehouseRef || "",
+        recipientWarehouseAddress: order.recipientWarehouseAddress || "",
+        shippingCost: order.shippingCost || "",
+        estimatedDelivery: order.estimatedDelivery || "",
       });
       
 
@@ -2378,7 +2385,7 @@ export default function Orders() {
                       recipientWarehouseAddress: form.watch("recipientWarehouseAddress")
                     })}
                     <NovaPoshtaIntegration
-                      key={`${form.watch("recipientCityRef")}-${form.watch("recipientWarehouseRef")}`}
+                      key={`nova-poshta-${isEditMode ? editingOrder?.id : 'new'}`}
                       onAddressSelect={(address, cityRef, warehouseRef) => {
                         // Зберігаємо адресу в примітках замовлення та в окремих полях
                         const currentNotes = form.watch("notes") || "";
