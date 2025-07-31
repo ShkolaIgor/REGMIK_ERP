@@ -884,13 +884,21 @@ export default function Orders() {
 
   // Завантаження даних доставки при зміні клієнта
   useEffect(() => {
-    const selectedClientId = form.watch("clientId");
-    if (selectedClientId && selectedClientId !== '') {
-      loadClientDeliveryData(selectedClientId);
-    } else {
-      setClientDeliveryData(null);
-    }
-  }, [form.watch("clientId")]);
+    if (!form) return; // Безпечна перевірка
+    
+    const subscription = form.watch((value, { name }) => {
+      if (name === "clientId") {
+        const selectedClientId = value.clientId;
+        if (selectedClientId && selectedClientId !== '') {
+          loadClientDeliveryData(selectedClientId);
+        } else {
+          setClientDeliveryData(null);
+        }
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -960,55 +968,74 @@ export default function Orders() {
 
   // Відстежуємо зміни клієнта для оновлення контактів (тільки для нових замовлень)
   useEffect(() => {
-    const clientId = form.watch("clientId");
+    if (!form) return; // Безпечна перевірка
     
-    // ВАЖЛИВО: не очищуємо поля при редагуванні існуючого замовлення
-    if (isEditMode && editingOrder) {
-      return;
-    }
+    const subscription = form.watch((value, { name }) => {
+      if (name === "clientId") {
+        const clientId = value.clientId;
+        
+        // ВАЖЛИВО: не очищуємо поля при редагуванні існуючого замовлення
+        if (isEditMode && editingOrder) {
+          return;
+        }
+        
+        if (clientId) {
+          setSelectedClientId(clientId);
+          // Скидаємо обрану контактну особу при зміні клієнта
+          form.setValue("clientContactsId", undefined);
+          form.setValue("customerEmail", "");
+          form.setValue("customerPhone", "");
+        } else {
+          setSelectedClientId("");
+          setClientContactsForOrder([]);
+          form.setValue("clientContactsId", undefined);
+          form.setValue("customerEmail", "");
+          form.setValue("customerPhone", "");
+        }
+      }
+    });
     
-    if (clientId) {
-      setSelectedClientId(clientId);
-      // Скидаємо обрану контактну особу при зміні клієнта
-      form.setValue("clientContactsId", undefined);
-      form.setValue("customerEmail", "");
-      form.setValue("customerPhone", "");
-    } else {
-      setSelectedClientId("");
-      setClientContactsForOrder([]);
-      form.setValue("clientContactsId", undefined);
-      form.setValue("customerEmail", "");
-      form.setValue("customerPhone", "");
-    }
-  }, [form.watch("clientId"), isEditMode, editingOrder]);
+    return () => subscription.unsubscribe();
+  }, [form, isEditMode, editingOrder]);
 
   // Автозаповнення контактних даних при виборі контактної особи (тільки для нових замовлень)
   useEffect(() => {
-    const contactId = form.watch("clientContactsId");
+    if (!form) return; // Безпечна перевірка
     
-    // ВАЖЛИВО: автозаповнення тільки для нових замовлень або якщо поля пусті
-    if (contactId && clientContactsForOrder.length > 0) {
-      // Перетворюємо contactId на число для порівняння
-      const contactIdNum = typeof contactId === 'string' ? parseInt(contactId) : contactId;
-      const selectedContact = clientContactsForOrder.find(contact => contact.id === contactIdNum);
-      if (selectedContact) {
-        // При редагуванні заповнюємо тільки якщо поля пусті
-        const currentEmail = form.getValues("customerEmail");
-        const currentPhone = form.getValues("customerPhone");
-        
-        if (!isEditMode || !currentEmail) {
-          form.setValue("customerEmail", selectedContact.email || "");
-        }
-        if (!isEditMode || !currentPhone) {
-          form.setValue("customerPhone", selectedContact.phone || "");
+    const subscription = form.watch((value, { name }) => {
+      if (name !== "clientContactsId") return;
+      
+      const contactId = value.clientContactsId;
+    
+      // ВАЖЛИВО: автозаповнення тільки для нових замовлень або якщо поля пусті
+      if (contactId && clientContactsForOrder.length > 0) {
+        // Перетворюємо contactId на число для порівняння
+        const contactIdNum = typeof contactId === 'string' ? parseInt(contactId) : contactId;
+        const selectedContact = clientContactsForOrder.find(contact => contact.id === contactIdNum);
+        if (selectedContact) {
+          // При редагуванні заповнюємо тільки якщо поля пусті
+          const currentEmail = form.getValues("customerEmail");
+          const currentPhone = form.getValues("customerPhone");
+          
+          if (!isEditMode || !currentEmail) {
+            form.setValue("customerEmail", selectedContact.email || "");
+          }
+          if (!isEditMode || !currentPhone) {
+            form.setValue("customerPhone", selectedContact.phone || "");
+          }
         }
       }
-    }
-  }, [form.watch("clientContactsId"), clientContactsForOrder, isEditMode]);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form, clientContactsForOrder, isEditMode]);
 
   // Автозаповнення компанії при відкритті нової форми
   useEffect(() => {
-    if (companies.length > 0 && isDialogOpen && !isEditMode && !form.watch("companyId")) {
+    if (!form || !companies.length || !isDialogOpen || isEditMode) return;
+    
+    const currentCompanyId = form.getValues("companyId");
+    if (!currentCompanyId) {
       const defaultCompany = companies.find(company => company.isDefault);
       if (defaultCompany) {
         form.setValue("companyId", defaultCompany.id.toString());
