@@ -187,75 +187,7 @@ function SearchInput({ value, onChange }: {
   );
 }
 
-// Безпечний компонент для відображення перевізників
-function CarrierSelectSafe({ 
-  form, 
-  isEditMode, 
-  carriers, 
-  activeCarriers, 
-  carriersLoading, 
-  activeCarriersLoading 
-}: {
-  form: any;
-  isEditMode: boolean;
-  carriers: any[];
-  activeCarriers: any[];
-  carriersLoading: boolean;
-  activeCarriersLoading: boolean;
-}) {
-  const isLoading = carriersLoading || activeCarriersLoading;
-  const hasData = Array.isArray(activeCarriers) && Array.isArray(carriers);
-  
-  if (isLoading || !hasData) {
-    return (
-      <div className="flex items-center space-x-2 h-10 px-3 border rounded-md bg-muted">
-        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-sm text-muted-foreground">Завантаження перевізників...</span>
-      </div>
-    );
-  }
-
-  const currentCarrierId = form.getValues("carrierId") || "";
-  
-  // Створюємо список перевізників для відображення
-  let carriersToShow = [...activeCarriers];
-  
-  // При редагуванні додаємо поточний вибраний перевізник (навіть якщо неактивний)
-  if (isEditMode && currentCarrierId && currentCarrierId !== "") {
-    const currentCarrier = carriers.find((c: any) => c && c.id && c.id.toString() === currentCarrierId);
-    if (currentCarrier && !carriersToShow.find((c: any) => c && c.id && c.id.toString() === currentCarrierId)) {
-      carriersToShow.unshift(currentCarrier);
-    }
-  }
-  
-  return (
-    <Select
-      value={currentCarrierId || "none"}
-      onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
-    >
-      <SelectTrigger>
-        <SelectValue placeholder="Оберіть перевізника" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="none">Без перевізника</SelectItem>
-        {carriersToShow
-          .filter(carrier => carrier && carrier.id && carrier.name)
-          .map((carrier: any) => (
-            <SelectItem key={carrier.id} value={carrier.id.toString()}>
-              {carrier.name || `Перевізник ${carrier.id}`}{!carrier.isActive ? ' (неактивний)' : ''}
-            </SelectItem>
-          ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
 export default function Orders() {
-  // Основні hooks першими
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  // State змінні
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState(""); // Пошук відновлено
@@ -292,6 +224,10 @@ export default function Orders() {
   // Пагінація
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(25);
+
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Обробник зміни пошуку
   const handleSearchChange = (value: string) => {
@@ -885,21 +821,13 @@ export default function Orders() {
 
   // Завантаження даних доставки при зміні клієнта
   useEffect(() => {
-    if (!form) return; // Безпечна перевірка
-    
-    const subscription = form.watch((value, { name }) => {
-      if (name === "clientId") {
-        const selectedClientId = value.clientId;
-        if (selectedClientId && selectedClientId !== '') {
-          loadClientDeliveryData(selectedClientId);
-        } else {
-          setClientDeliveryData(null);
-        }
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
+    const selectedClientId = form.watch("clientId");
+    if (selectedClientId && selectedClientId !== '') {
+      loadClientDeliveryData(selectedClientId);
+    } else {
+      setClientDeliveryData(null);
+    }
+  }, [form.watch("clientId")]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -969,74 +897,55 @@ export default function Orders() {
 
   // Відстежуємо зміни клієнта для оновлення контактів (тільки для нових замовлень)
   useEffect(() => {
-    if (!form) return; // Безпечна перевірка
+    const clientId = form.watch("clientId");
     
-    const subscription = form.watch((value, { name }) => {
-      if (name === "clientId") {
-        const clientId = value.clientId;
-        
-        // ВАЖЛИВО: не очищуємо поля при редагуванні існуючого замовлення
-        if (isEditMode && editingOrder) {
-          return;
-        }
-        
-        if (clientId) {
-          setSelectedClientId(clientId);
-          // Скидаємо обрану контактну особу при зміні клієнта
-          form.setValue("clientContactsId", undefined);
-          form.setValue("customerEmail", "");
-          form.setValue("customerPhone", "");
-        } else {
-          setSelectedClientId("");
-          setClientContactsForOrder([]);
-          form.setValue("clientContactsId", undefined);
-          form.setValue("customerEmail", "");
-          form.setValue("customerPhone", "");
-        }
-      }
-    });
+    // ВАЖЛИВО: не очищуємо поля при редагуванні існуючого замовлення
+    if (isEditMode && editingOrder) {
+      return;
+    }
     
-    return () => subscription.unsubscribe();
-  }, [form, isEditMode, editingOrder]);
+    if (clientId) {
+      setSelectedClientId(clientId);
+      // Скидаємо обрану контактну особу при зміні клієнта
+      form.setValue("clientContactsId", undefined);
+      form.setValue("customerEmail", "");
+      form.setValue("customerPhone", "");
+    } else {
+      setSelectedClientId("");
+      setClientContactsForOrder([]);
+      form.setValue("clientContactsId", undefined);
+      form.setValue("customerEmail", "");
+      form.setValue("customerPhone", "");
+    }
+  }, [form.watch("clientId"), isEditMode, editingOrder]);
 
   // Автозаповнення контактних даних при виборі контактної особи (тільки для нових замовлень)
   useEffect(() => {
-    if (!form) return; // Безпечна перевірка
+    const contactId = form.watch("clientContactsId");
     
-    const subscription = form.watch((value, { name }) => {
-      if (name !== "clientContactsId") return;
-      
-      const contactId = value.clientContactsId;
-    
-      // ВАЖЛИВО: автозаповнення тільки для нових замовлень або якщо поля пусті
-      if (contactId && clientContactsForOrder.length > 0) {
-        // Перетворюємо contactId на число для порівняння
-        const contactIdNum = typeof contactId === 'string' ? parseInt(contactId) : contactId;
-        const selectedContact = clientContactsForOrder.find(contact => contact.id === contactIdNum);
-        if (selectedContact) {
-          // При редагуванні заповнюємо тільки якщо поля пусті
-          const currentEmail = form.getValues("customerEmail");
-          const currentPhone = form.getValues("customerPhone");
-          
-          if (!isEditMode || !currentEmail) {
-            form.setValue("customerEmail", selectedContact.email || "");
-          }
-          if (!isEditMode || !currentPhone) {
-            form.setValue("customerPhone", selectedContact.phone || "");
-          }
+    // ВАЖЛИВО: автозаповнення тільки для нових замовлень або якщо поля пусті
+    if (contactId && clientContactsForOrder.length > 0) {
+      // Перетворюємо contactId на число для порівняння
+      const contactIdNum = typeof contactId === 'string' ? parseInt(contactId) : contactId;
+      const selectedContact = clientContactsForOrder.find(contact => contact.id === contactIdNum);
+      if (selectedContact) {
+        // При редагуванні заповнюємо тільки якщо поля пусті
+        const currentEmail = form.getValues("customerEmail");
+        const currentPhone = form.getValues("customerPhone");
+        
+        if (!isEditMode || !currentEmail) {
+          form.setValue("customerEmail", selectedContact.email || "");
+        }
+        if (!isEditMode || !currentPhone) {
+          form.setValue("customerPhone", selectedContact.phone || "");
         }
       }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form, clientContactsForOrder, isEditMode]);
+    }
+  }, [form.watch("clientContactsId"), clientContactsForOrder, isEditMode]);
 
   // Автозаповнення компанії при відкритті нової форми
   useEffect(() => {
-    if (!form || !companies.length || !isDialogOpen || isEditMode) return;
-    
-    const currentCompanyId = form.getValues("companyId");
-    if (!currentCompanyId) {
+    if (companies.length > 0 && isDialogOpen && !isEditMode && !form.watch("companyId")) {
       const defaultCompany = companies.find(company => company.isDefault);
       if (defaultCompany) {
         form.setValue("companyId", defaultCompany.id.toString());
@@ -2335,14 +2244,48 @@ export default function Orders() {
 
                   <div>
                     <Label htmlFor="carrierId">Перевізник</Label>
-                    <CarrierSelectSafe 
-                      form={form} 
-                      isEditMode={isEditMode}
-                      carriers={carriers || []}
-                      activeCarriers={activeCarriers || []}
-                      carriersLoading={carriersLoading}
-                      activeCarriersLoading={activeCarriersLoading}
-                    />
+                    {carriersLoading || activeCarriersLoading ? (
+                      <div className="flex items-center space-x-2 h-10 px-3 border rounded-md bg-muted">
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-muted-foreground">Завантаження перевізників...</span>
+                      </div>
+                    ) : (
+                      <Select
+                        value={(() => {
+                          const currentCarrierId = form.watch("carrierId");
+                          if (!currentCarrierId || currentCarrierId === "") return "none";
+                          return currentCarrierId;
+                        })()}
+                        onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Оберіть перевізника" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Без перевізника</SelectItem>
+                          {(() => {
+                            const currentCarrierId = form.watch("carrierId");
+                            
+                            // Завжди показуємо активних перевізників
+                            let carriersToShow = [...(activeCarriers || [])];
+                            
+                            // При редагуванні додаємо поточний вибраний перевізник якщо він неактивний
+                            if (isEditMode && currentCarrierId && currentCarrierId !== "" && carriers && carriers.length > 0) {
+                              const currentCarrier = carriers.find((c: any) => c.id.toString() === currentCarrierId);
+                              if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id.toString() === currentCarrierId)) {
+                                carriersToShow.push(currentCarrier);
+                              }
+                            }
+                            
+                            return carriersToShow.map((carrier: any) => (
+                              <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                                {carrier.name || `Перевізник ${carrier.id}`}{!carrier.isActive ? ' (неактivний)' : ''}
+                              </SelectItem>
+                            ));
+                          })()}
+                        </SelectContent>
+                      </Select>
+                    )}
                     
                     {/* Кнопка для ручного автозаповнення даних доставки */}
                     {form.watch("clientId") && (
