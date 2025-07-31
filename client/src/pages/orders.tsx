@@ -197,6 +197,8 @@ export default function Orders() {
   const [orderItems, setOrderItems] = useState<OrderItemFormData[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any>(null);
+  const [clientDeliveryData, setClientDeliveryData] = useState<any>(null);
+  const [loadingDeliveryData, setLoadingDeliveryData] = useState(false);
   const [isPartialShipmentOpen, setIsPartialShipmentOpen] = useState(false);
   const [selectedOrderForShipment, setSelectedOrderForShipment] = useState<Order | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
@@ -816,6 +818,16 @@ export default function Orders() {
 
   // Запит для пошуку клієнтів з debounce
   const [debouncedSearchValue, setDebouncedSearchValue] = useState("");
+
+  // Завантаження даних доставки при зміні клієнта
+  useEffect(() => {
+    const selectedClientId = form.watch("clientId");
+    if (selectedClientId && selectedClientId !== '') {
+      loadClientDeliveryData(selectedClientId);
+    } else {
+      setClientDeliveryData(null);
+    }
+  }, [form.watch("clientId")]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1754,6 +1766,57 @@ export default function Orders() {
     createClientMutation.mutate(formData);
   };
 
+  // Завантаження даних доставки клієнта для показування стану кнопки
+  const loadClientDeliveryData = async (clientId: string) => {
+    if (!clientId) {
+      setClientDeliveryData(null);
+      return;
+    }
+
+    setLoadingDeliveryData(true);
+    try {
+      const response = await fetch(`/api/clients/${clientId}/delivery-settings`);
+      if (response.ok) {
+        const deliverySettings = await response.json();
+        setClientDeliveryData(deliverySettings);
+      } else {
+        setClientDeliveryData(null);
+      }
+    } catch (error) {
+      console.error("Помилка завантаження даних доставки:", error);
+      setClientDeliveryData(null);
+    } finally {
+      setLoadingDeliveryData(false);
+    }
+  };
+
+  // Ручне автозаповнення даних доставки
+  const handleManualDeliveryFill = () => {
+    if (!clientDeliveryData) return;
+
+    // Автозаповнення перевізника
+    if (clientDeliveryData.carrier) {
+      form.setValue("carrierId", clientDeliveryData.carrier.id.toString());
+    }
+
+    // Автозаповнення міста Nova Poshta
+    if (clientDeliveryData.city) {
+      form.setValue("recipientCityRef", clientDeliveryData.city.ref);
+      form.setValue("recipientCityName", clientDeliveryData.city.name || "");
+    }
+
+    // Автозаповнення відділення Nova Poshta
+    if (clientDeliveryData.warehouse) {
+      form.setValue("recipientWarehouseRef", clientDeliveryData.warehouse.ref);
+      form.setValue("recipientWarehouseAddress", clientDeliveryData.warehouse.address || "");
+    }
+
+    toast({
+      title: "Дані доставки заповнені",
+      description: "Інформація про доставку завантажена з профілю клієнта",
+    });
+  };
+
   const handleSubmit = (data: OrderFormData) => {
     
     // Якщо діалог закритий, не продовжуємо валідацію
@@ -2222,6 +2285,31 @@ export default function Orders() {
                           })()}
                         </SelectContent>
                       </Select>
+                    )}
+                    
+                    {/* Кнопка для ручного автозаповнення даних доставки */}
+                    {form.watch("clientId") && (
+                      <div className="mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleManualDeliveryFill}
+                          disabled={!clientDeliveryData || loadingDeliveryData}
+                          className="w-full bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 disabled:opacity-50"
+                        >
+                          {loadingDeliveryData ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                              Завантаження...
+                            </>
+                          ) : clientDeliveryData ? (
+                            <>📋 Заповнити дані доставки з профілю клієнта</>
+                          ) : (
+                            <>📋 Дані доставки недоступні</>
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </div>
 
