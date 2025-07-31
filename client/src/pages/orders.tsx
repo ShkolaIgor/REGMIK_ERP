@@ -187,6 +187,69 @@ function SearchInput({ value, onChange }: {
   );
 }
 
+// Безпечний компонент для відображення перевізників
+function CarrierSelectSafe({ 
+  form, 
+  isEditMode, 
+  carriers, 
+  activeCarriers, 
+  carriersLoading, 
+  activeCarriersLoading 
+}: {
+  form: any;
+  isEditMode: boolean;
+  carriers: any[];
+  activeCarriers: any[];
+  carriersLoading: boolean;
+  activeCarriersLoading: boolean;
+}) {
+  const isLoading = carriersLoading || activeCarriersLoading;
+  const hasData = Array.isArray(activeCarriers) && Array.isArray(carriers);
+  
+  if (isLoading || !hasData) {
+    return (
+      <div className="flex items-center space-x-2 h-10 px-3 border rounded-md bg-muted">
+        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-sm text-muted-foreground">Завантаження перевізників...</span>
+      </div>
+    );
+  }
+
+  const currentCarrierId = form.getValues("carrierId") || "";
+  
+  // Створюємо список перевізників для відображення
+  let carriersToShow = [...activeCarriers];
+  
+  // При редагуванні додаємо поточний вибраний перевізник (навіть якщо неактивний)
+  if (isEditMode && currentCarrierId && currentCarrierId !== "") {
+    const currentCarrier = carriers.find((c: any) => c && c.id && c.id.toString() === currentCarrierId);
+    if (currentCarrier && !carriersToShow.find((c: any) => c && c.id && c.id.toString() === currentCarrierId)) {
+      carriersToShow.unshift(currentCarrier);
+    }
+  }
+  
+  return (
+    <Select
+      value={currentCarrierId || "none"}
+      onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="Оберіть перевізника" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">Без перевізника</SelectItem>
+        {carriersToShow
+          .filter(carrier => carrier && carrier.id && carrier.name)
+          .map((carrier: any) => (
+            <SelectItem key={carrier.id} value={carrier.id.toString()}>
+              {carrier.name || `Перевізник ${carrier.id}`}{!carrier.isActive ? ' (неактивний)' : ''}
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -2244,61 +2307,14 @@ export default function Orders() {
 
                   <div>
                     <Label htmlFor="carrierId">Перевізник</Label>
-                    {carriersLoading || activeCarriersLoading || !activeCarriers || !carriers ? (
-                      <div className="flex items-center space-x-2 h-10 px-3 border rounded-md bg-muted">
-                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-sm text-muted-foreground">Завантаження перевізників...</span>
-                      </div>
-                    ) : (
-                      <Select
-                        value={(() => {
-                          const currentCarrierId = form.watch("carrierId");
-                          if (!currentCarrierId || currentCarrierId === "") return "none";
-                          return currentCarrierId;
-                        })()}
-                        onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Оберіть перевізника" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Без перевізника</SelectItem>
-                          {(() => {
-                            try {
-                              const currentCarrierId = form.watch("carrierId");
-                              
-                              // Безпечна ініціалізація з перевіркою масивів
-                              if (!Array.isArray(activeCarriers) || !Array.isArray(carriers)) {
-                                return [];
-                              }
-                              
-                              // Завжди показуємо активних перевізників
-                              let carriersToShow = [...activeCarriers];
-                              
-                              // При редагуванні ЗАВЖДИ додаємо поточний вибраний перевізник (навіть якщо неактивний)
-                              if (isEditMode && currentCarrierId && currentCarrierId !== "" && carriers.length > 0) {
-                                const currentCarrier = carriers.find((c: any) => c && c.id && c.id.toString() === currentCarrierId);
-                                if (currentCarrier && !carriersToShow.find((c: any) => c && c.id && c.id.toString() === currentCarrierId)) {
-                                  // Додаємо поточний перевізник на початок списку
-                                  carriersToShow.unshift(currentCarrier);
-                                }
-                              }
-                              
-                              return carriersToShow
-                                .filter(carrier => carrier && carrier.id && carrier.name) // Фільтруємо некоректні записи
-                                .map((carrier: any) => (
-                                  <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                                    {carrier.name || `Перевізник ${carrier.id}`}{!carrier.isActive ? ' (неактивний)' : ''}
-                                  </SelectItem>
-                                ));
-                            } catch (error) {
-                              console.error("Помилка відображення перевізників:", error);
-                              return [];
-                            }
-                          })()}
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <CarrierSelectSafe 
+                      form={form} 
+                      isEditMode={isEditMode}
+                      carriers={carriers || []}
+                      activeCarriers={activeCarriers || []}
+                      carriersLoading={carriersLoading}
+                      activeCarriersLoading={activeCarriersLoading}
+                    />
                     
                     {/* Кнопка для ручного автозаповнення даних доставки */}
                     {form.watch("clientId") && (
