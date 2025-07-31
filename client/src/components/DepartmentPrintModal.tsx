@@ -400,7 +400,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           .quantity {
             text-align: center;
             font-weight: bold;
-            color: #059669;
+            <!-- color: #059669; -->
             font-size: 12px;
           }
           .notes-section {
@@ -479,10 +479,10 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           </div>
         ` : ''}
 
-        <div class="footer">
+        <!-- <div class="footer">
           Виробничий лист для відділу "${department.departmentName}" створено: ${new Date().toLocaleString('uk-UA')}<br>
           Система REGMIK ERP
-        </div>
+        </div> -->
       </body>
       </html>
     `;
