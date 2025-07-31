@@ -3490,6 +3490,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/carriers/active', async (req, res) => {
+    try {
+      const activeCarriers = await storage.getActiveCarriers();
+      res.json(activeCarriers);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get active carriers' });
+    }
+  });
+
   app.get('/api/carriers/default', async (req, res) => {
     try {
       const defaultCarrier = await storage.getDefaultCarrier();

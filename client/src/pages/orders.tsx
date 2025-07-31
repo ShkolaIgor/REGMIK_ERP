@@ -730,8 +730,8 @@ export default function Orders() {
   });
 
   const { data: carriers = [] } = useQuery<any[]>({
-    queryKey: ["/api/carriers"],
-    // Завантажуємо завжди для відображення в таблиці замовлень
+    queryKey: ["/api/carriers/active"],
+    // Завантажуємо тільки активних перевізників для списків вибору
   });
 
   const { data: defaultCarrier } = useQuery<any>({

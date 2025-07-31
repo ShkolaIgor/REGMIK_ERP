@@ -100,7 +100,7 @@ export function PartialShipmentDialog({
 
   // Запит для отримання перевізників
   const { data: carriers = [] } = useQuery({
-    queryKey: ["/api/carriers"],
+    queryKey: ["/api/carriers/active"],
   });
 
   const addresses = (savedAddresses as any[]) || [];

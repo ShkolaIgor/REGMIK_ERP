@@ -21,11 +21,9 @@ interface CarrierSelectProps {
 }
 
 export function CarrierSelect({ value, onValueChange, placeholder = "Оберіть перевізника" }: CarrierSelectProps) {
-  const { data: carriers = [], isLoading } = useQuery<Carrier[]>({
-    queryKey: ["/api/carriers"],
+  const { data: activeCarriers = [], isLoading } = useQuery<Carrier[]>({
+    queryKey: ["/api/carriers/active"],
   });
-
-  const activeCarriers = carriers.filter(carrier => carrier.isActive);
 
   if (isLoading) {
     return (

@@ -425,6 +425,7 @@ export interface IStorage {
 
   // Carriers
   getCarriers(): Promise<Carrier[]>;
+  getActiveCarriers(): Promise<Carrier[]>;
   getCarrier(id: number): Promise<Carrier | null>;
   createCarrier(data: InsertCarrier): Promise<Carrier>;
   updateCarrier(id: number, data: Partial<InsertCarrier>): Promise<Carrier | null>;
@@ -1774,6 +1775,10 @@ export class MemStorage implements IStorage {
   // Carriers methods
   async getCarriers(): Promise<Carrier[]> {
     return Array.from(this.carriers.values());
+  }
+
+  async getActiveCarriers(): Promise<Carrier[]> {
+    return Array.from(this.carriers.values()).filter(carrier => carrier.isActive);
   }
 
   async getCarrier(id: number): Promise<Carrier | null> {

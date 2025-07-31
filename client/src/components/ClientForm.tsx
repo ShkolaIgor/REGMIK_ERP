@@ -63,7 +63,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
 
   // Data queries
   const { data: clientTypes } = useQuery({ queryKey: ['/api/client-types'] });
-  const { data: carriers } = useQuery({ queryKey: ['/api/carriers'] });
+  const { data: carriers } = useQuery({ queryKey: ['/api/carriers/active'] });
 
   // Nova Poshta state
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();

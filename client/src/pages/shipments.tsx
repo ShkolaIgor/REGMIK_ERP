@@ -188,7 +188,7 @@ export default function Shipments() {
 
   // Завантаження перевізників
   const { data: carriers = [] } = useQuery({
-    queryKey: ["/api/carriers"],
+    queryKey: ["/api/carriers/active"],
   });
 
   // Завантаження збережених адрес клієнтів

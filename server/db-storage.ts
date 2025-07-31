@@ -4240,6 +4240,10 @@ export class DatabaseStorage implements IStorage {
 
   // Carriers
   async getCarriers(): Promise<Carrier[]> {
+    return await db.select().from(carriers).orderBy(carriers.name);
+  }
+
+  async getActiveCarriers(): Promise<Carrier[]> {
     return await db.select().from(carriers).where(eq(carriers.isActive, true)).orderBy(carriers.name);
   }
 
