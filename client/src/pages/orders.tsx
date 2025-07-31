@@ -15,7 +15,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, ChevronUp, ChevronDown, Search, Filter, X, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Building2, Settings } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, ChevronUp, ChevronDown, Search, Filter, X, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Building2, Settings, MessageSquare, RefreshCw } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -2281,7 +2282,34 @@ export default function Orders() {
                   
 
                   <div>
-                    <Label htmlFor="carrierId">Перевізник</Label>
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="carrierId" className="flex-1">Перевізник</Label>
+                      {form.watch("clientId") && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleManualDeliveryFill}
+                                disabled={!clientDeliveryData?.client || loadingDeliveryData || (!clientDeliveryData.client.carrierId && !clientDeliveryData.client.cityRef && !clientDeliveryData.client.warehouseRef && !clientDeliveryData.carrier && !clientDeliveryData.city && !clientDeliveryData.warehouse)}
+                                className="h-8 w-8 p-0"
+                              >
+                                {loadingDeliveryData ? (
+                                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <RefreshCw className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Заповнити дані доставки з профілю клієнта</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                     {carriersLoading || activeCarriersLoading ? (
                       <div className="flex items-center space-x-2 h-10 px-3 border rounded-md bg-muted">
                         <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -2323,31 +2351,6 @@ export default function Orders() {
                           })()}
                         </SelectContent>
                       </Select>
-                    )}
-                    
-                    {/* Кнопка для ручного автозаповнення даних доставки */}
-                    {form.watch("clientId") && (
-                      <div className="mt-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleManualDeliveryFill}
-                          disabled={!clientDeliveryData?.client || loadingDeliveryData || (!clientDeliveryData.client.carrierId && !clientDeliveryData.client.cityRef && !clientDeliveryData.client.warehouseRef && !clientDeliveryData.carrier && !clientDeliveryData.city && !clientDeliveryData.warehouse)}
-                          className="w-full bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 disabled:opacity-50"
-                        >
-                          {loadingDeliveryData ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                              Завантаження...
-                            </>
-                          ) : (clientDeliveryData?.client && (clientDeliveryData.client.carrierId || clientDeliveryData.client.cityRef || clientDeliveryData.client.warehouseRef || clientDeliveryData.carrier || clientDeliveryData.city || clientDeliveryData.warehouse)) ? (
-                            <>📋 Заповнити дані доставки з профілю клієнта</>
-                          ) : (
-                            <>📋 Дані доставки недоступні</>
-                          )}
-                        </Button>
-                      </div>
                     )}
                   </div>
 
@@ -2636,17 +2639,43 @@ export default function Orders() {
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
+                            
+                            {/* Кнопка коментаря */}
+                            {!item.comment ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  updateOrderItem(index, "comment", " ");
+                                }}
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                              </Button>
+                            ) : null}
                           </div>
                           
-                          {/* Другий рядок: коментар */}
-                          <div>
-                            <Input
-                              placeholder="Коментар"
-                              value={item.comment || ""}
-                              onChange={(e) => updateOrderItem(index, "comment", e.target.value)}
-                              className="w-full"
-                            />
-                          </div>
+                          {/* Другий рядок: коментар (тільки якщо є) */}
+                          {item.comment && (
+                            <div className="flex items-center space-x-2">
+                              <Input
+                                placeholder="Коментар до товару"
+                                value={item.comment || ""}
+                                onChange={(e) => updateOrderItem(index, "comment", e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  updateOrderItem(index, "comment", "");
+                                }}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ))})
                       
