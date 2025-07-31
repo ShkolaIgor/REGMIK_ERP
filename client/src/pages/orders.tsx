@@ -133,9 +133,9 @@ const orderSchema = z.object({
   orderNumber: z.string().optional(), // Автоматично генерується
   totalAmount: z.string().optional(), // Автоматично розраховується
   invoiceNumber: z.string().optional(),
-  carrierId: z.number().optional(),
+  carrierId: z.string().optional(), // Змінено з number на string для сумісності з React Hook Form
   status: z.string().default("pending"),
-  statusId: z.number().optional(),
+  statusId: z.string().optional(), // Змінено з number на string для сумісності
   notes: z.string().optional(),
   paymentDate: z.string().optional(),
   paymentType: z.string().optional(),
@@ -1522,8 +1522,8 @@ export default function Orders() {
         shippedDate: formatDate(order.shippedDate),
         trackingNumber: order.trackingNumber || "",
         invoiceNumber: order.invoiceNumber || "",
-        carrierId: order.carrierId || undefined,
-        statusId: order.statusId || undefined,
+        carrierId: order.carrierId?.toString() || "",
+        statusId: order.statusId?.toString() || "",
         productionApproved: order.productionApproved || false,
         productionApprovedBy: order.productionApprovedBy || "",
         productionApprovedAt: formatDate(order.productionApprovedAt),
@@ -1800,7 +1800,7 @@ export default function Orders() {
         ...(data.clientContactsId && String(data.clientContactsId) !== '' && { clientContactsId: typeof data.clientContactsId === 'string' ? parseInt(data.clientContactsId) : data.clientContactsId }),
         ...(data.companyId && data.companyId !== '' && { companyId: parseInt(data.companyId) }),
         ...(data.invoiceNumber && data.invoiceNumber !== '' && { invoiceNumber: data.invoiceNumber }),
-        ...(data.carrierId && { carrierId: data.carrierId }),
+        ...(data.carrierId && data.carrierId !== "" && { carrierId: parseInt(data.carrierId) }),
         ...(data.notes && data.notes !== '' && { notes: data.notes }),
         ...(data.paymentDate && data.paymentDate !== '' && { paymentDate: parseDateForServer(data.paymentDate) }),
         ...(data.dueDate && data.dueDate !== '' && { dueDate: parseDateForServer(data.dueDate) }),
@@ -2163,8 +2163,8 @@ export default function Orders() {
                   <div>
                     <Label htmlFor="carrierId">Перевізник</Label>
                     <Select
-                      value={form.watch("carrierId") ? form.watch("carrierId")?.toString() : "none"}
-                      onValueChange={(value) => form.setValue("carrierId", value === "none" ? undefined : parseInt(value))}
+                      value={form.watch("carrierId") || "none"}
+                      onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Оберіть перевізника" />
@@ -2184,10 +2184,10 @@ export default function Orders() {
                           let carriersToShow = [...(activeCarriers || [])];
                           
                           // При редагуванні додаємо поточний вибраний перевізник якщо він неактивний
-                          if (isEditMode && currentCarrierId && !isNaN(currentCarrierId) && carriers && carriers.length > 0) {
-                            const currentCarrier = carriers.find((c: any) => c.id === currentCarrierId);
+                          if (isEditMode && currentCarrierId && currentCarrierId !== "" && carriers && carriers.length > 0) {
+                            const currentCarrier = carriers.find((c: any) => c.id.toString() === currentCarrierId);
                             console.log('CURRENT CARRIER found:', currentCarrier);
-                            if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id === currentCarrierId)) {
+                            if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id.toString() === currentCarrierId)) {
                               carriersToShow.push(currentCarrier);
                               console.log('ADDED inactive carrier to show:', currentCarrier.name);
                             }
@@ -2221,7 +2221,7 @@ export default function Orders() {
 
 
                 {/* Nova Poshta Integration */}
-                {form.watch("carrierId") && carriers?.find((c: any) => c.id === parseInt((form.watch("carrierId") || "0").toString()))?.name === "Нова Пошта" && (
+                {form.watch("carrierId") && carriers?.find((c: any) => c.id.toString() === form.watch("carrierId"))?.name === "Нова Пошта" && (
                   <div className="mt-6">
                     <NovaPoshtaIntegration
                       onAddressSelect={(address, cityRef, warehouseRef) => {
