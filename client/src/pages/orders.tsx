@@ -831,6 +831,7 @@ export default function Orders() {
       const response = await fetch(`/api/clients/${clientId}/delivery-settings`);
       if (response.ok) {
         const deliverySettings = await response.json();
+        console.log('FRONTEND DEBUG - Received delivery settings:', deliverySettings);
         setClientDeliveryData(deliverySettings);
       } else {
         setClientDeliveryData(null);
@@ -847,27 +848,40 @@ export default function Orders() {
   const handleManualDeliveryFill = () => {
     if (!clientDeliveryData) return;
 
+    let filledCount = 0;
+
     // Автозаповнення перевізника
     if (clientDeliveryData.carrier) {
       form.setValue("carrierId", clientDeliveryData.carrier.id.toString());
+      filledCount++;
     }
 
     // Автозаповнення міста Nova Poshta
     if (clientDeliveryData.city) {
       form.setValue("recipientCityRef", clientDeliveryData.city.ref);
-      form.setValue("recipientCityName", clientDeliveryData.city.name || "");
+      form.setValue("recipientCityName", clientDeliveryData.city.name || clientDeliveryData.city.description || "");
+      filledCount++;
     }
 
     // Автозаповнення відділення Nova Poshta
     if (clientDeliveryData.warehouse) {
       form.setValue("recipientWarehouseRef", clientDeliveryData.warehouse.ref);
-      form.setValue("recipientWarehouseAddress", clientDeliveryData.warehouse.address || "");
+      form.setValue("recipientWarehouseAddress", clientDeliveryData.warehouse.description || clientDeliveryData.warehouse.address || "");
+      filledCount++;
     }
 
-    toast({
-      title: "Дані доставки заповнені",
-      description: "Інформація про доставку завантажена з профілю клієнта",
-    });
+    if (filledCount > 0) {
+      toast({
+        title: "Дані доставки заповнені",
+        description: `Заповнено ${filledCount} поле(ів) з профілю клієнта`,
+      });
+    } else {
+      toast({
+        title: "Немає даних для заповнення",
+        description: "У клієнта не налаштовані дані доставки",
+        variant: "destructive",
+      });
+    }
   };
 
 
