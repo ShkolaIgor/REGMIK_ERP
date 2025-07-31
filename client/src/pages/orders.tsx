@@ -729,12 +729,12 @@ export default function Orders() {
     // Статуси потрібні для відображення колонки статусу в таблиці замовлень
   });
 
-  const { data: carriers = [] } = useQuery<any[]>({
+  const { data: carriers = [], isLoading: carriersLoading } = useQuery<any[]>({
     queryKey: ["/api/carriers"],
     // Завантажуємо всіх перевізників для відображення в таблиці замовлень (включаючи неактивних для історичних записів)
   });
 
-  const { data: activeCarriers = [] } = useQuery<any[]>({
+  const { data: activeCarriers = [], isLoading: activeCarriersLoading } = useQuery<any[]>({
     queryKey: ["/api/carriers/active"],
     staleTime: 0,
     refetchOnMount: true,
@@ -747,14 +747,7 @@ export default function Orders() {
     // Завантажуємо перевізника за замовчуванням для автозаповнення форми
   });
 
-  // Забезпечуємо що дані перевізників завжди доступні при відкритті форми
-  useEffect(() => {
-    if (isDialogOpen) {
-      // Просто рефетчимо дані без очищення кешу
-      queryClient.refetchQueries({ queryKey: ["/api/carriers/active"] });
-      queryClient.refetchQueries({ queryKey: ["/api/carriers"] });
-    }
-  }, [isDialogOpen, queryClient]);
+
 
   // Стабільне оновлення серверної пагінації при зміні фільтрів
   useEffect(() => {
@@ -1729,12 +1722,14 @@ export default function Orders() {
 
             // Автозаповнення міста Nova Poshta
             if (deliverySettings.city) {
-              form.setValue("cityRef", deliverySettings.city.ref);
+              form.setValue("recipientCityRef", deliverySettings.city.ref);
+              form.setValue("recipientCityName", deliverySettings.city.name || "");
             }
 
             // Автозаповнення відділення Nova Poshta
             if (deliverySettings.warehouse) {
-              form.setValue("warehouseRef", deliverySettings.warehouse.ref);
+              form.setValue("recipientWarehouseRef", deliverySettings.warehouse.ref);
+              form.setValue("recipientWarehouseAddress", deliverySettings.warehouse.address || "");
             }
           }
         }
@@ -2186,41 +2181,48 @@ export default function Orders() {
 
                   <div>
                     <Label htmlFor="carrierId">Перевізник</Label>
-                    <Select
-                      value={(() => {
-                        const currentCarrierId = form.watch("carrierId");
-                        if (!currentCarrierId || currentCarrierId === "") return "none";
-                        return currentCarrierId;
-                      })()}
-                      onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Оберіть перевізника" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Без перевізника</SelectItem>
-                        {(() => {
+                    {carriersLoading || activeCarriersLoading ? (
+                      <div className="flex items-center space-x-2 h-10 px-3 border rounded-md bg-muted">
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-muted-foreground">Завантаження перевізників...</span>
+                      </div>
+                    ) : (
+                      <Select
+                        value={(() => {
                           const currentCarrierId = form.watch("carrierId");
-                          
-                          // Завжди показуємо активних перевізників
-                          let carriersToShow = [...(activeCarriers || [])];
-                          
-                          // При редагуванні додаємо поточний вибраний перевізник якщо він неактивний
-                          if (isEditMode && currentCarrierId && currentCarrierId !== "" && carriers && carriers.length > 0) {
-                            const currentCarrier = carriers.find((c: any) => c.id.toString() === currentCarrierId);
-                            if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id.toString() === currentCarrierId)) {
-                              carriersToShow.push(currentCarrier);
-                            }
-                          }
-                          
-                          return carriersToShow.map((carrier: any) => (
-                            <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                              {carrier.name || `Перевізник ${carrier.id}`}{!carrier.isActive ? ' (неактивний)' : ''}
-                            </SelectItem>
-                          ));
+                          if (!currentCarrierId || currentCarrierId === "") return "none";
+                          return currentCarrierId;
                         })()}
-                      </SelectContent>
-                    </Select>
+                        onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Оберіть перевізника" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Без перевізника</SelectItem>
+                          {(() => {
+                            const currentCarrierId = form.watch("carrierId");
+                            
+                            // Завжди показуємо активних перевізників
+                            let carriersToShow = [...(activeCarriers || [])];
+                            
+                            // При редагуванні додаємо поточний вибраний перевізник якщо він неактивний
+                            if (isEditMode && currentCarrierId && currentCarrierId !== "" && carriers && carriers.length > 0) {
+                              const currentCarrier = carriers.find((c: any) => c.id.toString() === currentCarrierId);
+                              if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id.toString() === currentCarrierId)) {
+                                carriersToShow.push(currentCarrier);
+                              }
+                            }
+                            
+                            return carriersToShow.map((carrier: any) => (
+                              <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                                {carrier.name || `Перевізник ${carrier.id}`}{!carrier.isActive ? ' (неактivний)' : ''}
+                              </SelectItem>
+                            ));
+                          })()}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
 
                   {/* Трек номер (тільки для редагування) */}
