@@ -846,27 +846,38 @@ export default function Orders() {
 
   // Ручне автозаповнення даних доставки
   const handleManualDeliveryFill = () => {
-    if (!clientDeliveryData) return;
+    if (!clientDeliveryData?.client) return;
 
     let filledCount = 0;
+    const client = clientDeliveryData.client;
 
-    // Автозаповнення перевізника
+    // Автозаповнення перевізника з client.carrierId або з clientDeliveryData.carrier
     if (clientDeliveryData.carrier) {
       form.setValue("carrierId", clientDeliveryData.carrier.id.toString());
       filledCount++;
+    } else if (client.carrierId) {
+      form.setValue("carrierId", client.carrierId.toString());
+      filledCount++;
     }
 
-    // Автозаповнення міста Nova Poshta
+    // Автозаповнення міста Nova Poshta з client.cityRef
     if (clientDeliveryData.city) {
       form.setValue("recipientCityRef", clientDeliveryData.city.ref);
       form.setValue("recipientCityName", clientDeliveryData.city.name || clientDeliveryData.city.description || "");
       filledCount++;
+    } else if (client.cityRef) {
+      form.setValue("recipientCityRef", client.cityRef);
+      // Примітка: назва міста не доступна, тому що база Nova Poshta порожня
+      filledCount++;
     }
 
-    // Автозаповнення відділення Nova Poshta
+    // Автозаповнення відділення Nova Poshta з client.warehouseRef
     if (clientDeliveryData.warehouse) {
       form.setValue("recipientWarehouseRef", clientDeliveryData.warehouse.ref);
       form.setValue("recipientWarehouseAddress", clientDeliveryData.warehouse.description || clientDeliveryData.warehouse.address || "");
+      filledCount++;
+    } else if (client.warehouseRef) {
+      form.setValue("recipientWarehouseRef", client.warehouseRef);
       filledCount++;
     }
 
@@ -2311,7 +2322,7 @@ export default function Orders() {
                           variant="outline"
                           size="sm"
                           onClick={handleManualDeliveryFill}
-                          disabled={!clientDeliveryData || loadingDeliveryData}
+                          disabled={!clientDeliveryData?.client || loadingDeliveryData || (!clientDeliveryData.client.carrierId && !clientDeliveryData.client.cityRef && !clientDeliveryData.client.warehouseRef && !clientDeliveryData.carrier && !clientDeliveryData.city && !clientDeliveryData.warehouse)}
                           className="w-full bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 disabled:opacity-50"
                         >
                           {loadingDeliveryData ? (
@@ -2319,7 +2330,7 @@ export default function Orders() {
                               <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
                               Завантаження...
                             </>
-                          ) : clientDeliveryData ? (
+                          ) : (clientDeliveryData?.client && (clientDeliveryData.client.carrierId || clientDeliveryData.client.cityRef || clientDeliveryData.client.warehouseRef || clientDeliveryData.carrier || clientDeliveryData.city || clientDeliveryData.warehouse)) ? (
                             <>📋 Заповнити дані доставки з профілю клієнта</>
                           ) : (
                             <>📋 Дані доставки недоступні</>
