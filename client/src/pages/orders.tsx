@@ -730,8 +730,13 @@ export default function Orders() {
   });
 
   const { data: carriers = [] } = useQuery<any[]>({
+    queryKey: ["/api/carriers"],
+    // Завантажуємо всіх перевізників для відображення в таблиці замовлень (включаючи неактивних для історичних записів)
+  });
+
+  const { data: activeCarriers = [] } = useQuery<any[]>({
     queryKey: ["/api/carriers/active"],
-    // Завантажуємо тільки активних перевізників для списків вибору
+    // Завантажуємо тільки активних перевізників для вибору в нових замовленнях
   });
 
   const { data: defaultCarrier } = useQuery<any>({
@@ -2149,9 +2154,9 @@ export default function Orders() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
-                        {carriers?.map((carrier: any) => (
+                        {(isEditMode ? carriers : activeCarriers)?.map((carrier: any) => (
                           <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                            {carrier.name}
+                            {carrier.name}{!carrier.isActive ? ' (неактивний)' : ''}
                           </SelectItem>
                         ))}
                       </SelectContent>
