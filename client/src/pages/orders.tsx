@@ -1483,7 +1483,7 @@ export default function Orders() {
       shippedDate: "",
       trackingNumber: "",
       invoiceNumber: "",
-      carrierId: null,
+      carrierId: undefined,
       statusId: undefined,
       productionApproved: false,
       productionApprovedBy: "",
