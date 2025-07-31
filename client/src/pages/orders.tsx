@@ -881,6 +881,15 @@ export default function Orders() {
       filledCount++;
     }
 
+    // Debug: перевірка поточних значень форми
+    console.log('Form values after fill:', {
+      carrierId: form.getValues("carrierId"),
+      recipientCityRef: form.getValues("recipientCityRef"),
+      recipientCityName: form.getValues("recipientCityName"),
+      recipientWarehouseRef: form.getValues("recipientWarehouseRef"),
+      recipientWarehouseAddress: form.getValues("recipientWarehouseAddress")
+    });
+
     if (filledCount > 0) {
       toast({
         title: "Дані доставки заповнені",
@@ -2424,6 +2433,12 @@ export default function Orders() {
                     />
                   </div>
                 )}
+
+                {/* Приховані поля для Nova Poshta даних */}
+                <input type="hidden" {...form.register("recipientCityRef")} />
+                <input type="hidden" {...form.register("recipientCityName")} />
+                <input type="hidden" {...form.register("recipientWarehouseRef")} />
+                <input type="hidden" {...form.register("recipientWarehouseAddress")} />
 
                 {/* Дати для рахунку */}
                 <div className="grid grid-cols-3 gap-4">
