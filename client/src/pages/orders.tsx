@@ -747,14 +747,12 @@ export default function Orders() {
     // Завантажуємо перевізника за замовчуванням для автозаповнення форми
   });
 
-  // Примусово оновлюємо кеш перевізників при відкритті форми
+  // Забезпечуємо що дані перевізників завжди доступні при відкритті форми
   useEffect(() => {
     if (isDialogOpen) {
-      console.log('CLEARING CARRIERS CACHE...');
-      queryClient.removeQueries({ queryKey: ["/api/carriers/active"] });
-      queryClient.removeQueries({ queryKey: ["/api/carriers"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/carriers/active"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/carriers"] });
+      // Просто рефетчимо дані без очищення кешу
+      queryClient.refetchQueries({ queryKey: ["/api/carriers/active"] });
+      queryClient.refetchQueries({ queryKey: ["/api/carriers"] });
     }
   }, [isDialogOpen, queryClient]);
 
@@ -1532,8 +1530,7 @@ export default function Orders() {
         customerPhone: order.contactPhone || order.contact?.primaryPhone || order.contact?.phone || "",
       });
       
-      console.log('HANDLE EDIT ORDER - original carrierId:', order.carrierId, typeof order.carrierId);
-      console.log('HANDLE EDIT ORDER - set carrierId to form:', order.carrierId || undefined);
+
 
       // Швидке встановлення клієнта з мінімальною логікою
       if (order.clientId) {
@@ -2203,13 +2200,7 @@ export default function Orders() {
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
                         {(() => {
-                          // DEBUG: Показати поточні дані та carrierId
                           const currentCarrierId = form.watch("carrierId");
-                          console.log('=== CARRIER DEBUG INFO ===');
-                          console.log('FORM carrierId:', currentCarrierId, typeof currentCarrierId);
-                          console.log('isEditMode:', isEditMode);
-                          console.log('ACTIVE CARRIERS API:', activeCarriers?.map(c => `${c.id}: ${c.name}`));
-                          console.log('ALL CARRIERS API:', carriers?.map(c => `${c.id}: ${c.name} (${c.isActive ? 'active' : 'inactive'})`));
                           
                           // Завжди показуємо активних перевізників
                           let carriersToShow = [...(activeCarriers || [])];
@@ -2217,15 +2208,10 @@ export default function Orders() {
                           // При редагуванні додаємо поточний вибраний перевізник якщо він неактивний
                           if (isEditMode && currentCarrierId && currentCarrierId !== "" && carriers && carriers.length > 0) {
                             const currentCarrier = carriers.find((c: any) => c.id.toString() === currentCarrierId);
-                            console.log('CURRENT CARRIER found:', currentCarrier);
                             if (currentCarrier && !currentCarrier.isActive && !carriersToShow.find((c: any) => c.id.toString() === currentCarrierId)) {
                               carriersToShow.push(currentCarrier);
-                              console.log('ADDED inactive carrier to show:', currentCarrier.name);
                             }
                           }
-                          
-                          console.log('FINAL CARRIERS TO SHOW:', carriersToShow?.map(c => `${c.id}: ${c.name} (${c.isActive ? 'active' : 'inactive'})`));
-                          console.log('=== END CARRIER DEBUG ===');
                           
                           return carriersToShow.map((carrier: any) => (
                             <SelectItem key={carrier.id} value={carrier.id.toString()}>

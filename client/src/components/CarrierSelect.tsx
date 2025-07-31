@@ -18,12 +18,24 @@ interface CarrierSelectProps {
   value?: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
+  isEditMode?: boolean;
 }
 
-export function CarrierSelect({ value, onValueChange, placeholder = "Оберіть перевізника" }: CarrierSelectProps) {
-  const { data: activeCarriers = [], isLoading } = useQuery<Carrier[]>({
+export function CarrierSelect({ value, onValueChange, placeholder = "Оберіть перевізника", isEditMode = false }: CarrierSelectProps) {
+  // Завантажуємо активних перевізників для створення нових замовлень
+  const { data: activeCarriers = [], isLoading: isLoadingActive } = useQuery<Carrier[]>({
     queryKey: ["/api/carriers/active"],
+    enabled: !isEditMode, // Не завантажуємо активних в режимі редагування
   });
+
+  // Завантажуємо всіх перевізників для режиму редагування
+  const { data: allCarriers = [], isLoading: isLoadingAll } = useQuery<Carrier[]>({
+    queryKey: ["/api/carriers"],
+    enabled: isEditMode, // Завантажуємо всіх тільки в режимі редагування
+  });
+
+  const isLoading = isEditMode ? isLoadingAll : isLoadingActive;
+  const carriers = isEditMode ? allCarriers : activeCarriers;
 
   if (isLoading) {
     return (
@@ -41,10 +53,15 @@ export function CarrierSelect({ value, onValueChange, placeholder = "Обері�
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {activeCarriers.map((carrier) => (
+        {carriers.map((carrier) => (
           <SelectItem key={carrier.id} value={carrier.id.toString()}>
             <div className="flex items-center justify-between w-full">
-              <span>{carrier.name}</span>
+              <span>
+                {carrier.name}
+                {isEditMode && !carrier.isActive && (
+                  <span className="text-gray-500 text-sm ml-1">(неактивний)</span>
+                )}
+              </span>
               {carrier.serviceType && (
                 <span className="text-xs text-gray-500 ml-2">
                   {carrier.serviceType === "express" && "Експрес"}
@@ -56,7 +73,7 @@ export function CarrierSelect({ value, onValueChange, placeholder = "Обері�
             </div>
           </SelectItem>
         ))}
-        {activeCarriers.length === 0 && (
+        {carriers.length === 0 && (
           <SelectItem value="no-carriers" disabled>
             Немає доступних перевізників
           </SelectItem>
