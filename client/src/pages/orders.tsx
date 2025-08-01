@@ -904,6 +904,12 @@ export default function Orders() {
       recipientWarehouseAddress: form.getValues("recipientWarehouseAddress")
     });
 
+    // Форсуємо оновлення компонента Nova Poshta після заповнення
+    setTimeout(() => {
+      // Це допоможе React побачити нові значення після автозаповнення
+      form.trigger(["recipientCityRef", "recipientWarehouseRef"]);
+    }, 100);
+
     if (filledCount > 0) {
       toast({
         title: "Дані доставки заповнені",
