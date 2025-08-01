@@ -122,56 +122,63 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         <title>Виробничий лист - Замовлення ${order.orderNumber}</title>
         <style>
           @page { 
-            size: A4; 
-            margin: 10mm;
+            size: A4 landscape; 
+            margin: 8mm;
           }
           body { 
             font-family: Arial, sans-serif; 
-            font-size: 11px; 
-            line-height: 1.3; 
+            font-size: 8px; 
+            line-height: 1.1; 
             margin: 0; 
             padding: 0;
+            column-count: 2;
+            column-gap: 12mm;
+            column-fill: auto;
           }
           .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             border-bottom: 2px solid #333;
-            padding-bottom: 10px;
+            padding-bottom: 6px;
+            column-span: all;
           }
           .main-title {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
             color: #1f2937;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
           }
           .order-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             flex-wrap: wrap;
             background-color: #f8fafc;
-            padding: 8px;
-            border-radius: 4px;
+            padding: 4px;
+            border-radius: 3px;
+            column-span: all;
           }
           .info-group {
-            margin-bottom: 5px;
+            margin-bottom: 2px;
+            font-size: 7px;
           }
           .label {
             font-weight: bold;
             color: #374151;
           }
           .department-section {
-            margin-bottom: 20px;
+            margin-bottom: 6px;
             border: 1px solid #d1d5db;
-            border-radius: 6px;
+            border-radius: 3px;
             overflow: hidden;
+            break-inside: avoid;
           }
           .department-header {
             background-color: #2563eb;
             color: white;
-            padding: 8px 12px;
+            padding: 3px 6px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 8px;
           }
           .items-table {
             width: 100%;
@@ -180,13 +187,16 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           .items-table th,
           .items-table td {
             border: 1px solid #e5e7eb;
-            padding: 6px;
+            padding: 2px 3px;
             text-align: left;
+          }
+          .items-table td {
+            font-size: 7px;
           }
           .items-table th {
             background-color: #f9fafb;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 7px;
           }
           .items-table tr:nth-child(even) {
             background-color: #fefefe;
@@ -381,27 +391,31 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         <title>Виробничий лист - ${department.departmentName} - ${order.orderNumber}</title>
         <style>
           @page { 
-            size: A4; 
-            margin: 15mm;
+            size: A4 landscape; 
+            margin: 8mm;
           }
           body { 
             font-family: Arial, sans-serif; 
-            font-size: 12px; 
-            line-height: 1.4; 
+            font-size: 8px; 
+            line-height: 1.1; 
             margin: 0; 
             padding: 0;
+            column-count: 2;
+            column-gap: 12mm;
+            column-fill: auto;
           }
           .header {
             text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 3px solid #2563eb;
-            padding-bottom: 15px;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 6px;
+            column-span: all;
           }
           .main-title {
-            font-size: 18px;
+            font-size: 12px;
             font-weight: bold;
             color: #1e40af;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
           }
           .department-title {
             font-size: 16px;
@@ -411,16 +425,18 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           }
           .order-info {
             background-color: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #2563eb;
+            padding: 4px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+            border-left: 2px solid #2563eb;
+            column-span: all;
           }
           .info-group {
-            margin-bottom: 8px;
+            margin-bottom: 1px;
             display: inline-block;
             width: 48%;
             vertical-align: top;
+            font-size: 7px;
           }
           .label {
             font-weight: bold;
@@ -429,20 +445,22 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 11px;
+            margin-bottom: 6px;
+            font-size: 7px;
           }
           .items-table th {
             background-color: #2563eb;
             color: white;
-            padding: 10px 8px;
+            padding: 2px 3px;
             text-align: left;
             font-weight: bold;
+            font-size: 7px;
           }
           .items-table td {
-            padding: 8px;
+            padding: 2px 3px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: top;
+            font-size: 7px;
           }
           .items-table tr:nth-child(even) {
             background-color: #f8fafc;
