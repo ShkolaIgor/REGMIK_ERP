@@ -233,6 +233,7 @@ export default function Orders() {
     recipientWarehouseAddress: ""
   });
   const [showSaveDeliveryButton, setShowSaveDeliveryButton] = useState(false);
+  const [isDataAutoFilled, setIsDataAutoFilled] = useState(false); // Флаг для відстеження автозаповнення
   
   // Пагінація
   const [currentPage, setCurrentPage] = useState(0);
@@ -906,13 +907,13 @@ export default function Orders() {
       recipientWarehouseAddress: form.getValues("recipientWarehouseAddress") || ""
     });
 
-    // Приховуємо кнопку "Зберегти в картку клієнта" після автозаповнення з профілю
+    // Встановлюємо флаг автозаповнення та приховуємо кнопку
+    setIsDataAutoFilled(true);
     setShowSaveDeliveryButton(false);
 
     // Форсуємо перерендеринг компонента Nova Poshta після заповнення
     setTimeout(() => {
       setNovaPoshtaKey(prev => prev + 1);
-      // Це допоможе React побачити нові значення після автозаповнення
       form.trigger(["recipientCityRef", "recipientWarehouseRef"]);
     }, 100);
 
@@ -1794,7 +1795,7 @@ export default function Orders() {
 
   // Функція для відстеження змін у даних доставки
   const checkDeliveryDataChanges = () => {
-    if (!isEditMode || !form.watch("clientId")) {
+    if (!isEditMode || !form.watch("clientId") || isDataAutoFilled) {
       setShowSaveDeliveryButton(false);
       return;
     }
@@ -1848,7 +1849,6 @@ export default function Orders() {
         description: "Дані доставки збережено в картку клієнта",
       });
     } catch (error) {
-      console.error('Failed to save delivery data:', error);
       toast({
         title: "Помилка",
         description: "Не вдалося зберегти дані доставки",
@@ -1875,10 +1875,7 @@ export default function Orders() {
       
       const isOverdue = today > dueDate;
       
-      // Debug: перевіряємо логіку прострочених замовлень
-      if (isOverdue) {
-        // Order is overdue, will be shown with visual indicators
-      }
+
       
       return isOverdue;
     }
@@ -2501,7 +2498,11 @@ export default function Orders() {
                           if (!currentCarrierId || currentCarrierId === "") return "none";
                           return currentCarrierId;
                         })()}
-                        onValueChange={(value) => form.setValue("carrierId", value === "none" ? "" : value)}
+                        onValueChange={(value) => {
+                          form.setValue("carrierId", value === "none" ? "" : value);
+                          // Коли користувач вручну змінює перевізника, скидаємо флаг автозаповнення
+                          setIsDataAutoFilled(false);
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Оберіть перевізника" />
@@ -2554,6 +2555,9 @@ export default function Orders() {
                     <NovaPoshtaIntegration
                       key={`nova-poshta-${isEditMode ? editingOrder?.id : 'new'}-${novaPoshtaKey}`}
                       onAddressSelect={(address, cityRef, warehouseRef) => {
+                        // Коли користувач вручну вибирає адресу, скидаємо флаг автозаповнення
+                        setIsDataAutoFilled(false);
+                        
                         // Зберігаємо адресу в примітках замовлення та в окремих полях
                         const currentNotes = form.watch("notes") || "";
                         const addressInfo = `Адреса доставки Nova Poshta: ${address}`;
