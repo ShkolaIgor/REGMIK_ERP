@@ -235,7 +235,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
       </head>
       <body>
         <div class="header">
-          <div class="main-title"> 📦 ПАКУВАЛЬНИЙ ЛИСТ ${new Date().toLocaleString('uk-UA')}</div>
+          <div class="main-title"> 📦 ПАКУВАЛЬНИЙ ЛИСТ </div>
         </div>
 
         <div class="order-info">
@@ -320,7 +320,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         ${departments.map(department => `
           <div class="department-section">
             <div class="department-header">
-              🏭 ${department.departmentName.toUpperCase()}
+              🏭 ${department.departmentName.toUpperCase()} <span class="label">📋 Замовлення:</span> ${order.orderNumber}
             </div>
             <table class="items-table">
               <thead>
@@ -356,7 +356,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <tr>
                   <th style="width: 5%">№</th>
                   <th style="width: 45%">Найменування товару</th>
-                  <!-- <th style="width: 15%">Артикул</th> -->
                   <th style="width: 10%">Кількість</th>
                   <th style="width: 25%">Примітки</th>
                 </tr>
