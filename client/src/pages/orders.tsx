@@ -222,6 +222,16 @@ export default function Orders() {
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   
+  // Стан для збереження даних доставки в картку клієнта
+  const [originalDeliveryData, setOriginalDeliveryData] = useState({
+    carrierId: "",
+    recipientCityRef: "",
+    recipientCityName: "",
+    recipientWarehouseRef: "",
+    recipientWarehouseAddress: ""
+  });
+  const [showSaveDeliveryButton, setShowSaveDeliveryButton] = useState(false);
+  
   // Пагінація
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -1043,6 +1053,16 @@ export default function Orders() {
       }
     }
   }, [companies, isDialogOpen, isEditMode, form]);
+
+  // Відстеження змін у полях доставки для показу кнопки збереження
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name && ['carrierId', 'recipientCityRef', 'recipientCityName', 'recipientWarehouseRef', 'recipientWarehouseAddress'].includes(name)) {
+        setTimeout(() => checkDeliveryDataChanges(), 100); // Невелика затримка для стабільності
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch, isEditMode, originalDeliveryData]);
   
   const clientsList = clientSearchData?.clients || [];
 
@@ -1614,6 +1634,17 @@ export default function Orders() {
         const formatDate = (dateString: string | null) => 
           dateString ? new Date(dateString).toISOString().slice(0, 16) : "";
         
+        // Зберігаємо оригінальні дані доставки для порівняння
+        const currentDeliveryData = {
+          carrierId: fullOrder.carrierId?.toString() || "",
+          recipientCityRef: fullOrder.recipientCityRef || "",
+          recipientCityName: fullOrder.recipientCityName || "",
+          recipientWarehouseRef: fullOrder.recipientWarehouseRef || "",
+          recipientWarehouseAddress: fullOrder.recipientWarehouseAddress || ""
+        };
+        setOriginalDeliveryData(currentDeliveryData);
+        setShowSaveDeliveryButton(false);
+        
         // Заповнення форми повними даними
         form.reset({
           clientId: fullOrder.clientId?.toString() || "",
@@ -1746,6 +1777,73 @@ export default function Orders() {
       const price = parseFloat(item.unitPrice) || 0;
       return sum + (qty * price);
     }, 0);
+  };
+
+  // Функція для відстеження змін у даних доставки
+  const checkDeliveryDataChanges = () => {
+    if (!isEditMode || !form.watch("clientId")) {
+      setShowSaveDeliveryButton(false);
+      return;
+    }
+
+    const currentDeliveryData = {
+      carrierId: form.watch("carrierId") || "",
+      recipientCityRef: form.watch("recipientCityRef") || "",
+      recipientCityName: form.watch("recipientCityName") || "",
+      recipientWarehouseRef: form.watch("recipientWarehouseRef") || "",
+      recipientWarehouseAddress: form.watch("recipientWarehouseAddress") || ""
+    };
+
+    const hasChanges = JSON.stringify(currentDeliveryData) !== JSON.stringify(originalDeliveryData);
+    setShowSaveDeliveryButton(hasChanges);
+  };
+
+  // Функція для збереження даних доставки в картку клієнта
+  const saveDeliveryDataToClient = async () => {
+    const clientId = form.watch("clientId");
+    if (!clientId) return;
+
+    const deliveryData = {
+      carrierId: form.watch("carrierId") || null,
+      recipientCityRef: form.watch("recipientCityRef") || null,
+      recipientCityName: form.watch("recipientCityName") || null,
+      recipientWarehouseRef: form.watch("recipientWarehouseRef") || null,
+      recipientWarehouseAddress: form.watch("recipientWarehouseAddress") || null
+    };
+
+    try {
+      const response = await fetch(`/api/clients/${clientId}/delivery-data`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(deliveryData),
+      });
+
+      if (!response.ok) throw new Error('Failed to save delivery data');
+
+      // Оновлюємо оригінальні дані та приховуємо кнопку
+      setOriginalDeliveryData({
+        carrierId: deliveryData.carrierId?.toString() || "",
+        recipientCityRef: deliveryData.recipientCityRef || "",
+        recipientCityName: deliveryData.recipientCityName || "",
+        recipientWarehouseRef: deliveryData.recipientWarehouseRef || "",
+        recipientWarehouseAddress: deliveryData.recipientWarehouseAddress || ""
+      });
+      setShowSaveDeliveryButton(false);
+
+      toast({
+        title: "Успіх",
+        description: "Дані доставки збережено в картку клієнта",
+      });
+    } catch (error) {
+      console.error('Failed to save delivery data:', error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося зберегти дані доставки",
+        variant: "destructive",
+      });
+    }
   };
 
   // Допоміжні функції для таблиці
@@ -2503,6 +2601,28 @@ export default function Orders() {
                       initialCityName={form.watch("recipientCityName")}
                       initialWarehouseAddress={form.watch("recipientWarehouseAddress")}
                     />
+                    
+                    {/* Кнопка збереження даних доставки в картку клієнта */}
+                    {showSaveDeliveryButton && form.watch("clientId") && (
+                      <div className="mt-4 flex items-center gap-2 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-800">
+                            Дані доставки змінено
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            Зберегти ці налаштування доставки як типові для цього клієнта?
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={saveDeliveryDataToClient}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          Зберегти в картку клієнта
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 

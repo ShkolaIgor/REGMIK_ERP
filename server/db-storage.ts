@@ -7573,6 +7573,44 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  // Метод для збереження даних доставки в картку клієнта
+  async updateClientDeliveryData(clientId: number, deliveryData: {
+    carrierId: number | null;
+    recipientCityRef?: string;
+    recipientCityName?: string;
+    recipientWarehouseRef?: string;
+    recipientWarehouseAddress?: string;
+  }): Promise<any> {
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+
+    // Оновлюємо поля тільки якщо вони передані
+    if (deliveryData.carrierId !== undefined) {
+      updateData.carrierId = deliveryData.carrierId;
+    }
+    if (deliveryData.recipientCityRef !== undefined) {
+      updateData.cityRef = deliveryData.recipientCityRef;
+    }
+    if (deliveryData.recipientCityName !== undefined) {
+      updateData.cityName = deliveryData.recipientCityName;
+    }
+    if (deliveryData.recipientWarehouseRef !== undefined) {
+      updateData.warehouseRef = deliveryData.recipientWarehouseRef;
+    }
+    if (deliveryData.recipientWarehouseAddress !== undefined) {
+      updateData.warehouseAddress = deliveryData.recipientWarehouseAddress;
+    }
+
+    const [client] = await db
+      .update(clients)
+      .set(updateData)
+      .where(eq(clients.id, clientId))
+      .returning();
+    
+    return client;
+  }
+
   async updateClient(id: number, updates: any): Promise<any> {
     const [client] = await db
       .update(clients)

@@ -481,6 +481,14 @@ export interface IStorage {
     warehouse?: any;
   } | undefined>;
 
+  updateClientDeliveryData(clientId: number, deliveryData: {
+    carrierId: number | null;
+    recipientCityRef?: string;
+    recipientCityName?: string;
+    recipientWarehouseRef?: string;
+    recipientWarehouseAddress?: string;
+  }): Promise<any>;
+
   // Client Contacts
   getClientContacts(): Promise<ClientContact[]>;
   getClientContactsPaginated?(page: number, limit: number, search?: string, clientId?: number): Promise<{
@@ -2538,6 +2546,16 @@ export class MemStorage implements IStorage {
       city: null,
       warehouse: null
     };
+  }
+
+  async updateClientDeliveryData(clientId: number, deliveryData: {
+    carrierId: number | null;
+    recipientCityRef?: string;
+    recipientCityName?: string;
+    recipientWarehouseRef?: string;
+    recipientWarehouseAddress?: string;
+  }): Promise<any> {
+    throw new Error("MemStorage не підтримує оновлення даних доставки клієнта");
   }
 }
 

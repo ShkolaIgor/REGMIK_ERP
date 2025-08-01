@@ -6053,6 +6053,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Client delivery settings API for order auto-fill
+  // PUT endpoint для збереження даних доставки в картку клієнта
+  app.put("/api/clients/:id/delivery-data", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.id);
+      const { carrierId, recipientCityRef, recipientCityName, recipientWarehouseRef, recipientWarehouseAddress } = req.body;
+
+      await storage.updateClientDeliveryData(clientId, {
+        carrierId: carrierId ? parseInt(carrierId) : null,
+        recipientCityRef,
+        recipientCityName,
+        recipientWarehouseRef,
+        recipientWarehouseAddress
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving client delivery data:", error);
+      res.status(500).json({ error: "Failed to save delivery data" });
+    }
+  });
+
   app.get("/api/clients/:id/delivery-settings", async (req, res) => {
     try {
       const clientId = parseInt(req.params.id);
