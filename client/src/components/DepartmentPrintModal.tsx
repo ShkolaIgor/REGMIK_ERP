@@ -222,7 +222,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
       </head>
       <body>
         <div class="header">
-          <div class="main-title">🏭 ВИРОБНИЧИЙ ЛИСТ</div>
+          <div class="main-title">🏭 ВИРОБНИЧИЙ ТА ПАКУВАЛЬНИЙ ЛИСТ</div>
           <div>${new Date().toLocaleString('uk-UA')}</div>
         </div>
 
@@ -287,10 +287,12 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               <thead>
                 <tr>
                   <th style="width: 5%">№</th>
-                  <th style="width: 45%">Найменування товару</th>
-                  <!-- <th style="width: 15%">Артикул</th> -->
-                  <th style="width: 10%">Кількість</th>
-                  <th style="width: 25%">Примітки</th>
+                  <th style="width: 35%">Найменування товару</th>
+                  <th style="width: 10%">Артикул</th>
+                  <th style="width: 8%">Кількість</th>
+                  <th style="width: 10%">Ціна за од.</th>
+                  <th style="width: 10%">Сума</th>
+                  <th style="width: 22%">Примітки</th>
                 </tr>
               </thead>
               <tbody>
@@ -299,12 +301,14 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                     <td style="text-align: center;">${index + 1}</td>
                     <td>
                       <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                      <!-- ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''} -->
+                      ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
                     </td>
-                    <!-- <td style="text-align: center; font-family: monospace;">
+                    <td style="text-align: center; font-family: monospace; font-size: 10px;">
                       ${item.productSku || '-'}
-                    </td> -->
+                    </td>
                     <td class="quantity">${item.quantity} шт.</td>
+                    <td class="price">${item.unitPrice ? parseFloat(item.unitPrice).toFixed(2) : '0.00'} грн</td>
+                    <td class="price">${item.totalPrice ? parseFloat(item.totalPrice).toFixed(2) : (item.unitPrice && item.quantity ? (parseFloat(item.unitPrice) * parseInt(item.quantity)).toFixed(2) : '0.00')} грн</td>
                     <td style="font-size: 10px;">
                       ${item.notes || '-'}
                     </td>
@@ -312,6 +316,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 `).join('')}
               </tbody>
             </table>
+            <div class="department-total" style="text-align: right; margin: 10px 0; padding: 8px; background-color: #f0f0f0; border: 1px solid #ccc;">
+              <strong>💰 Сума по відділу: ${department.totalAmount ? parseFloat(department.totalAmount).toFixed(2) : '0.00'} грн</strong>
+            </div>
           </div>
         `).join('')}
 
@@ -324,10 +331,12 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               <thead>
                 <tr>
                   <th style="width: 5%">№</th>
-                  <th style="width: 45%">Найменування товару</th>
-                  <!-- <th style="width: 15%">Артикул</th> -->
-                  <th style="width: 10%">Кількість</th>
-                  <th style="width: 25%">Примітки</th>
+                  <th style="width: 35%">Найменування товару</th>
+                  <th style="width: 10%">Артикул</th>
+                  <th style="width: 8%">Кількість</th>
+                  <th style="width: 10%">Ціна за од.</th>
+                  <th style="width: 10%">Сума</th>
+                  <th style="width: 22%">Примітки</th>
                 </tr>
               </thead>
               <tbody>
@@ -336,12 +345,14 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                     <td style="text-align: center;">${index + 1}</td>
                     <td>
                       <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                      <!-- ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''} -->
+                      ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
                     </td>
-                    <!-- <td style="text-align: center; font-family: monospace;">
+                    <td style="text-align: center; font-family: monospace; font-size: 10px;">
                       ${item.productSku || '-'}
-                    </td> -->
+                    </td>
                     <td class="quantity">${item.quantity} шт.</td>
+                    <td class="price">${item.unitPrice ? parseFloat(item.unitPrice).toFixed(2) : '0.00'} грн</td>
+                    <td class="price">${item.totalPrice ? parseFloat(item.totalPrice).toFixed(2) : (item.unitPrice && item.quantity ? (parseFloat(item.unitPrice) * parseInt(item.quantity)).toFixed(2) : '0.00')} грн</td>
                     <td style="font-size: 10px;">
                       ${item.notes || '-'}
                     </td>
@@ -349,6 +360,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 `).join('')}
               </tbody>
             </table>
+            <div class="department-total" style="text-align: right; margin: 10px 0; padding: 8px; background-color: #fee2e2; border: 1px solid #fca5a5;">
+              <strong>💰 Сума товарів без відділу: ${itemsWithoutDepartmentTotal ? parseFloat(itemsWithoutDepartmentTotal).toFixed(2) : '0.00'} грн</strong>
+            </div>
           </div>
         ` : ''}
 
@@ -472,7 +486,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
       </head>
       <body>
         <div class="header">
-          <div class="main-title">🏭 ВИРОБНИЧИЙ ЛИСТ</div>
+          <div class="main-title">🏭 ВИРОБНИЧИЙ ТА ПАКУВАЛЬНИЙ ЛИСТ</div>
           <div class="department-title">${department.departmentName.toUpperCase()}</div>
         </div>
 
@@ -537,10 +551,12 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           <thead>
             <tr>
               <th style="width: 5%">№</th>
-              <th style="width: 45%">Найменування товару</th>
-              <!-- <th style="width: 15%">Артикул</th> -->
-              <th style="width: 10%">Кількість</th>
-              <th style="width: 25%">Примітки</th>
+              <th style="width: 35%">Найменування товару</th>
+              <th style="width: 10%">Артикул</th>
+              <th style="width: 8%">Кількість</th>
+              <th style="width: 10%">Ціна за од.</th>
+              <th style="width: 10%">Сума</th>
+              <th style="width: 22%">Примітки</th>
             </tr>
           </thead>
           <tbody>
@@ -549,11 +565,14 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <td style="text-align: center;">${index + 1}</td>
                 <td>
                   <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                  <!-- ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''} -->
-                <!-- <td style="text-align: center; font-family: monospace;">
+                  ${item.categoryName ? `<br><small style="color: #6b7280;">(${item.categoryName})</small>` : ''}
+                </td>
+                <td style="text-align: center; font-family: monospace; font-size: 10px;">
                   ${item.productSku || '-'}
-                </td> -->
+                </td>
                 <td class="quantity">${item.quantity} шт.</td>
+                <td class="price">${item.unitPrice ? parseFloat(item.unitPrice).toFixed(2) : '0.00'} грн</td>
+                <td class="price">${item.totalPrice ? parseFloat(item.totalPrice).toFixed(2) : (item.unitPrice && item.quantity ? (parseFloat(item.unitPrice) * parseInt(item.quantity)).toFixed(2) : '0.00')} грн</td>
                 <td style="font-size: 10px;">
                   ${item.notes || '-'}
                 </td>
@@ -562,12 +581,20 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           </tbody>
         </table>
 
+        <div class="department-total" style="text-align: right; margin: 15px 0; padding: 10px; background-color: #f0f0f0; border: 2px solid #000;">
+          <strong style="font-size: 14px;">💰 Загальна сума по відділу: ${department.totalAmount ? parseFloat(department.totalAmount).toFixed(2) : '0.00'} грн</strong>
+        </div>
+
         ${order.notes ? `
           <div class="notes-section">
             <strong>📝 Загальні примітки до замовлення:</strong><br>
             ${order.notes}
           </div>
         ` : ''}
+
+        <div style="text-align: right; margin: 20px 0; padding: 15px; background-color: #dbeafe; border: 3px solid #3b82f6; border-radius: 8px;">
+          <strong style="font-size: 16px;">💰 ЗАГАЛЬНА СУМА ЗАМОВЛЕННЯ: ${order.totalAmount ? parseFloat(order.totalAmount).toFixed(2) : '0.00'} грн</strong>
+        </div>
 
         <!-- <div class="footer">
           Виробничий лист для відділу "${department.departmentName}" створено: ${new Date().toLocaleString('uk-UA')}<br>
