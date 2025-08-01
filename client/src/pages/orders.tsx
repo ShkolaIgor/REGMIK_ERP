@@ -152,6 +152,7 @@ const orderSchema = z.object({
   // Nova Poshta поля
   recipientCityRef: z.string().optional(),
   recipientCityName: z.string().optional(),
+  recipientAreaName: z.string().optional(),
   recipientWarehouseRef: z.string().optional(),
   recipientWarehouseAddress: z.string().optional(),
   shippingCost: z.string().optional(),
@@ -227,6 +228,7 @@ export default function Orders() {
     carrierId: "",
     recipientCityRef: "",
     recipientCityName: "",
+    recipientAreaName: "",
     recipientWarehouseRef: "",
     recipientWarehouseAddress: ""
   });
@@ -1807,6 +1809,7 @@ export default function Orders() {
       carrierId: form.watch("carrierId") || null,
       recipientCityRef: form.watch("recipientCityRef") || null,
       recipientCityName: form.watch("recipientCityName") || null,
+      recipientAreaName: form.watch("recipientAreaName") || null,
       recipientWarehouseRef: form.watch("recipientWarehouseRef") || null,
       recipientWarehouseAddress: form.watch("recipientWarehouseAddress") || null
     };
@@ -1964,6 +1967,7 @@ export default function Orders() {
             if (deliverySettings.city) {
               form.setValue("recipientCityRef", deliverySettings.city.ref);
               form.setValue("recipientCityName", deliverySettings.city.name || "");
+              form.setValue("recipientAreaName", deliverySettings.city.area || "");
             }
 
             // Автозаповнення відділення Nova Poshta
@@ -2528,6 +2532,7 @@ export default function Orders() {
                     {console.log('NOVA POSHTA FORM VALUES:', {
                       recipientCityRef: form.watch("recipientCityRef"),
                       recipientCityName: form.watch("recipientCityName"),
+                      recipientAreaName: form.watch("recipientAreaName"),
                       recipientWarehouseRef: form.watch("recipientWarehouseRef"),
                       recipientWarehouseAddress: form.watch("recipientWarehouseAddress")
                     })}
@@ -2546,8 +2551,9 @@ export default function Orders() {
                         form.setValue("recipientWarehouseRef", warehouseRef);
                         form.setValue("recipientWarehouseAddress", address);
                         
-                        // Знайдемо назву міста за cityRef
+                        // Тимчасово залишимо пустими, поки не налаштуємо передачу назв з NovaPoshtaIntegration
                         form.setValue("recipientCityName", "");
+                        form.setValue("recipientAreaName", "");
                       }}
                       onCostCalculated={(cost) => {
                         // Зберігаємо розраховану вартість доставки в примітках та окремих полях
@@ -2599,6 +2605,7 @@ export default function Orders() {
                       initialCityRef={form.watch("recipientCityRef")}
                       initialWarehouseRef={form.watch("recipientWarehouseRef")}
                       initialCityName={form.watch("recipientCityName")}
+                      initialAreaName={form.watch("recipientAreaName")}
                       initialWarehouseAddress={form.watch("recipientWarehouseAddress")}
                     />
                     
@@ -2629,6 +2636,7 @@ export default function Orders() {
                 {/* Приховані поля для Nova Poshta даних */}
                 <input type="hidden" {...form.register("recipientCityRef")} />
                 <input type="hidden" {...form.register("recipientCityName")} />
+                <input type="hidden" {...form.register("recipientAreaName")} />
                 <input type="hidden" {...form.register("recipientWarehouseRef")} />
                 <input type="hidden" {...form.register("recipientWarehouseAddress")} />
 

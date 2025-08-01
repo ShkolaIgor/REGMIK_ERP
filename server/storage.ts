@@ -485,6 +485,7 @@ export interface IStorage {
     carrierId: number | null;
     recipientCityRef?: string;
     recipientCityName?: string;
+    recipientAreaName?: string;
     recipientWarehouseRef?: string;
     recipientWarehouseAddress?: string;
   }): Promise<any>;
@@ -2552,6 +2553,7 @@ export class MemStorage implements IStorage {
     carrierId: number | null;
     recipientCityRef?: string;
     recipientCityName?: string;
+    recipientAreaName?: string;
     recipientWarehouseRef?: string;
     recipientWarehouseAddress?: string;
   }): Promise<any> {

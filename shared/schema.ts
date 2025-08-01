@@ -1094,7 +1094,10 @@ export const clients = pgTable("clients", {
   source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
   carrierId: integer("carrier_id").references(() => carriers.id), // зв'язок з перевізником
   cityRef: varchar("city_ref", { length: 255 }), // ref міста Нової Пошти
+  cityName: varchar("city_name", { length: 255 }), // назва міста
+  areaName: varchar("area_name", { length: 255 }), // назва області
   warehouseRef: varchar("warehouse_ref", { length: 255 }), // ref відділення Нової Пошти
+  warehouseName: varchar("warehouse_name", { length: 500 }), // назва відділення
   
   // Контактна інформація клієнта
   contactPerson: text("contact_person"), // ім'я контактної особи

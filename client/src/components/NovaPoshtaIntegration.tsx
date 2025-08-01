@@ -95,6 +95,7 @@ interface NovaPoshtaIntegrationProps {
   initialCityRef?: string;
   initialWarehouseRef?: string;
   initialCityName?: string;
+  initialAreaName?: string;
   initialWarehouseAddress?: string;
 }
 
@@ -115,6 +116,7 @@ export function NovaPoshtaIntegration({
   initialCityRef,
   initialWarehouseRef,
   initialCityName,
+  initialAreaName,
   initialWarehouseAddress
 }: NovaPoshtaIntegrationProps) {
   const [cityQuery, setCityQuery] = useState("");
@@ -178,17 +180,18 @@ export function NovaPoshtaIntegration({
     if (initialCityRef && !selectedCity) {
       console.log('LOADING INITIAL CITY FOR REF:', initialCityRef);
       
-      // Використовуємо передану назву міста або загальну назву
+      // Використовуємо передані назви міста та області
       const cityName = initialCityName || "Збережене місто";
+      const areaName = initialAreaName || "Збережена область";
       
       const virtualCity: City = {
         Ref: initialCityRef,
         Description: cityName,
         DescriptionRu: cityName,
-        AreaDescription: "Збережена область",
-        AreaDescriptionRu: "Сохраненная область", 
-        RegionDescription: "Збережений регіон",
-        RegionDescriptionRu: "Сохраненный регион",
+        AreaDescription: areaName,
+        AreaDescriptionRu: areaName, 
+        RegionDescription: areaName,
+        RegionDescriptionRu: areaName,
         SettlementTypeDescription: "місто",
         DeliveryCity: "1",
         Warehouses: "1"

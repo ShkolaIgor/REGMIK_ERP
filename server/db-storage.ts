@@ -7552,7 +7552,21 @@ export class DatabaseStorage implements IStorage {
         .from(novaPoshtaCities)
         .where(eq(novaPoshtaCities.ref, client.cityRef))
         .limit(1);
-      city = cityData;
+      
+      if (cityData) {
+        city = {
+          ...cityData,
+          name: client.cityName || cityData.description,
+          area: client.areaName || cityData.areaDescription
+        };
+      } else if (client.cityName) {
+        // Якщо дані міста немає в базі Nova Poshta, створюємо об'єкт з збережених даних
+        city = {
+          ref: client.cityRef,
+          name: client.cityName,
+          area: client.areaName || "Область не вказана"
+        };
+      }
     }
 
     // Get Nova Poshta warehouse if exists
@@ -7578,6 +7592,7 @@ export class DatabaseStorage implements IStorage {
     carrierId: number | null;
     recipientCityRef?: string;
     recipientCityName?: string;
+    recipientAreaName?: string;
     recipientWarehouseRef?: string;
     recipientWarehouseAddress?: string;
   }): Promise<any> {
@@ -7595,11 +7610,14 @@ export class DatabaseStorage implements IStorage {
     if (deliveryData.recipientCityName !== undefined) {
       updateData.cityName = deliveryData.recipientCityName;
     }
+    if (deliveryData.recipientAreaName !== undefined) {
+      updateData.areaName = deliveryData.recipientAreaName;
+    }
     if (deliveryData.recipientWarehouseRef !== undefined) {
       updateData.warehouseRef = deliveryData.recipientWarehouseRef;
     }
     if (deliveryData.recipientWarehouseAddress !== undefined) {
-      updateData.warehouseAddress = deliveryData.recipientWarehouseAddress;
+      updateData.warehouseName = deliveryData.recipientWarehouseAddress;
     }
 
     const [client] = await db
