@@ -324,7 +324,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         
           <div class="department-section">
             <div class="department-header">
-              <span class="label">🏭 ВИРОБНИЧИЙ ЛИСТ 📋 Замовлення:</span> ${order.orderNumber} 🏭 ${department.departmentName.toUpperCase()} 🏭 <span class=tyle="font-size: 10px;>${new Date().toLocaleString('uk-UA')}</span>
+              <span class="label">ВИРОБНИЧИЙ ЛИСТ 📋 Замовлення:</span> ${order.orderNumber} 🏭 ${department.departmentName.toUpperCase()} <span class=tyle="font-size: 8px;>${new Date().toLocaleString('uk-UA')}</span>
             </div>
             <table class="items-table">
               <thead>
