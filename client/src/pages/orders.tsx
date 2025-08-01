@@ -221,6 +221,7 @@ export default function Orders() {
   const [clientContactsForOrder, setClientContactsForOrder] = useState<any[]>([]);
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [novaPoshtaKey, setNovaPoshtaKey] = useState(0); // Для перерендерингу Nova Poshta компонента
   
   // Стан для збереження даних доставки в картку клієнта
   const [originalDeliveryData, setOriginalDeliveryData] = useState({
@@ -904,8 +905,9 @@ export default function Orders() {
       recipientWarehouseAddress: form.getValues("recipientWarehouseAddress")
     });
 
-    // Форсуємо оновлення компонента Nova Poshta після заповнення
+    // Форсуємо перерендеринг компонента Nova Poshta після заповнення
     setTimeout(() => {
+      setNovaPoshtaKey(prev => prev + 1);
       // Це допоможе React побачити нові значення після автозаповнення
       form.trigger(["recipientCityRef", "recipientWarehouseRef"]);
     }, 100);
@@ -2546,7 +2548,7 @@ export default function Orders() {
                   <div className="mt-6">
 
                     <NovaPoshtaIntegration
-                      key={`nova-poshta-${isEditMode ? editingOrder?.id : 'new'}`}
+                      key={`nova-poshta-${isEditMode ? editingOrder?.id : 'new'}-${novaPoshtaKey}`}
                       onAddressSelect={(address, cityRef, warehouseRef) => {
                         // Зберігаємо адресу в примітках замовлення та в окремих полях
                         const currentNotes = form.watch("notes") || "";
