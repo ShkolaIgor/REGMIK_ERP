@@ -297,7 +297,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <th style="width: 45%">Найменування товару</th>
                 <!-- <th style="width: 15%">Артикул</th> -->
                 <th style="width: 10%">Кількість</th>
-                <th style="width: 25%">Примітки</th>
+                <!-- <th style="width: 25%">Примітки</th> -->
               </tr>
             </thead>
             <tbody>
@@ -306,7 +306,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                   <td style="text-align: center;">${index + 1}</td>
                   <td>${item.productName || item.itemName || 'Без назви'}</td>
                   <td class="quantity">${item.quantity} шт.</td>
-                  <td style="font-size: 10px;">${item.notes || '-'}</td>
+                  <!-- <td style="font-size: 10px;">${item.notes || '-'}</td> -->
                 </tr>
               `).join('')}
             </tbody>
@@ -315,11 +315,13 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
 
         <div class="header"> </div>
 
-        <div class="header">
+        <!-- <div class="header">
           <div class="main-title">🏭 ВИРОБНИЧИЙ ЛИСТ ${new Date().toLocaleString('uk-UA')}</div>
-        </div>
+        </div> -->
 
         ${departments.map(department => `
+          <div class="main-title">🏭 ВИРОБНИЧИЙ ЛИСТ ${new Date().toLocaleString('uk-UA')}</div>
+        
           <div class="department-section">
             <div class="department-header">
               <span class="label">📋 Замовлення:</span> ${order.orderNumber} 🏭 ${department.departmentName.toUpperCase()}
