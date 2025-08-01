@@ -170,18 +170,13 @@ export function NovaPoshtaIntegration({
   // Завантаження початкових значень міста і складу з Nova Poshta API (як у ClientForm.tsx)
   useEffect(() => {
     const loadInitialData = async () => {
-
-      
       // Завантажуємо місто з API за ref (як у ClientForm.tsx)
       if (initialCityRef && !selectedCity) {
-
-        
         try {
           const response = await fetch(`/api/nova-poshta/city/${initialCityRef}`);
           if (response.ok) {
             const cityData = await response.json();
             if (cityData) {
-
               setSelectedCity(cityData);
               setCityQuery(cityData.Description);
             }
@@ -193,15 +188,12 @@ export function NovaPoshtaIntegration({
       
       // Завантажуємо склад з API за ref (тільки після завантаження міста)
       if (initialWarehouseRef && selectedCity && !selectedWarehouse) {
-
-        
         try {
           const response = await fetch(`/api/nova-poshta/warehouses/${selectedCity.Ref}`);
           if (response.ok) {
             const warehouses = await response.json();
             const warehouse = warehouses.find((w: any) => w.Ref === initialWarehouseRef);
             if (warehouse) {
-
               setSelectedWarehouse(warehouse);
               setWarehouseQuery(warehouse.ShortAddress);
             }
@@ -212,8 +204,11 @@ export function NovaPoshtaIntegration({
       }
     };
     
-    loadInitialData();
-  }, [initialCityRef, initialWarehouseRef, selectedCity?.Ref]);
+    // Якщо нема початкових даних, не викликаємо API
+    if (initialCityRef || initialWarehouseRef) {
+      loadInitialData();
+    }
+  }, [initialCityRef, initialWarehouseRef]);
 
   // Функція для завантаження опису замовлення
   const loadOrderDescription = async () => {
@@ -535,11 +530,18 @@ export function NovaPoshtaIntegration({
                   size="sm"
                   onClick={() => {
                     console.log('Clearing city and warehouse data');
-                    setSelectedCity(null);
+                    // Форсуємо очищення в правильному порядку
                     setSelectedWarehouse(null);
-                    setCityQuery('');
                     setWarehouseQuery('');
-                    console.log('After clearing - cityQuery:', '', 'selectedCity:', null);
+                    setSelectedCity(null);
+                    setCityQuery('');
+                    console.log('After clearing - cityQuery should be empty');
+                    
+                    // Форсуємо re-render через setTimeout
+                    setTimeout(() => {
+                      setCityQuery('');
+                      console.log('Force cleared cityQuery in setTimeout');
+                    }, 0);
                   }}
                 >
                   Змінити
