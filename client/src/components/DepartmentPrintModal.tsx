@@ -305,13 +305,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 ${department.items.map((item, index) => `
                   <tr>
                     <td style="text-align: center;">${index + 1}</td>
-                    <td>
-                      <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                    </td>
+                    <td>${item.productName || item.itemName || 'Без назви'}</td>
                     <td class="quantity">${item.quantity} шт.</td>
-                    <td style="font-size: 10px;">
-                      ${item.notes || '-'}
-                    </td>
+                    <td style="font-size: 10px;">${item.notes || '-'}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -339,13 +335,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 ${itemsWithoutDepartment.map((item, index) => `
                   <tr>
                     <td style="text-align: center;">${index + 1}</td>
-                    <td>
-                      <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                    </td>
+                    <td>${item.productName || item.itemName || 'Без назви'}</td>
                     <td class="quantity">${item.quantity} шт.</td>
-                    <td style="font-size: 10px;">
-                      ${item.notes || '-'}
-                    </td>
+                    <td style="font-size: 10px;">${item.notes || '-'}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -357,7 +349,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         <!-- Пакувальний лист - всі позиції разом -->
         <div class="department-section" style="margin-top: 10px; border: 2px solid #059669;">
           <div class="department-header" style="background-color: #059669;">
-            📦 ПАКУВАЛЬНИЙ ЛИСТ - ВСІ ПОЗИЦІЇ
+            📦 ПАКУВАЛЬНИЙ ЛИСТ
           </div>
           <table class="items-table">
             <thead>
@@ -373,13 +365,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               ${allItems.map((item, index) => `
                 <tr>
                   <td style="text-align: center;">${index + 1}</td>
-                  <td>
-                    <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                  </td>
+                  <td>${item.productName || item.itemName || 'Без назви'}</td>
                   <td class="quantity">${item.quantity} шт.</td>
-                  <td style="font-size: 10px;">
-                    ${item.notes || '-'}
-                  </td>
+                  <td style="font-size: 10px;">${item.notes || '-'}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -581,7 +569,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             <tr>
               <th style="width: 5%">№</th>
               <th style="width: 45%">Найменування товару</th>
-              <!-- <th style="width: 15%">Артикул</th> -->
               <th style="width: 10%">Кількість</th>
               <th style="width: 25%">Примітки</th>
             </tr>
@@ -590,13 +577,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             ${department.items.map((item, index) => `
               <tr>
                 <td style="text-align: center;">${index + 1}</td>
-                <td>
-                  <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                </td>
+                <td>${item.productName || item.itemName || 'Без назви'}</td>
                 <td class="quantity">${item.quantity} шт.</td>
-                <td style="font-size: 10px;">
-                  ${item.notes || '-'}
-                </td>
+                <td style="font-size: 10px;">${item.notes || '-'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -614,7 +597,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               <tr>
                 <th style="width: 5%">№</th>
                 <th style="width: 45%">Найменування товару</th>
-                <!-- <th style="width: 15%">Артикул</th> -->
                 <th style="width: 10%">Кількість</th>
                 <th style="width: 25%">Примітки</th>
               </tr>
@@ -623,13 +605,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               ${allItems.map((item, index) => `
                 <tr>
                   <td style="text-align: center;">${index + 1}</td>
-                  <td>
-                    <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                  </td>
+                  <td>${item.productName || item.itemName || 'Без назви'}</td>
                   <td class="quantity">${item.quantity} шт.</td>
-                  <td style="font-size: 10px;">
-                    ${item.notes || '-'}
-                  </td>
+                  <td style="font-size: 10px;">${item.notes || '-'}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -642,8 +620,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             ${order.notes}
           </div>
         ` : ''}
-
-
 
         <!-- <div class="footer">
           Виробничий лист для відділу "${department.departmentName}" створено: ${new Date().toLocaleString('uk-UA')}<br>
