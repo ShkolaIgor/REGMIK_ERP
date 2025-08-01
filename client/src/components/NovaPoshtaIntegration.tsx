@@ -534,10 +534,12 @@ export function NovaPoshtaIntegration({
                   variant="outline" 
                   size="sm"
                   onClick={() => {
+                    console.log('Clearing city and warehouse data');
                     setSelectedCity(null);
                     setSelectedWarehouse(null);
                     setCityQuery('');
                     setWarehouseQuery('');
+                    console.log('After clearing - cityQuery:', '', 'selectedCity:', null);
                   }}
                 >
                   Змінити
