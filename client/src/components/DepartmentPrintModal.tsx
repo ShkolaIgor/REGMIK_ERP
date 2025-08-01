@@ -15,7 +15,6 @@ interface DepartmentItem {
   notes?: string;
   itemName?: string;
   productName?: string;
-  productSku?: string;
   categoryName?: string;
 }
 
@@ -35,7 +34,6 @@ interface DepartmentPrintData {
     shippedDate?: string;
     notes?: string;
     createdAt: string;
-    trackingNumber?: string;
     client?: {
       name: string;
       taxCode?: string; // ЄДРПОУ
@@ -238,8 +236,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
       </head>
       <body>
         <div class="header">
-          <div class="main-title">🏭 ВИРОБНИЧИЙ ТА ПАКУВАЛЬНИЙ ЛИСТ</div>
-          <div>${new Date().toLocaleString('uk-UA')}</div>
+          <div class="main-title">🏭 ВИРОБНИЧИЙ ТА ПАКУВАЛЬНИЙ ЛИСТ ${new Date().toLocaleString('uk-UA')}</div>
         </div>
 
         <div class="order-info">
@@ -281,11 +278,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             <div class="info-group">
               <span class="label">🚚 Перевізник:</span> ${order.carrier.name}
             </div>
-            ${order.trackingNumber ? `
-              <div class="info-group">
-                <span class="label">📦 ТТН:</span> ${order.trackingNumber}
-              </div>
-            ` : ''}
             ${order.carrier.cityName ? `
               <div class="info-group">
                 <span class="label">🏪 Місто доставки:</span> ${order.carrier.recipientCityName}
@@ -304,7 +296,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <tr>
                   <th style="width: 5%">№</th>
                   <th style="width: 45%">Найменування товару</th>
-                  <th style="width: 15%">Артикул</th>
+                  <!-- <th style="width: 15%">Артикул</th> -->
                   <th style="width: 10%">Кількість</th>
                   <th style="width: 25%">Примітки</th>
                 </tr>
@@ -315,9 +307,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                     <td style="text-align: center;">${index + 1}</td>
                     <td>
                       <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                    </td>
-                    <td style="text-align: center; font-family: monospace; font-size: 10px;">
-                      ${item.productSku || '-'}
                     </td>
                     <td class="quantity">${item.quantity} шт.</td>
                     <td style="font-size: 10px;">
@@ -341,7 +330,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <tr>
                   <th style="width: 5%">№</th>
                   <th style="width: 45%">Найменування товару</th>
-                  <th style="width: 15%">Артикул</th>
+                  <!-- <th style="width: 15%">Артикул</th> -->
                   <th style="width: 10%">Кількість</th>
                   <th style="width: 25%">Примітки</th>
                 </tr>
@@ -352,9 +341,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                     <td style="text-align: center;">${index + 1}</td>
                     <td>
                       <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                    </td>
-                    <td style="text-align: center; font-family: monospace; font-size: 10px;">
-                      ${item.productSku || '-'}
                     </td>
                     <td class="quantity">${item.quantity} шт.</td>
                     <td style="font-size: 10px;">
@@ -378,7 +364,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               <tr>
                 <th style="width: 5%">№</th>
                 <th style="width: 45%">Найменування товару</th>
-                <th style="width: 15%">Артикул</th>
+                <!-- <th style="width: 15%">Артикул</th> -->
                 <th style="width: 10%">Кількість</th>
                 <th style="width: 25%">Примітки</th>
               </tr>
@@ -389,9 +375,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                   <td style="text-align: center;">${index + 1}</td>
                   <td>
                     <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                  </td>
-                  <td style="text-align: center; font-family: monospace; font-size: 10px;">
-                    ${item.productSku || '-'}
                   </td>
                   <td class="quantity">${item.quantity} шт.</td>
                   <td style="font-size: 10px;">
@@ -580,11 +563,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             <div class="info-group">
               <span class="label">🚚 Перевізник:</span> ${order.carrier.name}
             </div>
-            ${order.trackingNumber ? `
-              <div class="info-group">
-                <span class="label">📦 ТТН:</span> ${order.trackingNumber}
-              </div>
-            ` : ''}
             ${order.carrier.recipientCityName ? `
               <div class="info-group">
                 <span class="label">🏪 Місто доставки:</span> ${order.carrier.recipientCityName}
@@ -603,7 +581,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             <tr>
               <th style="width: 5%">№</th>
               <th style="width: 45%">Найменування товару</th>
-              <th style="width: 15%">Артикул</th>
+              <!-- <th style="width: 15%">Артикул</th> -->
               <th style="width: 10%">Кількість</th>
               <th style="width: 25%">Примітки</th>
             </tr>
@@ -614,9 +592,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <td style="text-align: center;">${index + 1}</td>
                 <td>
                   <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                </td>
-                <td style="text-align: center; font-family: monospace; font-size: 10px;">
-                  ${item.productSku || '-'}
                 </td>
                 <td class="quantity">${item.quantity} шт.</td>
                 <td style="font-size: 10px;">
@@ -632,14 +607,14 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         <!-- Пакувальний лист - всі позиції замовлення -->
         <div style="margin-top: 15px; border: 2px solid #059669; border-radius: 3px; overflow: hidden; break-inside: avoid;">
           <div style="background-color: #059669; color: white; padding: 3px 6px; font-weight: bold; font-size: 8px;">
-            📦 ПАКУВАЛЬНИЙ ЛИСТ - ВСІ ПОЗИЦІЇ
+            📦 ПАКУВАЛЬНИЙ ЛИСТ
           </div>
           <table class="items-table">
             <thead>
               <tr>
                 <th style="width: 5%">№</th>
                 <th style="width: 45%">Найменування товару</th>
-                <th style="width: 15%">Артикул</th>
+                <!-- <th style="width: 15%">Артикул</th> -->
                 <th style="width: 10%">Кількість</th>
                 <th style="width: 25%">Примітки</th>
               </tr>
@@ -650,9 +625,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                   <td style="text-align: center;">${index + 1}</td>
                   <td>
                     <strong>${item.productName || item.itemName || 'Без назви'}</strong>
-                  </td>
-                  <td style="text-align: center; font-family: monospace; font-size: 10px;">
-                    ${item.productSku || '-'}
                   </td>
                   <td class="quantity">${item.quantity} шт.</td>
                   <td style="font-size: 10px;">
@@ -880,9 +852,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                               <span className="font-medium">
                                 {item.productName || item.itemName || 'Без назви'}
                               </span>
-                              {item.productSku && (
-                                <span className="text-gray-500 ml-2">({item.productSku})</span>
-                              )}
                             </div>
                             <Badge variant="secondary" className="bg-green-100 text-green-800">
                               {item.quantity} шт.
@@ -917,9 +886,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                         <span className="font-medium">
                           {item.productName || item.itemName || 'Без назви'}
                         </span>
-                        {item.productSku && (
-                          <span className="text-gray-500 ml-2">({item.productSku})</span>
-                        )}
                       </div>
                       <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                         {item.quantity} шт.
