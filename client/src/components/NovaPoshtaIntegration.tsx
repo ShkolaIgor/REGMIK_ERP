@@ -167,10 +167,9 @@ export function NovaPoshtaIntegration({
     }
   }, [externalRecipientName, externalRecipientPhone]);
 
-  // Завантаження початкових значень міста і складу з Nova Poshta API (як у ClientForm.tsx)
+  // Завантаження початкового міста з Nova Poshta API
   useEffect(() => {
-    const loadInitialData = async () => {
-      // Завантажуємо місто з API за ref (як у ClientForm.tsx)
+    const loadInitialCity = async () => {
       if (initialCityRef && !selectedCity) {
         try {
           const response = await fetch(`/api/nova-poshta/city/${initialCityRef}`);
@@ -185,8 +184,16 @@ export function NovaPoshtaIntegration({
           console.error('Failed to load city by ref:', error);
         }
       }
-      
-      // Завантажуємо склад з API за ref (тільки після завантаження міста)
+    };
+    
+    if (initialCityRef) {
+      loadInitialCity();
+    }
+  }, [initialCityRef]);
+
+  // Завантаження початкового складу після завантаження міста
+  useEffect(() => {
+    const loadInitialWarehouse = async () => {
       if (initialWarehouseRef && selectedCity && !selectedWarehouse) {
         try {
           const response = await fetch(`/api/nova-poshta/warehouses/${selectedCity.Ref}`);
@@ -204,11 +211,10 @@ export function NovaPoshtaIntegration({
       }
     };
     
-    // Якщо нема початкових даних, не викликаємо API
-    if (initialCityRef || initialWarehouseRef) {
-      loadInitialData();
+    if (initialWarehouseRef && selectedCity) {
+      loadInitialWarehouse();
     }
-  }, [initialCityRef, initialWarehouseRef]);
+  }, [initialWarehouseRef, selectedCity?.Ref]);
 
   // Функція для завантаження опису замовлення
   const loadOrderDescription = async () => {
@@ -529,19 +535,11 @@ export function NovaPoshtaIntegration({
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    console.log('Clearing city and warehouse data');
-                    // Форсуємо очищення в правильному порядку
+                    // Очищаємо всі дані для нового вибору
                     setSelectedWarehouse(null);
                     setWarehouseQuery('');
                     setSelectedCity(null);
                     setCityQuery('');
-                    console.log('After clearing - cityQuery should be empty');
-                    
-                    // Форсуємо re-render через setTimeout
-                    setTimeout(() => {
-                      setCityQuery('');
-                      console.log('Force cleared cityQuery in setTimeout');
-                    }, 0);
                   }}
                 >
                   Змінити
