@@ -1599,6 +1599,14 @@ export default function Orders() {
       const formatDate = (dateString: string | null) => 
         dateString ? new Date(dateString).toISOString().slice(0, 16) : "";
       
+      // Debug: логування Nova Poshta даних з order
+      console.log('🔧 DEBUG: Nova Poshta data from order:', {
+        recipientCityRef: order.recipientCityRef,
+        recipientCityName: order.recipientCityName,
+        recipientWarehouseRef: order.recipientWarehouseRef,
+        recipientWarehouseAddress: order.recipientWarehouseAddress,
+      });
+      
       // Заповнення форми новими даними
       form.reset({
         clientId: order.clientId?.toString() || "",
@@ -1670,6 +1678,16 @@ export default function Orders() {
         comment: item.comment || "",
       })) || [];
       setOrderItems(items);
+      
+      // Debug: перевірка form values після reset  
+      setTimeout(() => {
+        console.log('🔧 DEBUG: Form values after reset:', {
+          recipientCityRef: form.getValues("recipientCityRef"),
+          recipientCityName: form.getValues("recipientCityName"),
+          recipientWarehouseRef: form.getValues("recipientWarehouseRef"),
+          recipientWarehouseAddress: form.getValues("recipientWarehouseAddress"),
+        });
+      }, 200);
     }, 100);
     
     // Встановлюємо фокус тільки для нових замовлень
