@@ -896,6 +896,16 @@ export default function Orders() {
 
 
 
+    // Оновлюємо базові дані після автозаповнення щоб кнопка не показувалась
+    setOriginalDeliveryData({
+      carrierId: form.getValues("carrierId") || "",
+      recipientCityRef: form.getValues("recipientCityRef") || "",
+      recipientCityName: form.getValues("recipientCityName") || "",
+      recipientAreaName: "",
+      recipientWarehouseRef: form.getValues("recipientWarehouseRef") || "",
+      recipientWarehouseAddress: form.getValues("recipientWarehouseAddress") || ""
+    });
+
     // Приховуємо кнопку "Зберегти в картку клієнта" після автозаповнення з профілю
     setShowSaveDeliveryButton(false);
 
