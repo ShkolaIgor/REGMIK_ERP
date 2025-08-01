@@ -468,10 +468,7 @@ export function NovaPoshtaIntegration({
     return aNumber - bNumber;
   });
 
-  // Дебагінг
-  console.log('Warehouses:', warehouses, 'Filtered:', filteredWarehouses, 'Query:', warehouseQuery);
-  console.log('Selected City Ref for warehouses query:', selectedCity?.Ref);
-  console.log('Warehouses loading:', warehousesLoading);
+
 
   // Відстеження відвантаження
   const { data: trackingInfo, isLoading: trackingLoading } = useQuery<TrackingInfo>({
@@ -568,6 +565,10 @@ export function NovaPoshtaIntegration({
                         onClick={() => {
                           setSelectedCity(city);
                           setCityQuery(city.Description);
+                          
+                          // Очищаємо вибраний склад при зміні міста
+                          setSelectedWarehouse(null);
+                          setWarehouseQuery("");
                         }}
                       >
                         <div className="font-medium text-sm">{city.Description}</div>

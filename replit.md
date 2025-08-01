@@ -7,11 +7,11 @@ REGMIK ERP is a comprehensive enterprise resource planning system tailored for U
 Preferred communication style: Simple, everyday language.
 User has Russian-language 1C system and needs integration setup guidance.
 
-## Recent Changes (Updated 2025-07-31)
-- **Nova Poshta Integration Fixed**: Resolved schema validation issues preventing Nova Poshta field persistence
-- **Database Schema Updated**: Made Nova Poshta fields nullable in insertOrderSchemaForm for proper form handling
-- **Virtual Object Support**: Added fallback city/warehouse objects for known ref values to improve form restoration
-- **Customer Addresses Error Fixed**: Removed non-existent customerName field from database queries
+## Recent Changes (Updated 2025-08-01)
+- **Nova Poshta Display Issue Fixed**: Resolved "Збережена область" display problem by implementing API-based data loading
+- **Architecture Simplified**: Replaced virtual object creation with real Nova Poshta API data retrieval using loadCityByRef/loadWarehouseByRef methods
+- **Database Schema Cleaned**: Removed unnecessary recipientAreaName, recipientCityName, recipientWarehouseAddress fields from clients table
+- **City Selection Logic Fixed**: Added proper warehouse clearing when city changes to prevent stale data display
 
 ## System Architecture
 
