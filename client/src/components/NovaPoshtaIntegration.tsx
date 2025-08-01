@@ -537,6 +537,7 @@ export function NovaPoshtaIntegration({
                     setSelectedCity(null);
                     setSelectedWarehouse(null);
                     setCityQuery('');
+                    setWarehouseQuery('');
                   }}
                 >
                   Змінити
