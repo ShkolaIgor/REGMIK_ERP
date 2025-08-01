@@ -165,7 +165,7 @@ export function NovaPoshtaIntegration({
     }
   }, [externalRecipientName, externalRecipientPhone]);
 
-  // Встановлення початкових значень міста і складу
+  // Встановлення початкових значень міста і складу (тільки якщо поля пусті)
   useEffect(() => {
     console.log('NovaPoshtaIntegration useEffect triggered:', {
       initialCityRef,
@@ -174,173 +174,52 @@ export function NovaPoshtaIntegration({
       selectedWarehouseRef: selectedWarehouse?.Ref
     });
     
-    if (initialCityRef && initialCityRef !== selectedCity?.Ref) {
+    // Ініціалізуємо місто тільки якщо його ще не обрано користувачем
+    if (initialCityRef && !selectedCity) {
       console.log('LOADING INITIAL CITY FOR REF:', initialCityRef);
       
-      // Створюємо віртуальний об'єкт міста для будь-якого збереженого ref-а
-      if (initialCityRef && initialCityRef !== 'undefined') {
-        const cityName = (() => {
-          // Спеціальні ref-и з відомими назвами
-          if (initialCityRef === 'db5c897c-391c-11dd-90d9-001a92567626') return "Київ";
-          // Інакше використовуємо передану назву або загальну
-          return initialCityName || "Збережене місто";
-        })();
-        
-        const virtualCity: City = {
-          Ref: initialCityRef,
-          Description: cityName,
-          DescriptionRu: cityName,
-          AreaDescription: "Збережена область",
-          AreaDescriptionRu: "Сохраненная область", 
-          RegionDescription: "Збережений регіон",
-          RegionDescriptionRu: "Сохраненный регион",
-          SettlementTypeDescription: "місто",
-          DeliveryCity: "1",
-          Warehouses: "1"
-        };
-        console.log('CREATED VIRTUAL CITY:', virtualCity);
-        setSelectedCity(virtualCity);
-        setCityQuery(virtualCity.Description);
-        return;
-      }
+      // Використовуємо передану назву міста або загальну назву
+      const cityName = initialCityName || "Збережене місто";
       
-      // Спочатку пробуємо знайти в базі даних
-      fetch(`/api/nova-poshta-cities?ref=${initialCityRef}`)
-        .then(res => res.json())
-        .then(dbCities => {
-          console.log('DB Cities response for ref:', dbCities);
-          if (dbCities.length > 0) {
-            const dbCity = dbCities[0];
-            const city: City = {
-              Ref: dbCity.Ref || dbCity.ref || initialCityRef,
-              Description: dbCity.Description || dbCity.description || `Місто (${dbCity.Ref || dbCity.ref || initialCityRef})`,
-              DescriptionRu: dbCity.DescriptionRu || dbCity.description_ru || dbCity.Description || dbCity.description || `Город (${dbCity.Ref || dbCity.ref || initialCityRef})`,
-              AreaDescription: dbCity.AreaDescription || dbCity.area_description || '',
-              AreaDescriptionRu: dbCity.AreaDescriptionRu || dbCity.area_description_ru || dbCity.AreaDescription || dbCity.area_description || '',
-              RegionDescription: dbCity.RegionDescription || dbCity.region_description || '',
-              RegionDescriptionRu: dbCity.RegionDescriptionRu || dbCity.region_description_ru || dbCity.RegionDescription || dbCity.region_description || '',
-              SettlementTypeDescription: dbCity.SettlementTypeDescription || dbCity.settlement_type_description || '',
-              DeliveryCity: dbCity.DeliveryCity || dbCity.delivery_city || '1',
-              Warehouses: dbCity.Warehouses || dbCity.warehouses || '1'
-            };
-            console.log('FOUND CITY IN DB:', city);
-            setSelectedCity(city);
-            const cityName = city.Description || `Місто (${city.Ref})`;
-            setCityQuery(cityName);
-          } else {
-            // Якщо не знайдено в базі, пробуємо API
-            fetch(`/api/nova-poshta/cities?search=`)
-              .then(res => res.json())
-              .then(cities => {
-                const city = cities.find((c: City) => c.Ref === initialCityRef);
-                if (city) {
-                  console.log('FOUND CITY IN API:', city);
-                  setSelectedCity(city);
-                  setCityQuery(city.Description);
-                } else {
-                  console.log('CITY NOT FOUND, creating fallback for ref:', initialCityRef);
-                  const virtualCity: City = {
-                    Ref: initialCityRef,
-                    Description: `Місто (${initialCityRef})`,
-                    DescriptionRu: `Город (${initialCityRef})`,
-                    AreaDescription: "",
-                    AreaDescriptionRu: "",
-                    RegionDescription: "",
-                    RegionDescriptionRu: "",
-                    SettlementTypeDescription: "",
-                    DeliveryCity: "1",
-                    Warehouses: "1"
-                  };
-                  setSelectedCity(virtualCity);
-                  setCityQuery(virtualCity.Description);
-                }
-              })
-              .catch(console.error);
-          }
-        })
-        .catch(console.error);
+      const virtualCity: City = {
+        Ref: initialCityRef,
+        Description: cityName,
+        DescriptionRu: cityName,
+        AreaDescription: "Збережена область",
+        AreaDescriptionRu: "Сохраненная область", 
+        RegionDescription: "Збережений регіон",
+        RegionDescriptionRu: "Сохраненный регион",
+        SettlementTypeDescription: "місто",
+        DeliveryCity: "1",
+        Warehouses: "1"
+      };
+      console.log('CREATED VIRTUAL CITY:', virtualCity);
+      setSelectedCity(virtualCity);
+      setCityQuery(virtualCity.Description);
+
     }
     
-    if (initialWarehouseRef && initialWarehouseRef !== selectedWarehouse?.Ref) {
+    // Ініціалізуємо склад тільки якщо його ще не обрано користувачем
+    if (initialWarehouseRef && !selectedWarehouse) {
       console.log('LOADING INITIAL WAREHOUSE FOR REF:', initialWarehouseRef);
       
-      // Створюємо віртуальний об'єкт складу для будь-якого збереженого ref-а
-      if (initialWarehouseRef && initialWarehouseRef !== 'undefined') {
-        const warehouseAddress = (() => {
-          // Спеціальні ref-и з відомими адресами
-          if (initialWarehouseRef === '1e31d8de-6beb-11e6-a2d7-001a92567626') return "Відділення №5 (вул. Хрещатик, 5)";
-          // Інакше використовуємо передану адресу або загальну
-          return initialWarehouseAddress || "Збережене відділення";
-        })();
-        
-        const virtualWarehouse: Warehouse = {
-          Ref: initialWarehouseRef,
-          Number: "1",
-          Description: warehouseAddress,
-          ShortAddress: warehouseAddress,
-          Phone: "0800509001",
-          Schedule: {},
-          CityRef: selectedCity?.Ref || initialCityRef || ""
-        };
-        console.log('CREATED VIRTUAL WAREHOUSE:', virtualWarehouse);
-        setSelectedWarehouse(virtualWarehouse);
-        setWarehouseQuery(virtualWarehouse.Description);
-        return;
-      }
+      // Використовуємо передану адресу складу або загальну назву
+      const warehouseAddress = initialWarehouseAddress || "Збережене відділення";
       
-      // Пошук складу безпосередньо в базі даних Nova Poshta
-      fetch(`/api/nova-poshta-warehouses?ref=${initialWarehouseRef}`)
-        .then(res => res.json())
-        .then(dbWarehouses => {
-          console.log('DB Warehouses response for ref:', dbWarehouses);
-          if (dbWarehouses.length > 0) {
-            const dbWarehouse = dbWarehouses[0];
-            console.log('FOUND WAREHOUSE IN DB:', dbWarehouse);
-            // Конвертуємо формат бази даних до формату API
-            const warehouse: Warehouse = {
-              Ref: dbWarehouse.ref,
-              Number: dbWarehouse.number || '',
-              Description: dbWarehouse.description || `Відділення (${dbWarehouse.ref})`,
-              ShortAddress: dbWarehouse.short_address || dbWarehouse.description || `Відділення (${dbWarehouse.ref})`,
-              Phone: dbWarehouse.phone || '',
-              Schedule: dbWarehouse.schedule || {},
-              CityRef: dbWarehouse.city_ref
-            };
-            setSelectedWarehouse(warehouse);
-            const warehouseName = warehouse.Description || `Відділення (${warehouse.Ref})`;
-            setWarehouseQuery(warehouseName);
-          } else if (initialCityRef) {
-            // Якщо склад не знайдений, пробуємо завантажити склади для міста
-            console.log('WAREHOUSE NOT FOUND IN DB, trying to load warehouses for city:', initialCityRef);
-            fetch(`/api/nova-poshta/warehouses?cityRef=${initialCityRef}`)
-              .then(res => res.json())
-              .then(warehouses => {
-                const warehouse = warehouses.find((w: Warehouse) => w.Ref === initialWarehouseRef);
-                if (warehouse) {
-                  console.log('FOUND WAREHOUSE IN API:', warehouse);
-                  setSelectedWarehouse(warehouse);
-                  setWarehouseQuery(warehouse.Description);
-                } else {
-                  console.log('WAREHOUSE NOT FOUND, creating fallback for ref:', initialWarehouseRef);
-                  const virtualWarehouse: Warehouse = {
-                    Ref: initialWarehouseRef,
-                    Number: "1", 
-                    Description: `Відділення (${initialWarehouseRef})`,
-                    ShortAddress: `Відділення (${initialWarehouseRef})`,
-                    Phone: "",
-                    Schedule: {},
-                    CityRef: initialCityRef || ""
-                  };
-                  setSelectedWarehouse(virtualWarehouse);
-                  setWarehouseQuery(virtualWarehouse.Description);
-                }
-              })
-              .catch(console.error);
-          }
-        })
-        .catch(console.error);
+      const virtualWarehouse: Warehouse = {
+        Ref: initialWarehouseRef,
+        Number: "1",
+        Description: warehouseAddress,
+        ShortAddress: warehouseAddress,
+        Phone: "0800509001",
+        Schedule: {},
+        CityRef: selectedCity?.Ref || initialCityRef || ""
+      };
+      console.log('CREATED VIRTUAL WAREHOUSE:', virtualWarehouse);
+      setSelectedWarehouse(virtualWarehouse);
+      setWarehouseQuery(virtualWarehouse.Description);
     }
-  }, [initialCityRef, initialWarehouseRef, selectedCity?.Ref, selectedWarehouse?.Ref]);
+  }, [initialCityRef, initialWarehouseRef]); // Видалено залежності selectedCity?.Ref, selectedWarehouse?.Ref для запобігання циклічного оновлення
 
   // Функція для завантаження опису замовлення
   const loadOrderDescription = async () => {
