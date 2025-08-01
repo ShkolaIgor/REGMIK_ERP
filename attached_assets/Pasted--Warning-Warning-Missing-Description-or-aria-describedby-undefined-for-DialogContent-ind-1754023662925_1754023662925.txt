@@ -1,0 +1,142 @@
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-DJIFw8a6.js, line 782)
+[Log] 🔧 DEBUG: Nova Poshta data from order: – {recipientCityRef: undefined, recipientCityName: undefined, recipientWarehouseRef: undefined, …} (index-DJIFw8a6.js, line 1576)
+{recipientCityRef: undefined, recipientCityName: undefined, recipientWarehouseRef: undefined, recipientWarehouseAddress: undefined}Object
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-DJIFw8a6.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-DJIFw8a6.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-DJIFw8a6.js, line 808)
+[Log] Warehouses loading: – false (index-DJIFw8a6.js, line 808)
+[Log] NovaPoshtaIntegration useEffect triggered: – {initialCityRef: "", initialWarehouseRef: "", selectedCityRef: undefined, …} (index-DJIFw8a6.js, line 808)
+{initialCityRef: "", initialWarehouseRef: "", selectedCityRef: undefined, selectedWarehouseRef: undefined}Object
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-DJIFw8a6.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-DJIFw8a6.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-DJIFw8a6.js, line 808)
+[Log] Warehouses loading: – false (index-DJIFw8a6.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-DJIFw8a6.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-DJIFw8a6.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-DJIFw8a6.js, line 808)
+[Log] Warehouses loading: – false (index-DJIFw8a6.js, line 808)
+[Log] Order details: – {id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", …} (index-DJIFw8a6.js, line 808)
+{id: 51800, orderSequenceNumber: 51800, orderNumber: "52798", clientId: 9143, clientContactsId: null, …}Object
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-DJIFw8a6.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-DJIFw8a6.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-DJIFw8a6.js, line 808)
+[Log] Warehouses loading: – false (index-DJIFw8a6.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-DJIFw8a6.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-DJIFw8a6.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-DJIFw8a6.js, line 808)
+[Log] Warehouses loading: – false (index-DJIFw8a6.js, line 808)
+[Log] 🔧 DEBUG: Form values after reset: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-DJIFw8a6.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] All categories: – [Object, Object, Object, …] (19) (index-DJIFw8a6.js, line 808)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …]Array (19)
+[Log] Processing item: – {id: 91584, orderId: 51800, productId: 25413, …} (index-DJIFw8a6.js, line 808)
+{id: 91584, orderId: 51800, productId: 25413, quantity: 1, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-DJIFw8a6.js, line 808)
+[Log] Processing item: – {id: 91585, orderId: 51800, productId: 24947, …} (index-DJIFw8a6.js, line 808)
+{id: 91585, orderId: 51800, productId: 24947, quantity: 3, unitPrice: "769.50", …}Object
+[Log] Added category: – "Датчики температури" (index-DJIFw8a6.js, line 808)
+[Log] Processing item: – {id: 91586, orderId: 51800, productId: 14384, …} (index-DJIFw8a6.js, line 808)
+{id: 91586, orderId: 51800, productId: 14384, quantity: 2, unitPrice: "902.67", …}Object
+[Log] Added category: – "Датчики температури" (index-DJIFw8a6.js, line 808)
+[Log] Processing item: – {id: 91587, orderId: 51800, productId: 25414, …} (index-DJIFw8a6.js, line 808)
+{id: 91587, orderId: 51800, productId: 25414, quantity: 1, unitPrice: "882.36", …}Object
+[Log] Added category: – "Датчики температури" (index-DJIFw8a6.js, line 808)
+[Log] Processing item: – {id: 91588, orderId: 51800, productId: 25564, …} (index-DJIFw8a6.js, line 808)
+{id: 91588, orderId: 51800, productId: 25564, quantity: 1, unitPrice: "882.36", …}Object
+[Log] Added category: – "Датчики температури" (index-DJIFw8a6.js, line 808)
+[Log] Processing item: – {id: 91589, orderId: 51800, productId: 15880, …} (index-DJIFw8a6.js, line 808)
+{id: 91589, orderId: 51800, productId: 15880, quantity: 3, unitPrice: "399.60", …}Object
+[Log] Added category: – "Гільзи захисні" (index-DJIFw8a6.js, line 808)
+[Log] Processing item: – {id: 91590, orderId: 51800, productId: 15571, …} (index-DJIFw8a6.js, line 808)
+{id: 91590, orderId: 51800, productId: 15571, quantity: 1, unitPrice: "643.50", …}Object
+[Log] Added category: – "Гільзи захисні" (index-DJIFw8a6.js, line 808)
+[Log] Processing item: – {id: 91591, orderId: 51800, productId: 19363, …} (index-DJIFw8a6.js, line 808)
+{id: 91591, orderId: 51800, productId: 19363, quantity: 1, unitPrice: "670.50", …}Object
+[Log] Added category: – "Гільзи захисні" (index-DJIFw8a6.js, line 808)
+[Log] Generated description: – "Датчики температури, Гільзи захисні" (index-DJIFw8a6.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: – {recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", …} (index-DJIFw8a6.js, line 1576)
+{recipientCityRef: "", recipientCityName: "", recipientWarehouseRef: "", recipientWarehouseAddress: ""}Object
+[Log] Warehouses: (5) (index-DJIFw8a6.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-DJIFw8a6.js, line 808)
+[Log] Warehouses loading: – false (index-DJIFw8a6.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: (index-DJIFw8a6.js, line 1576)
+Object
+
+recipientCityName: ""
+
+recipientCityRef: ""
+
+recipientWarehouseAddress: ""
+
+recipientWarehouseRef: ""
+
+Object Prototype
+[Log] Warehouses: (5) (index-DJIFw8a6.js, line 808)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-DJIFw8a6.js, line 808)
+[Log] Warehouses loading: – false (index-DJIFw8a6.js, line 808)
+[Log] NOVA POSHTA FORM VALUES: (index-DJIFw8a6.js, line 1576)
+Object
+
+recipientCityName: ""
+
+recipientCityRef: ""
+
+recipientWarehouseAddress: ""
+
+recipientWarehouseRef: ""
+
+Object Prototype
+[Log] Warehouses: (5) (index-DJIFw8a6.js, line 808)
+Array (0)
+No Properties
+
+Array Prototype
+"Filtered:"
+Array (0)
+No Properties
+
+Array Prototype
+"Query:"
+""
+[Log] Selected City Ref for warehouses query: – undefined (index-DJIFw8a6.js, line 808)
+[Log] Warehouses loading: – false (index-DJIFw8a6.js, line 808)

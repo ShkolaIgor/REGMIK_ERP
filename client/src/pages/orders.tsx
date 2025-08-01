@@ -1549,8 +1549,9 @@ export default function Orders() {
     form.reset();
   };
 
-  // Функція для початку редагування замовлення - МАКСИМАЛЬНО ОПТИМІЗОВАНА
-  const handleEditOrder = (order: any) => {
+  // Функція для початку редагування замовлення - ЗАВАНТАЖУЄ ПОВНІ ДАНІ
+  const handleEditOrder = async (order: any) => {
+    console.log('🔧 DEBUG: handleEditOrder received order object:', order);
     
     // ПОВНЕ очищення попереднього стану для запобігання змішуванню даних  
     setEditingOrder(null);
@@ -1588,107 +1589,121 @@ export default function Orders() {
       customerPhone: "",
     });
     
-    // Встановлення нового стану
-    setEditingOrder(order);
-    setIsEditMode(true);
-    setIsDialogOpen(true);
-    
-    // Невелика затримка для обробки React state updates
-    setTimeout(() => {
-      // Оптимізована функція для дат
-      const formatDate = (dateString: string | null) => 
-        dateString ? new Date(dateString).toISOString().slice(0, 16) : "";
+    // Завантажуємо повні дані замовлення з сервера
+    try {
+      const response = await fetch(`/api/orders/${order.id}`);
+      if (!response.ok) throw new Error('Failed to fetch order details');
+      const fullOrder = await response.json();
       
-      // Debug: логування Nova Poshta даних з order
-      console.log('🔧 DEBUG: Nova Poshta data from order:', {
-        recipientCityRef: order.recipientCityRef,
-        recipientCityName: order.recipientCityName,
-        recipientWarehouseRef: order.recipientWarehouseRef,
-        recipientWarehouseAddress: order.recipientWarehouseAddress,
+      console.log('🔧 DEBUG: Full order data from API:', fullOrder);
+      console.log('🔧 DEBUG: Nova Poshta data from full order:', {
+        recipientCityRef: fullOrder.recipientCityRef,
+        recipientCityName: fullOrder.recipientCityName,
+        recipientWarehouseRef: fullOrder.recipientWarehouseRef,
+        recipientWarehouseAddress: fullOrder.recipientWarehouseAddress,
       });
       
-      // Заповнення форми новими даними
-      form.reset({
-        clientId: order.clientId?.toString() || "",
-        clientContactsId: order.clientContactsId?.toString() || "",
-        companyId: order.companyId?.toString() || "",
-        orderNumber: order.orderNumber || "",
-        totalAmount: order.totalAmount || "",
-        status: order.status || "Нове",
-        notes: order.notes || "",
-        paymentDate: formatDate(order.paymentDate),
-        paymentType: order.paymentType || "full",
-        paidAmount: order.paidAmount || "0",
-        dueDate: formatDate(order.dueDate),
-        shippedDate: formatDate(order.shippedDate),
-        trackingNumber: order.trackingNumber || "",
-        invoiceNumber: order.invoiceNumber || "",
-        carrierId: order.carrierId?.toString() || "",
-        statusId: order.statusId?.toString() || "",
-        productionApproved: order.productionApproved || false,
-        productionApprovedBy: order.productionApprovedBy || "",
-        productionApprovedAt: formatDate(order.productionApprovedAt),
-        // ПРІОРИТЕТ: спочатку поля замовлення, потім контактна особа
-        customerEmail: order.contactEmail || order.contact?.email || "",
-        customerPhone: order.contactPhone || order.contact?.primaryPhone || order.contact?.phone || "",
-        // Nova Poshta дані доставки
-        recipientCityRef: order.recipientCityRef || "",
-        recipientCityName: order.recipientCityName || "",
-        recipientWarehouseRef: order.recipientWarehouseRef || "",
-        recipientWarehouseAddress: order.recipientWarehouseAddress || "",
-        shippingCost: order.shippingCost || "",
-        estimatedDelivery: order.estimatedDelivery || "",
-      });
+      // Встановлення нового стану з повними даними
+      setEditingOrder(fullOrder);
+      setIsEditMode(true);
+      setIsDialogOpen(true);
       
-
-
-      // Швидке встановлення клієнта з мінімальною логікою
-      if (order.clientId) {
-        setSelectedClientId(order.clientId.toString());
-        // Використовуємо дані з замовлення якщо доступні
-        const clientName = order.clientName || order.client?.name || `Client ${order.clientId}`;
-        setClientSearchValue(clientName);
-      } else {
-        setSelectedClientId("");
-        setClientSearchValue("");
-      }
-
-      // Швидке встановлення компанії
-      if (order.companyId) {
-        setSelectedCompanyId(order.companyId.toString());
-        const company = companies?.find((c: any) => c.id === order.companyId);
-        setCompanySearchValue(company?.name || `Company ${order.companyId}`);
-      } else {
-        setSelectedCompanyId("");
-        setCompanySearchValue("");
-      }
-
-      // Завантажуємо контакти для правильного відображення значення
-      if (order.clientId && order.clientContactsId) {
-        // Встановлюємо selectedContactId для правильного відображення
-        setSelectedContactId(parseInt(order.clientContactsId));
-      }
-
-      // Оптимізоване встановлення товарів
-      const items = order.items?.map((item: any) => ({
-        productId: item.productId || 0,
-        itemName: item.itemName || item.product?.name || "",
-        quantity: String(item.quantity || 1),
-        unitPrice: String(item.unitPrice || 0),
-        comment: item.comment || "",
-      })) || [];
-      setOrderItems(items);
-      
-      // Debug: перевірка form values після reset  
+      // Невелика затримка для обробки React state updates
       setTimeout(() => {
-        console.log('🔧 DEBUG: Form values after reset:', {
-          recipientCityRef: form.getValues("recipientCityRef"),
-          recipientCityName: form.getValues("recipientCityName"),
-          recipientWarehouseRef: form.getValues("recipientWarehouseRef"),
-          recipientWarehouseAddress: form.getValues("recipientWarehouseAddress"),
-        });
-      }, 200);
-    }, 100);
+        // Оптимізована функція для дат
+        const formatDate = (dateString: string | null) => 
+          dateString ? new Date(dateString).toISOString().slice(0, 16) : "";
+        
+        // Заповнення форми повними даними
+        form.reset({
+          clientId: fullOrder.clientId?.toString() || "",
+          clientContactsId: fullOrder.clientContactsId?.toString() || "",
+          companyId: fullOrder.companyId?.toString() || "",
+          orderNumber: fullOrder.orderNumber || "",
+          totalAmount: fullOrder.totalAmount || "",
+          status: fullOrder.status || "Нове",
+          notes: fullOrder.notes || "",
+          paymentDate: formatDate(fullOrder.paymentDate),
+          paymentType: fullOrder.paymentType || "full",
+          paidAmount: fullOrder.paidAmount || "0",
+          dueDate: formatDate(fullOrder.dueDate),
+          shippedDate: formatDate(fullOrder.shippedDate),
+          trackingNumber: fullOrder.trackingNumber || "",
+          invoiceNumber: fullOrder.invoiceNumber || "",
+          carrierId: fullOrder.carrierId?.toString() || "",
+          statusId: fullOrder.statusId?.toString() || "",
+          productionApproved: fullOrder.productionApproved || false,
+          productionApprovedBy: fullOrder.productionApprovedBy || "",
+          productionApprovedAt: formatDate(fullOrder.productionApprovedAt),
+          // ПРІОРИТЕТ: спочатку поля замовлення, потім контактна особа
+          customerEmail: fullOrder.contactEmail || fullOrder.contact?.email || "",
+          customerPhone: fullOrder.contactPhone || fullOrder.contact?.primaryPhone || fullOrder.contact?.phone || "",
+          // Nova Poshta дані доставки
+          recipientCityRef: fullOrder.recipientCityRef || "",
+          recipientCityName: fullOrder.recipientCityName || "",
+          recipientWarehouseRef: fullOrder.recipientWarehouseRef || "",
+          recipientWarehouseAddress: fullOrder.recipientWarehouseAddress || "",
+          shippingCost: fullOrder.shippingCost || "",
+          estimatedDelivery: fullOrder.estimatedDelivery || "",
+      });
+      
+
+
+        // Швидке встановлення клієнта з мінімальною логікою
+        if (fullOrder.clientId) {
+          setSelectedClientId(fullOrder.clientId.toString());
+          // Використовуємо дані з замовлення якщо доступні
+          const clientName = fullOrder.clientName || fullOrder.client?.name || `Client ${fullOrder.clientId}`;
+          setClientSearchValue(clientName);
+        } else {
+          setSelectedClientId("");
+          setClientSearchValue("");
+        }
+
+        // Швидке встановлення компанії
+        if (fullOrder.companyId) {
+          setSelectedCompanyId(fullOrder.companyId.toString());
+          const company = companies?.find((c: any) => c.id === fullOrder.companyId);
+          setCompanySearchValue(company?.name || `Company ${fullOrder.companyId}`);
+        } else {
+          setSelectedCompanyId("");
+          setCompanySearchValue("");
+        }
+
+        // Завантажуємо контакти для правильного відображення значення
+        if (fullOrder.clientId && fullOrder.clientContactsId) {
+          // Встановлюємо selectedContactId для правильного відображення
+          setSelectedContactId(parseInt(fullOrder.clientContactsId));
+        }
+
+        // Оптимізоване встановлення товарів
+        const items = fullOrder.items?.map((item: any) => ({
+          productId: item.productId || 0,
+          itemName: item.itemName || item.product?.name || "",
+          quantity: String(item.quantity || 1),
+          unitPrice: String(item.unitPrice || 0),
+          comment: item.comment || "",
+        })) || [];
+          setOrderItems(items);
+        
+        // Debug: перевірка form values після reset  
+        setTimeout(() => {
+          console.log('🔧 DEBUG: Form values after reset:', {
+            recipientCityRef: form.getValues("recipientCityRef"),
+            recipientCityName: form.getValues("recipientCityName"),
+            recipientWarehouseRef: form.getValues("recipientWarehouseRef"),
+            recipientWarehouseAddress: form.getValues("recipientWarehouseAddress"),
+          });
+        }, 200);
+      }, 100);
+    } catch (error) {
+      console.error('🔧 ERROR: Failed to load order details:', error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося завантажити дані замовлення",
+        variant: "destructive",
+      });
+    }
     
     // Встановлюємо фокус тільки для нових замовлень
     if (!order) {
