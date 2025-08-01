@@ -2873,7 +2873,7 @@ export default function Orders() {
                             </div>
                           )}
                         </div>
-                      ))})
+                      ))}
                       
                       <div className="text-right text-lg font-semibold">
                         Загальна сума: {calculateTotal().toFixed(2)} ₴
