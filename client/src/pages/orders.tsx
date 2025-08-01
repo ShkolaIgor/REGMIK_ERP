@@ -33,6 +33,7 @@ import { OrdersXmlImport } from "@/components/OrdersXmlImport";
 import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
 import { PrintPreviewModal } from "@/components/PrintPreviewModal";
 import { DepartmentPrintModal } from "@/components/DepartmentPrintModal";
+import { PackingListModal } from "@/components/PackingListModal";
 import ComponentDeductions from "@/components/ComponentDeductions";
 import { ContactPersonAutocomplete } from "@/components/ContactPersonAutocomplete";
 // Типи
@@ -215,6 +216,8 @@ export default function Orders() {
   const [printOrderId, setPrintOrderId] = useState<number>(0);
   const [isDepartmentPrintOpen, setIsDepartmentPrintOpen] = useState(false);
   const [departmentPrintOrderId, setDepartmentPrintOrderId] = useState<number>(0);
+  const [isPackingListOpen, setIsPackingListOpen] = useState(false);
+  const [packingListOrderId, setPackingListOrderId] = useState<number>(0);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [companyComboboxOpen, setCompanyComboboxOpen] = useState(false);
   const [companySearchValue, setCompanySearchValue] = useState("");
@@ -653,7 +656,7 @@ export default function Orders() {
               onClick={() => handlePartialShipment(order)}
               title="Частково відвантажити"
             >
-              <Package className="w-4 h-4" />
+              <FileText className="w-4 h-4" />
             </Button>
             <Button
               variant="outline"
@@ -679,7 +682,16 @@ export default function Orders() {
               title="Друк по відділах виробництва"
               className="bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700"
             >
-              <Printer className="w-4 h-4" />
+              <Building2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePackingList(order)}
+              title="Пакувальний лист"
+              className="bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700"
+            >
+              <Package className="w-4 h-4" />
             </Button>
           </div>
         );
@@ -1447,6 +1459,12 @@ export default function Orders() {
   const handleDepartmentPrint = (order: any) => {
     setDepartmentPrintOrderId(order.id);
     setIsDepartmentPrintOpen(true);
+  };
+
+  // Функція для пакувального листа
+  const handlePackingList = (order: any) => {
+    setPackingListOrderId(order.id);
+    setIsPackingListOpen(true);
   };
 
   // Функція для створення рахунку
@@ -3449,6 +3467,12 @@ export default function Orders() {
           isOpen={isDepartmentPrintOpen}
           onClose={() => setIsDepartmentPrintOpen(false)}
           orderId={departmentPrintOrderId}
+        />
+
+        <PackingListModal
+          isOpen={isPackingListOpen}
+          onClose={() => setIsPackingListOpen(false)}
+          orderId={packingListOrderId}
         />
       </div>
     </div>

@@ -51,6 +51,8 @@ interface DepartmentPrintData {
       name: string;
       trackingUrl?: string;
       cityName?: string;
+      recipientCityName?: string;
+      recipientWarehouseAddress?: string;
     };
     company?: {
       name: string;
@@ -270,7 +272,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             ` : ''}
             ${order.carrier.cityName ? `
               <div class="info-group">
-                <span class="label">🏪 Місто доставки:</span> ${order.carrier.cityName}
+                <span class="label">🏪 Місто доставки:</span> ${order.carrier.recipientCityName}
               </div>
             ` : ''}
           ` : ''}
@@ -518,9 +520,14 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <span class="label">📦 ТТН:</span> ${order.trackingNumber}
               </div>
             ` : ''}
-            ${order.carrier.cityName ? `
+            ${order.carrier.recipientCityName ? `
               <div class="info-group">
-                <span class="label">🏪 Місто доставки:</span> ${order.carrier.cityName}
+                <span class="label">🏪 Місто доставки:</span> ${order.carrier.recipientCityName}
+              </div>
+            ` : ''}
+            ${order.carrier.recipientWarehouseAddress ? `
+              <div class="info-group">
+                <span class="label">📍 Відділення:</span> ${order.carrier.recipientWarehouseAddress}
               </div>
             ` : ''}
           ` : ''}

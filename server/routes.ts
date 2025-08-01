@@ -10686,6 +10686,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Пакувальний лист API
+  app.get('/api/orders/:id/packing-list', async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const orderData = await storage.getOrderWithItems(orderId);
+      
+      if (!orderData) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Підготувати дані для пакувального листа
+      const packingData = {
+        order: {
+          id: orderData.id,
+          orderNumber: orderData.orderNumber,
+          invoiceNumber: orderData.invoiceNumber,
+          status: orderData.status,
+          dueDate: orderData.dueDate,
+          shippedDate: orderData.shippedDate,
+          notes: orderData.notes,
+          createdAt: orderData.createdAt,
+          trackingNumber: orderData.trackingNumber,
+          client: orderData.client ? {
+            name: orderData.client.name,
+            taxCode: orderData.client.taxCode,
+            phone: orderData.client.phone
+          } : null,
+          contactPerson: orderData.contactPerson ? {
+            name: orderData.contactPerson.name,
+            email: orderData.contactPerson.email,
+            phone: orderData.contactPerson.primaryPhone || orderData.contactPerson.phone,
+            secondaryPhone: orderData.contactPerson.secondaryPhone
+          } : null,
+          carrier: orderData.carrier ? {
+            name: orderData.carrier.name,
+            recipientCityName: orderData.recipientCityName,
+            recipientWarehouseAddress: orderData.recipientWarehouseAddress
+          } : null,
+          company: orderData.company ? {
+            name: orderData.company.name
+          } : null
+        },
+        items: orderData.items.map(item => ({
+          id: item.id,
+          quantity: parseInt(item.quantity),
+          unitPrice: item.unitPrice,
+          totalPrice: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2),
+          notes: item.comment,
+          itemName: item.itemName,
+          productName: item.product?.name,
+          productSku: item.product?.sku,
+          categoryName: item.product?.category?.name
+        })),
+        totalAmount: orderData.totalAmount
+      };
+
+      res.json(packingData);
+    } catch (error) {
+      console.error('Failed to get packing list data:', error);
+      res.status(500).json({ error: "Failed to get packing list data" });
+    }
+  });
+
+  app.post('/api/orders/:id/confirm-packing-print', async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      // Можна додати окремий статус для пакувального листа якщо потрібно
+      // Наразі використовуємо той же printedAt для обох типів друку
+      await storage.updateOrder(orderId, {
+        printedAt: new Date()
+      });
+      res.json({ success: true, message: "Пакувальний лист роздруковано" });
+    } catch (error) {
+      console.error('Failed to confirm packing print:', error);
+      res.status(500).json({ error: "Failed to confirm packing print" });
+    }
+  });
+
   // Діагностичний ендпоінт для тестування банківського підключення
   app.post("/api/bank-email/test-connection", isSimpleAuthenticated, async (req, res) => {
     try {
