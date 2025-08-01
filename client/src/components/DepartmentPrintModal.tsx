@@ -113,6 +113,12 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
 
     const { order, departments, itemsWithoutDepartment } = printData;
     const deliveryDate = order.dueDate ? new Date(order.dueDate).toLocaleDateString('uk-UA') : 'Не вказано';
+    
+    // Створюємо список всіх позицій для пакувального листа
+    const allItems = [
+      ...departments.flatMap((dept: Department) => dept.items),
+      ...itemsWithoutDepartment
+    ];
 
     return `
       <!DOCTYPE html>
@@ -362,6 +368,41 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           </div>
         ` : ''}
 
+        <!-- Пакувальний лист - всі позиції разом -->
+        <div class="department-section" style="margin-top: 10px; border: 2px solid #059669;">
+          <div class="department-header" style="background-color: #059669;">
+            📦 ПАКУВАЛЬНИЙ ЛИСТ - ВСІ ПОЗИЦІЇ
+          </div>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 5%">№</th>
+                <th style="width: 45%">Найменування товару</th>
+                <th style="width: 15%">Артикул</th>
+                <th style="width: 10%">Кількість</th>
+                <th style="width: 25%">Примітки</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allItems.map((item, index) => `
+                <tr>
+                  <td style="text-align: center;">${index + 1}</td>
+                  <td>
+                    <strong>${item.productName || item.itemName || 'Без назви'}</strong>
+                  </td>
+                  <td style="text-align: center; font-family: monospace; font-size: 10px;">
+                    ${item.productSku || '-'}
+                  </td>
+                  <td class="quantity">${item.quantity} шт.</td>
+                  <td style="font-size: 10px;">
+                    ${item.notes || '-'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
         ${order.notes ? `
           <div class="notes-section">
             <strong>📝 Загальні примітки до замовлення:</strong><br>
@@ -380,8 +421,14 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
   const generateDepartmentPrintHTML = (department: Department): string => {
     if (!printData) return '';
 
-    const { order } = printData;
+    const { order, departments, itemsWithoutDepartment } = printData;
     const deliveryDate = order.dueDate ? new Date(order.dueDate).toLocaleDateString('uk-UA') : 'Не вказано';
+    
+    // Створюємо список всіх позицій для пакувального листа
+    const allItems = [
+      ...departments.flatMap((dept: Department) => dept.items),
+      ...itemsWithoutDepartment
+    ];
 
     return `
       <!DOCTYPE html>
@@ -581,6 +628,41 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         </table>
 
 
+
+        <!-- Пакувальний лист - всі позиції замовлення -->
+        <div style="margin-top: 15px; border: 2px solid #059669; border-radius: 3px; overflow: hidden; break-inside: avoid;">
+          <div style="background-color: #059669; color: white; padding: 3px 6px; font-weight: bold; font-size: 8px;">
+            📦 ПАКУВАЛЬНИЙ ЛИСТ - ВСІ ПОЗИЦІЇ
+          </div>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 5%">№</th>
+                <th style="width: 45%">Найменування товару</th>
+                <th style="width: 15%">Артикул</th>
+                <th style="width: 10%">Кількість</th>
+                <th style="width: 25%">Примітки</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allItems.map((item, index) => `
+                <tr>
+                  <td style="text-align: center;">${index + 1}</td>
+                  <td>
+                    <strong>${item.productName || item.itemName || 'Без назви'}</strong>
+                  </td>
+                  <td style="text-align: center; font-family: monospace; font-size: 10px;">
+                    ${item.productSku || '-'}
+                  </td>
+                  <td class="quantity">${item.quantity} шт.</td>
+                  <td style="font-size: 10px;">
+                    ${item.notes || '-'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
 
         ${order.notes ? `
           <div class="notes-section">
