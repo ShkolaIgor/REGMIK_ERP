@@ -167,62 +167,53 @@ export function NovaPoshtaIntegration({
     }
   }, [externalRecipientName, externalRecipientPhone]);
 
-  // Встановлення початкових значень міста і складу (тільки якщо поля пусті)
+  // Завантаження початкових значень міста і складу з Nova Poshta API (як у ClientForm.tsx)
   useEffect(() => {
-    console.log('NovaPoshtaIntegration useEffect triggered:', {
-      initialCityRef,
-      initialWarehouseRef,
-      selectedCityRef: selectedCity?.Ref,
-      selectedWarehouseRef: selectedWarehouse?.Ref
-    });
-    
-    // Ініціалізуємо місто тільки якщо його ще не обрано користувачем
-    if (initialCityRef && !selectedCity) {
-      console.log('LOADING INITIAL CITY FOR REF:', initialCityRef);
-      
-      // Використовуємо передані назви міста та області
-      const cityName = initialCityName || "Збережене місто";
-      const areaName = initialAreaName || "Збережена область";
-      
-      const virtualCity: City = {
-        Ref: initialCityRef,
-        Description: cityName,
-        DescriptionRu: cityName,
-        AreaDescription: areaName,
-        AreaDescriptionRu: areaName, 
-        RegionDescription: areaName,
-        RegionDescriptionRu: areaName,
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "1",
-        Warehouses: "1"
-      };
-      console.log('CREATED VIRTUAL CITY:', virtualCity);
-      setSelectedCity(virtualCity);
-      setCityQuery(virtualCity.Description);
+    const loadInitialData = async () => {
 
-    }
+      
+      // Завантажуємо місто з API за ref (як у ClientForm.tsx)
+      if (initialCityRef && !selectedCity) {
+
+        
+        try {
+          const response = await fetch(`/api/nova-poshta/city/${initialCityRef}`);
+          if (response.ok) {
+            const cityData = await response.json();
+            if (cityData) {
+
+              setSelectedCity(cityData);
+              setCityQuery(cityData.Description);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load city by ref:', error);
+        }
+      }
+      
+      // Завантажуємо склад з API за ref (тільки після завантаження міста)
+      if (initialWarehouseRef && selectedCity && !selectedWarehouse) {
+
+        
+        try {
+          const response = await fetch(`/api/nova-poshta/warehouses/${selectedCity.Ref}`);
+          if (response.ok) {
+            const warehouses = await response.json();
+            const warehouse = warehouses.find((w: any) => w.Ref === initialWarehouseRef);
+            if (warehouse) {
+
+              setSelectedWarehouse(warehouse);
+              setWarehouseQuery(warehouse.ShortAddress);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load warehouse by ref:', error);
+        }
+      }
+    };
     
-    // Ініціалізуємо склад тільки якщо його ще не обрано користувачем
-    if (initialWarehouseRef && !selectedWarehouse) {
-      console.log('LOADING INITIAL WAREHOUSE FOR REF:', initialWarehouseRef);
-      
-      // Використовуємо передану адресу складу або загальну назву
-      const warehouseAddress = initialWarehouseAddress || "Збережене відділення";
-      
-      const virtualWarehouse: Warehouse = {
-        Ref: initialWarehouseRef,
-        Number: "1",
-        Description: warehouseAddress,
-        ShortAddress: warehouseAddress,
-        Phone: "0800509001",
-        Schedule: {},
-        CityRef: selectedCity?.Ref || initialCityRef || ""
-      };
-      console.log('CREATED VIRTUAL WAREHOUSE:', virtualWarehouse);
-      setSelectedWarehouse(virtualWarehouse);
-      setWarehouseQuery(virtualWarehouse.Description);
-    }
-  }, [initialCityRef, initialWarehouseRef]); // Видалено залежності selectedCity?.Ref, selectedWarehouse?.Ref для запобігання циклічного оновлення
+    loadInitialData();
+  }, [initialCityRef, initialWarehouseRef, selectedCity?.Ref]);
 
   // Функція для завантаження опису замовлення
   const loadOrderDescription = async () => {

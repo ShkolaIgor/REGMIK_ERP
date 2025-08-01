@@ -152,7 +152,6 @@ const orderSchema = z.object({
   // Nova Poshta поля
   recipientCityRef: z.string().optional(),
   recipientCityName: z.string().optional(),
-  recipientAreaName: z.string().optional(),
   recipientWarehouseRef: z.string().optional(),
   recipientWarehouseAddress: z.string().optional(),
   shippingCost: z.string().optional(),
@@ -1808,10 +1807,7 @@ export default function Orders() {
     const deliveryData = {
       carrierId: form.watch("carrierId") || null,
       recipientCityRef: form.watch("recipientCityRef") || null,
-      recipientCityName: form.watch("recipientCityName") || null,
-      recipientAreaName: form.watch("recipientAreaName") || null,
-      recipientWarehouseRef: form.watch("recipientWarehouseRef") || null,
-      recipientWarehouseAddress: form.watch("recipientWarehouseAddress") || null
+      recipientWarehouseRef: form.watch("recipientWarehouseRef") || null
     };
 
     try {
@@ -1963,11 +1959,24 @@ export default function Orders() {
               form.setValue("carrierId", deliverySettings.carrier.id.toString());
             }
 
-            // Автозаповнення міста Nova Poshta
-            if (deliverySettings.city) {
+            // Автозаповнення міста Nova Poshta - завантажуємо назви з API за ref
+            if (deliverySettings.city && deliverySettings.city.ref) {
               form.setValue("recipientCityRef", deliverySettings.city.ref);
-              form.setValue("recipientCityName", deliverySettings.city.name || "");
-              form.setValue("recipientAreaName", deliverySettings.city.area || "");
+              
+              // Завантажуємо реальні назви з Nova Poshta API, як у ClientForm
+              try {
+                const cityResponse = await fetch(`/api/nova-poshta/city/${deliverySettings.city.ref}`);
+                if (cityResponse.ok) {
+                  const cityData = await cityResponse.json();
+                  if (cityData) {
+                    form.setValue("recipientCityName", cityData.Description || "");
+                  }
+                }
+              } catch (error) {
+                console.error('Помилка завантаження назви міста:', error);
+                // Використовуємо збережену назву як fallback
+                form.setValue("recipientCityName", deliverySettings.city.name || "");
+              }
             }
 
             // Автозаповнення відділення Nova Poshta
@@ -2529,13 +2538,7 @@ export default function Orders() {
                 {/* Nova Poshta Integration */}
                 {form.watch("carrierId") && carriers?.find((c: any) => c.id.toString() === form.watch("carrierId"))?.name === "Нова Пошта" && (
                   <div className="mt-6">
-                    {console.log('NOVA POSHTA FORM VALUES:', {
-                      recipientCityRef: form.watch("recipientCityRef"),
-                      recipientCityName: form.watch("recipientCityName"),
-                      recipientAreaName: form.watch("recipientAreaName"),
-                      recipientWarehouseRef: form.watch("recipientWarehouseRef"),
-                      recipientWarehouseAddress: form.watch("recipientWarehouseAddress")
-                    })}
+
                     <NovaPoshtaIntegration
                       key={`nova-poshta-${isEditMode ? editingOrder?.id : 'new'}`}
                       onAddressSelect={(address, cityRef, warehouseRef) => {
@@ -2551,9 +2554,8 @@ export default function Orders() {
                         form.setValue("recipientWarehouseRef", warehouseRef);
                         form.setValue("recipientWarehouseAddress", address);
                         
-                        // Тимчасово залишимо пустими, поки не налаштуємо передачу назв з NovaPoshtaIntegration
+                        // Назви завантажуються автоматично з Nova Poshta API за ref
                         form.setValue("recipientCityName", "");
-                        form.setValue("recipientAreaName", "");
                       }}
                       onCostCalculated={(cost) => {
                         // Зберігаємо розраховану вартість доставки в примітках та окремих полях
@@ -2605,7 +2607,7 @@ export default function Orders() {
                       initialCityRef={form.watch("recipientCityRef")}
                       initialWarehouseRef={form.watch("recipientWarehouseRef")}
                       initialCityName={form.watch("recipientCityName")}
-                      initialAreaName={form.watch("recipientAreaName")}
+
                       initialWarehouseAddress={form.watch("recipientWarehouseAddress")}
                     />
                     
@@ -2636,7 +2638,7 @@ export default function Orders() {
                 {/* Приховані поля для Nova Poshta даних */}
                 <input type="hidden" {...form.register("recipientCityRef")} />
                 <input type="hidden" {...form.register("recipientCityName")} />
-                <input type="hidden" {...form.register("recipientAreaName")} />
+
                 <input type="hidden" {...form.register("recipientWarehouseRef")} />
                 <input type="hidden" {...form.register("recipientWarehouseAddress")} />
 

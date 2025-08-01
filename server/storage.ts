@@ -484,10 +484,7 @@ export interface IStorage {
   updateClientDeliveryData(clientId: number, deliveryData: {
     carrierId: number | null;
     recipientCityRef?: string;
-    recipientCityName?: string;
-    recipientAreaName?: string;
     recipientWarehouseRef?: string;
-    recipientWarehouseAddress?: string;
   }): Promise<any>;
 
   // Client Contacts
@@ -2552,10 +2549,7 @@ export class MemStorage implements IStorage {
   async updateClientDeliveryData(clientId: number, deliveryData: {
     carrierId: number | null;
     recipientCityRef?: string;
-    recipientCityName?: string;
-    recipientAreaName?: string;
     recipientWarehouseRef?: string;
-    recipientWarehouseAddress?: string;
   }): Promise<any> {
     throw new Error("MemStorage не підтримує оновлення даних доставки клієнта");
   }

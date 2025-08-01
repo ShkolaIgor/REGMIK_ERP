@@ -7591,10 +7591,7 @@ export class DatabaseStorage implements IStorage {
   async updateClientDeliveryData(clientId: number, deliveryData: {
     carrierId: number | null;
     recipientCityRef?: string;
-    recipientCityName?: string;
-    recipientAreaName?: string;
     recipientWarehouseRef?: string;
-    recipientWarehouseAddress?: string;
   }): Promise<any> {
     const updateData: any = {
       updatedAt: new Date()
@@ -7607,17 +7604,8 @@ export class DatabaseStorage implements IStorage {
     if (deliveryData.recipientCityRef !== undefined) {
       updateData.cityRef = deliveryData.recipientCityRef;
     }
-    if (deliveryData.recipientCityName !== undefined) {
-      updateData.cityName = deliveryData.recipientCityName;
-    }
-    if (deliveryData.recipientAreaName !== undefined) {
-      updateData.areaName = deliveryData.recipientAreaName;
-    }
     if (deliveryData.recipientWarehouseRef !== undefined) {
       updateData.warehouseRef = deliveryData.recipientWarehouseRef;
-    }
-    if (deliveryData.recipientWarehouseAddress !== undefined) {
-      updateData.warehouseName = deliveryData.recipientWarehouseAddress;
     }
 
     const [client] = await db
