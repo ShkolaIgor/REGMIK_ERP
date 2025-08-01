@@ -8,10 +8,11 @@ Preferred communication style: Simple, everyday language.
 User has Russian-language 1C system and needs integration setup guidance.
 
 ## Recent Changes (Updated 2025-08-01)
-- **Nova Poshta Display Issue Fixed**: Resolved "Збережена область" display problem by implementing API-based data loading
+- **Nova Poshta Auto-fill Complete**: Fixed automatic carrier data population for Nova Poshta when using "Fill carrier data" button
+- **Component Re-rendering Optimized**: Added forced re-rendering mechanism for Nova Poshta component after auto-fill to ensure data visibility
+- **Save Button Logic Improved**: Hide "Save to client card" button when data is auto-filled from client profile to prevent redundant saves
+- **City Change Button Fixed**: Resolved "Change" button functionality to properly clear city input field for new selection
 - **Architecture Simplified**: Replaced virtual object creation with real Nova Poshta API data retrieval using loadCityByRef/loadWarehouseByRef methods
-- **Database Schema Cleaned**: Removed unnecessary recipientAreaName, recipientCityName, recipientWarehouseAddress fields from clients table
-- **City Selection Logic Fixed**: Added proper warehouse clearing when city changes to prevent stale data display
 
 ## System Architecture
 

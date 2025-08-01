@@ -875,12 +875,10 @@ export default function Orders() {
 
     // Автозаповнення міста Nova Poshta
     if (clientDeliveryData.city) {
-      console.log('SETTING CITY FROM DATA:', clientDeliveryData.city.ref, clientDeliveryData.city.name);
       form.setValue("recipientCityRef", clientDeliveryData.city.ref);
       form.setValue("recipientCityName", clientDeliveryData.city.name || clientDeliveryData.city.description || "");
       filledCount++;
     } else if (client.cityRef) {
-      console.log('SETTING CITY FROM CLIENT:', client.cityRef);
       form.setValue("recipientCityRef", client.cityRef);
       form.setValue("recipientCityName", "Місто (з профілю клієнта)");
       filledCount++;
@@ -896,14 +894,10 @@ export default function Orders() {
       filledCount++;
     }
 
-    // Debug: перевірка поточних значень форми
-    console.log('Form values after fill:', {
-      carrierId: form.getValues("carrierId"),
-      recipientCityRef: form.getValues("recipientCityRef"),
-      recipientCityName: form.getValues("recipientCityName"),
-      recipientWarehouseRef: form.getValues("recipientWarehouseRef"),
-      recipientWarehouseAddress: form.getValues("recipientWarehouseAddress")
-    });
+
+
+    // Приховуємо кнопку "Зберегти в картку клієнта" після автозаповнення з профілю
+    setShowSaveDeliveryButton(false);
 
     // Форсуємо перерендеринг компонента Nova Poshta після заповнення
     setTimeout(() => {
