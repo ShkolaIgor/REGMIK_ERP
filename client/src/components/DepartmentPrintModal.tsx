@@ -347,7 +347,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               </tbody>
             </table>
             <div>
-              <span style="font-size: 8px;>🏭 ${new Date().toLocaleString('uk-UA')}</span>
+              <span style="text-align: right; font-size: 8px;>🏭 ${new Date().toLocaleString('uk-UA')}</span>
             </div>
           </div>
           <div class="header"> </div>
