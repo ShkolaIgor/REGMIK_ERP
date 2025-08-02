@@ -321,10 +321,11 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         
           <div class="department-section">
             <div class="department-header">
-              <span class="label">ВИРОБНИЧИЙ ЛИСТ</span>
+              <span class="label">ВИРОБНИЧИЙ ЛИСТ 📋</span> ${order.orderNumber}
             </div>
-            <div>
-              <span class="label">📋 Замовлення:</span> ${order.orderNumber} 🏭 ${department.departmentName.toUpperCase()} <span class="label">📅 Дата відвантаження:</span> ${deliveryDate}
+              <div>
+                <span class="label">🏭 ${department.departmentName.toUpperCase()}</span>
+                <span style="text-align: right; font-size: 6px;">📅 Дата відвантаження: ${deliveryDate}</span>
             </div>
             <table class="items-table">
               <thead>
@@ -346,9 +347,8 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 `).join('')}
               </tbody>
             </table>
-            <div style="text-align: right; font-size: 8px;"">🏭 ${new Date().toLocaleString('uk-UA')}
-            </div>
           </div>
+          <div style="text-align: right; font-size: 6px;"">🏭 ${new Date().toLocaleString('uk-UA')}</div>
           <div class="header"> </div>
         `).join('')}
 
