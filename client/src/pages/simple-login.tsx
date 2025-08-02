@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Package, Eye, EyeOff } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +12,7 @@ export default function SimpleLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -68,15 +70,17 @@ export default function SimpleLogin() {
             <CardTitle className="text-center">Вхід в систему</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4" method="post">
               <div className="space-y-2">
                 <Label htmlFor="username">Логін</Label>
                 <Input
                   id="username"
+                  name="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Введіть логін"
+                  autoComplete="username"
                   required
                 />
               </div>
@@ -86,10 +90,12 @@ export default function SimpleLogin() {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Введіть пароль"
+                    autoComplete="current-password"
                     required
                   />
                   <Button
@@ -108,6 +114,17 @@ export default function SimpleLogin() {
                 </div>
               </div>
 
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                />
+                <Label htmlFor="remember" className="text-sm font-normal">
+                  Запам'ятати
+                </Label>
+              </div>
+              
               <Button 
                 type="submit" 
                 className="w-full bg-blue-600 hover:bg-blue-700"

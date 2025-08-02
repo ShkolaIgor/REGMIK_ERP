@@ -7,12 +7,12 @@ REGMIK ERP is a comprehensive enterprise resource planning system tailored for U
 Preferred communication style: Simple, everyday language.
 User has Russian-language 1C system and needs integration setup guidance.
 
-## Recent Changes (Updated 2025-08-01)
-- **Nova Poshta Auto-fill Complete**: Fixed automatic carrier data population for Nova Poshta when using "Fill carrier data" button
-- **Component Re-rendering Optimized**: Added forced re-rendering mechanism for Nova Poshta component after auto-fill to ensure data visibility
-- **Save Button Logic Improved**: Hide "Save to client card" button when data is auto-filled from client profile to prevent redundant saves
-- **City Change Button Fixed**: Resolved "Change" button functionality to properly clear city input field for new selection
-- **Architecture Simplified**: Replaced virtual object creation with real Nova Poshta API data retrieval using loadCityByRef/loadWarehouseByRef methods
+## Recent Changes (Updated 2025-08-02)
+- **Packing List Section Added**: Created separate "ПАКУВАЛЬНИЙ ЛИСТ - ВСІ ПОЗИЦІЇ" section in production sheets that lists all order items regardless of department assignments
+- **Print Layout Optimized**: Maintained landscape orientation with two-column layout for better space utilization in production documents
+- **Login Form Enhanced**: Added proper `autocomplete` attributes (`username`, `current-password`) and "Remember me" checkbox for browser password autofill functionality
+- **Browser Compatibility Improved**: Fixed form structure to work with browser password managers by adding `name` attributes and `method="post"`
+- **UI Consistency Maintained**: Updated login form while preserving existing design and functionality
 
 ## System Architecture
 
