@@ -1647,7 +1647,6 @@ export class DatabaseStorage implements IStorage {
             recipientCityName: order.recipient_city_name,
             recipientWarehouseAddress: order.recipient_warehouse_address
           } : null,
-          trackingNumber: order.tracking_number,
           company: null
         },
         departments: Object.values(departmentGroups),
