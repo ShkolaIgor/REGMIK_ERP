@@ -1642,8 +1642,8 @@ export class DatabaseStorage implements IStorage {
             phone: order.contact_phone,
             secondaryPhone: order.contact_secondary_phone
           } : null,
-          carrier: order.carrier_name ? {
-            name: order.carrier_name,
+          carrier: order.carrier_name || order.recipient_city_name || order.recipient_warehouse_address ? {
+            name: order.carrier_name || 'Не вказано',
             recipientCityName: order.recipient_city_name,
             recipientWarehouseAddress: order.recipient_warehouse_address
           } : null,
