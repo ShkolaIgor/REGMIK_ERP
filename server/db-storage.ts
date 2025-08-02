@@ -1498,6 +1498,7 @@ export class DatabaseStorage implements IStorage {
           o.tracking_number,
           o.recipient_city_name,
           o.recipient_warehouse_address,
+          o.recipient_warehouse_number,
           c.name as client_name,
           c.tax_code as client_tax_code,
           cc.full_name as contact_name,
@@ -1645,7 +1646,8 @@ export class DatabaseStorage implements IStorage {
           carrier: order.carrier_name || order.recipient_city_name || order.recipient_warehouse_address ? {
             name: order.carrier_name || 'Не вказано',
             recipientCityName: order.recipient_city_name,
-            recipientWarehouseAddress: order.recipient_warehouse_address
+            recipientWarehouseAddress: order.recipient_warehouse_address,
+            recipientWarehouseNumber: order.recipient_warehouse_number
           } : null,
           company: null
         },

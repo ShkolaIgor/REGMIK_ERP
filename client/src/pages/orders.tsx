@@ -155,6 +155,7 @@ const orderSchema = z.object({
   recipientCityName: z.string().optional(),
   recipientWarehouseRef: z.string().optional(),
   recipientWarehouseAddress: z.string().optional(),
+  recipientWarehouseNumber: z.string().optional(),
   shippingCost: z.string().optional(),
   estimatedDelivery: z.string().optional(),
 });
@@ -2559,7 +2560,7 @@ export default function Orders() {
 
                     <NovaPoshtaIntegration
                       key={`nova-poshta-${isEditMode ? editingOrder?.id : 'new'}-${novaPoshtaKey}`}
-                      onAddressSelect={(address, cityRef, warehouseRef, cityName) => {
+                      onAddressSelect={(address, cityRef, warehouseRef, cityName, warehouseNumber) => {
                         // Коли користувач вручну вибирає адресу, скидаємо флаг автозаповнення
                         setIsDataAutoFilled(false);
                         
@@ -2578,6 +2579,11 @@ export default function Orders() {
                         // Зберігаємо назву міста отриману з Nova Poshta API
                         if (cityName) {
                           form.setValue("recipientCityName", cityName);
+                        }
+                        
+                        // Зберігаємо номер відділення Nova Poshta
+                        if (warehouseNumber) {
+                          form.setValue("recipientWarehouseNumber", warehouseNumber);
                         }
                       }}
                       onCostCalculated={(cost) => {
@@ -2664,6 +2670,7 @@ export default function Orders() {
 
                 <input type="hidden" {...form.register("recipientWarehouseRef")} />
                 <input type="hidden" {...form.register("recipientWarehouseAddress")} />
+                <input type="hidden" {...form.register("recipientWarehouseNumber")} />
 
                 {/* Дати для рахунку */}
                 <div className="grid grid-cols-3 gap-4">

@@ -52,6 +52,7 @@ interface DepartmentPrintData {
       cityName?: string;
       recipientCityName?: string;
       recipientWarehouseAddress?: string;
+      recipientWarehouseNumber?: string;
     };
     company?: {
       name: string;
@@ -285,7 +286,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               <div style="font-size: 7px; margin-top: 2px; font-weight: normal;">
                 🚚 ${order.carrier.name}
                 ${order.carrier.recipientCityName ? ` | 🏪 ${order.carrier.recipientCityName}` : ''}
-                ${order.carrier.recipientWarehouseAddress ? ` | 📍 ${order.carrier.recipientWarehouseAddress}` : ''}
+                ${order.carrier.recipientWarehouseAddress ? ` | 📍 ${order.carrier.recipientWarehouseNumber ? `№${order.carrier.recipientWarehouseNumber} - ` : ''}${order.carrier.recipientWarehouseAddress}` : ''}
               </div>
           ` : ''}
         </div>
@@ -572,7 +573,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
             ` : ''}
             ${order.carrier.recipientWarehouseAddress ? `
               <div class="info-group">
-                <span class="label">📍 Відділення:</span> ${order.carrier.recipientWarehouseAddress}
+                <span class="label">📍 Відділення:</span> ${order.carrier.recipientWarehouseNumber ? `№${order.carrier.recipientWarehouseNumber} - ` : ''}${order.carrier.recipientWarehouseAddress}
               </div>
             ` : ''}
           ` : ''}
@@ -609,7 +610,7 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
               <div style="font-size: 7px; margin-top: 2px; font-weight: normal;">
                 🚚 ${order.carrier.name}
                 ${order.carrier.recipientCityName ? ` | 🏪 ${order.carrier.recipientCityName}` : ''}
-                ${order.carrier.recipientWarehouseAddress ? ` | 📍 ${order.carrier.recipientWarehouseAddress}` : ''}
+                ${order.carrier.recipientWarehouseAddress ? ` | 📍 ${order.carrier.recipientWarehouseNumber ? `№${order.carrier.recipientWarehouseNumber} - ` : ''}${order.carrier.recipientWarehouseAddress}` : ''}
                 ${order.trackingNumber ? ` | 📦 ТТН: ${order.trackingNumber}` : ''}
               </div>
             ` : ''}

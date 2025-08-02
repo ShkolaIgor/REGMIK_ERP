@@ -280,6 +280,7 @@ export const orders = pgTable("orders", {
   recipientCityName: varchar("recipient_city_name", { length: 255 }), // назва міста отримувача
   recipientWarehouseRef: varchar("recipient_warehouse_ref", { length: 255 }), // UUID відділення отримувача
   recipientWarehouseAddress: text("recipient_warehouse_address"), // адреса відділення отримувача
+  recipientWarehouseNumber: varchar("recipient_warehouse_number", { length: 20 }), // номер відділення Nova Poshta
   shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }), // розрахована вартість доставки
   estimatedDelivery: timestamp("estimated_delivery"), // очікувана дата доставки
   
