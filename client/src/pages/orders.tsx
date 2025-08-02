@@ -1694,6 +1694,7 @@ export default function Orders() {
           recipientCityName: fullOrder.recipientCityName || "",
           recipientWarehouseRef: fullOrder.recipientWarehouseRef || "",
           recipientWarehouseAddress: fullOrder.recipientWarehouseAddress || "",
+          recipientWarehouseNumber: fullOrder.recipientWarehouseNumber || "",
           shippingCost: fullOrder.shippingCost || "",
           estimatedDelivery: fullOrder.estimatedDelivery || "",
       });

@@ -657,6 +657,7 @@ export const insertOrderSchemaForm = insertOrderSchemaBase.extend({
   recipientCityName: z.string().optional().nullable(),
   recipientWarehouseRef: z.string().optional().nullable(),
   recipientWarehouseAddress: z.string().optional().nullable(),
+  recipientWarehouseNumber: z.string().optional().nullable(),
   shippingCost: z.string().optional().nullable(),
   estimatedDelivery: z.union([z.string(), z.date()]).optional().nullable(),
 }).transform((data) => ({

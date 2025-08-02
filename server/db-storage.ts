@@ -1343,6 +1343,7 @@ export class DatabaseStorage implements IStorage {
         recipientCityName: orderData.recipientCityName,
         recipientWarehouseRef: orderData.recipientWarehouseRef,
         recipientWarehouseAddress: orderData.recipientWarehouseAddress,
+        recipientWarehouseNumber: orderData.recipientWarehouseNumber,
         shippingCost: orderData.shippingCost,
         estimatedDelivery: orderData.estimatedDelivery,
       });
