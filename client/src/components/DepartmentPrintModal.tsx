@@ -279,21 +279,20 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
                 <span class="label">🏪 Місто доставки:</span> ${order.carrier.recipientCityName}
               </div>
             ` : ''}
+            ` : ''}
+            ${order.carrier ? `
+              <div style="font-size: 7px; margin-top: 2px; font-weight: normal;">
+                🚚 ${order.carrier.name}
+                ${order.carrier.recipientCityName ? ` | 🏪 ${order.carrier.recipientCityName}` : ''}
+                ${order.carrier.recipientWarehouseAddress ? ` | 📍 ${order.carrier.recipientWarehouseAddress}` : ''}
+              </div>
           ` : ''}
         </div>
 
         <!-- Пакувальний лист - всі позиції разом -->
         <div class="department-section" style="margin-top: 10px; border: 2px solid #059669;">
           <div class="department-header" style="background-color: #059669;">
-            📦 ПАКУВАЛЬНИЙ ЛИСТ - ВСІ ПОЗИЦІЇ
-            ${order.carrier ? `
-              <div style="font-size: 7px; margin-top: 2px; font-weight: normal;">
-                🚚 ${order.carrier.name}
-                ${order.carrier.recipientCityName ? ` | 🏪 ${order.carrier.recipientCityName}` : ''}
-                ${order.carrier.recipientWarehouseAddress ? ` | 📍 ${order.carrier.recipientWarehouseAddress}` : ''}
-                ${order.trackingNumber ? ` | 📦 ТТН: ${order.trackingNumber}` : ''}
-              </div>
-            ` : ''}
+            📦 ПАКУВАЛЬНИЙ ЛИСТ
           </div>
           <table class="items-table">
             <thead>
