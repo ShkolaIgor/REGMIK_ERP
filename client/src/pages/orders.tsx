@@ -2559,7 +2559,7 @@ export default function Orders() {
 
                     <NovaPoshtaIntegration
                       key={`nova-poshta-${isEditMode ? editingOrder?.id : 'new'}-${novaPoshtaKey}`}
-                      onAddressSelect={(address, cityRef, warehouseRef) => {
+                      onAddressSelect={(address, cityRef, warehouseRef, cityName) => {
                         // Коли користувач вручну вибирає адресу, скидаємо флаг автозаповнення
                         setIsDataAutoFilled(false);
                         
@@ -2575,8 +2575,10 @@ export default function Orders() {
                         form.setValue("recipientWarehouseRef", warehouseRef);
                         form.setValue("recipientWarehouseAddress", address);
                         
-                        // Назви завантажуються автоматично з Nova Poshta API за ref
-                        form.setValue("recipientCityName", "");
+                        // Зберігаємо назву міста отриману з Nova Poshta API
+                        if (cityName) {
+                          form.setValue("recipientCityName", cityName);
+                        }
                       }}
                       onCostCalculated={(cost) => {
                         // Зберігаємо розраховану вартість доставки в примітках та окремих полях

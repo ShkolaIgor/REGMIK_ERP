@@ -79,7 +79,7 @@ interface CustomerAddress {
 }
 
 interface NovaPoshtaIntegrationProps {
-  onAddressSelect?: (address: string, cityRef: string, warehouseRef: string) => void;
+  onAddressSelect?: (address: string, cityRef: string, warehouseRef: string, cityName?: string) => void;
   onCostCalculated?: (cost: DeliveryCost) => void;
   onTrackingNumberCreated?: (trackingNumber: string) => void;
   orderId?: string;
@@ -484,7 +484,7 @@ export function NovaPoshtaIntegration({
     if (warehouse && selectedCity) {
       setSelectedWarehouse(warehouse);
       const fullAddress = `${selectedCity.Description}, ${warehouse.Description}`;
-      onAddressSelect?.(fullAddress, selectedCity.Ref, warehouse.Ref);
+      onAddressSelect?.(fullAddress, selectedCity.Ref, warehouse.Ref, selectedCity.Description);
     }
   };
 
@@ -642,7 +642,8 @@ export function NovaPoshtaIntegration({
                                   onAddressSelect(
                                     warehouse.ShortAddress,
                                     selectedCity?.Ref || '',
-                                    warehouse.Ref
+                                    warehouse.Ref,
+                                    selectedCity?.Description || ''
                                   );
                                 }
                               }}
