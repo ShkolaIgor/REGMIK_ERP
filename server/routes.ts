@@ -10656,6 +10656,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Замовлення не знайдено" });
       }
       
+      // Debug: логування даних доставки
+      console.log('🔧 DEBUG: Print departments API response for order', orderId, ':', {
+        carrier: data.order.carrier,
+        recipientCityName: data.order.carrier?.recipientCityName,
+        recipientWarehouseAddress: data.order.carrier?.recipientWarehouseAddress,
+        trackingNumber: data.order.trackingNumber
+      });
+      
       res.json(data);
       
     } catch (error) {
