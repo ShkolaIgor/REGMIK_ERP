@@ -245,9 +245,6 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           <div class="info-group">
             <span class="label">📄 Рахунок:</span> ${order.invoiceNumber || 'Не вказано'}
           </div>
-          <div class="info-group">
-            <span class="label">📅 Дата відвантаження:</span> ${deliveryDate}
-          </div>
           ${order.client ? `
             <div class="info-group">
               <span class="label">👤 Клієнт:</span> ${order.client.name}
@@ -325,6 +322,9 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
           <div class="department-section">
             <div class="department-header">
               <span class="label">ВИРОБНИЧИЙ ЛИСТ 📋 Замовлення:</span> ${order.orderNumber} 🏭 ${department.departmentName.toUpperCase()} 🏭 ${new Date().toLocaleString('uk-UA')}
+            </div>
+            <div class="info-group">
+              <span class="label">📅 Дата відвантаження:</span> ${deliveryDate}
             </div>
             <table class="items-table">
               <thead>
