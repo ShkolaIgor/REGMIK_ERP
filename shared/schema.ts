@@ -635,6 +635,8 @@ const insertOrderSchemaBase = createInsertSchema(orders).omit({
   dueDate: z.union([z.string(), z.date()]).optional().nullable(),
   shippedDate: z.union([z.string(), z.date()]).optional().nullable(),
   productionApprovedAt: z.union([z.string(), z.date()]).optional().nullable(),
+  // Явно додаємо Nova Poshta поля
+  recipientWarehouseNumber: z.string().optional().nullable(),
 });
 
 // Схема з transform для API endpoints
