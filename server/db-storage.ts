@@ -1496,6 +1496,8 @@ export class DatabaseStorage implements IStorage {
           o.notes,
           o.created_at,
           o.tracking_number,
+          o.recipient_city_name,
+          o.recipient_warehouse_address,
           c.name as client_name,
           c.tax_code as client_tax_code,
           cc.full_name as contact_name,
@@ -1642,8 +1644,10 @@ export class DatabaseStorage implements IStorage {
           } : null,
           carrier: order.carrier_name ? {
             name: order.carrier_name,
-            cityName: novaPoshtaCityName
+            recipientCityName: order.recipient_city_name,
+            recipientWarehouseAddress: order.recipient_warehouse_address
           } : null,
+          trackingNumber: order.tracking_number,
           company: null
         },
         departments: Object.values(departmentGroups),

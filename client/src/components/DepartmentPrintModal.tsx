@@ -34,6 +34,7 @@ interface DepartmentPrintData {
     shippedDate?: string;
     notes?: string;
     createdAt: string;
+    trackingNumber?: string;
     client?: {
       name: string;
       taxCode?: string; // ЄДРПОУ
