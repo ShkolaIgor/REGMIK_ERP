@@ -284,9 +284,17 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
 
         <!-- Пакувальний лист - всі позиції разом -->
         <div class="department-section" style="margin-top: 10px; border: 2px solid #059669;">
-          <!-- <div class="department-header" style="background-color: #059669;">
-            📦 ПАКУВАЛЬНИЙ ЛИСТ
-          </div> -->
+          <div class="department-header" style="background-color: #059669;">
+            📦 ПАКУВАЛЬНИЙ ЛИСТ - ВСІ ПОЗИЦІЇ
+            ${order.carrier ? `
+              <div style="font-size: 7px; margin-top: 2px; font-weight: normal;">
+                🚚 ${order.carrier.name}
+                ${order.carrier.recipientCityName ? ` | 🏪 ${order.carrier.recipientCityName}` : ''}
+                ${order.carrier.recipientWarehouseAddress ? ` | 📍 ${order.carrier.recipientWarehouseAddress}` : ''}
+                ${order.trackingNumber ? ` | 📦 ТТН: ${order.trackingNumber}` : ''}
+              </div>
+            ` : ''}
+          </div>
           <table class="items-table">
             <thead>
               <tr>
@@ -596,7 +604,15 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
         <!-- Пакувальний лист - всі позиції замовлення -->
         <div style="margin-top: 15px; border: 2px solid #059669; border-radius: 3px; overflow: hidden; break-inside: avoid;">
           <div style="background-color: #059669; color: white; padding: 3px 6px; font-weight: bold; font-size: 8px;">
-            📦 ПАКУВАЛЬНИЙ ЛИСТ
+            📦 ПАКУВАЛЬНИЙ ЛИСТ - ВСІ ПОЗИЦІЇ
+            ${order.carrier ? `
+              <div style="font-size: 7px; margin-top: 2px; font-weight: normal;">
+                🚚 ${order.carrier.name}
+                ${order.carrier.recipientCityName ? ` | 🏪 ${order.carrier.recipientCityName}` : ''}
+                ${order.carrier.recipientWarehouseAddress ? ` | 📍 ${order.carrier.recipientWarehouseAddress}` : ''}
+                ${order.trackingNumber ? ` | 📦 ТТН: ${order.trackingNumber}` : ''}
+              </div>
+            ` : ''}
           </div>
           <table class="items-table">
             <thead>
