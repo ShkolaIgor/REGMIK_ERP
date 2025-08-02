@@ -88,6 +88,10 @@ export function DepartmentPrintModal({ isOpen, onClose, orderId }: DepartmentPri
       const response = await fetch(`/api/orders/${orderId}/print-departments`);
       if (response.ok) {
         const data = await response.json();
+        console.log('🔧 DEBUG: Frontend received print data:', {
+          carrier: data.order.carrier,
+          recipientWarehouseNumber: data.order.carrier?.recipientWarehouseNumber
+        });
         setPrintData(data);
       } else {
         toast({
